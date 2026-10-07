@@ -34,6 +34,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AionDpsMeter.Core\AionDpsMeter.Core.csproj" />
     <ProjectReference Include="..\AionDpsMeter.Services\AionDpsMeter.Services.csproj" />
+    <ProjectReference Include="..\AionDpsMeter.Timers\AionDpsMeter.Timers.csproj" />
   </ItemGroup>
 
   <!-- After publish: publish Updater as single-file into the same output folder -->
