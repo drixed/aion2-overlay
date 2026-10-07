@@ -29,7 +29,8 @@
 - `AionDpsMeter.UI/Pages/ForkSettings.*` — настройки форка внутри окна настроек RATmeter
 - `AionDpsMeter.UI/Services/TimerWindow/CubeMapWindow.cs` — окно «Карта кубов» (🗺)
 
-Всё остальное — свои файлы: `AionDpsMeter.Timers/`, `AionDpsMeter.Timers.Tests/`, `schedule.json`,
+Всё остальное — свои файлы: `.github/README.md` (GitHub показывает его вместо корневого README апстрима),
+`AionDpsMeter.Timers/`, `AionDpsMeter.Timers.Tests/`, `schedule.json`,
 `.github/workflows/sync-upstream.yml`, `docs/`.
 
 ## Если автообновление упало с конфликтом
