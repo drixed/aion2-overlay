@@ -7,6 +7,12 @@ namespace AionDpsMeter.Timers.Energy;
 /// the packet; it comes from schedule.json).</summary>
 public sealed record EnergyReading(int Current, int Extra);
 
+/// <summary>A partial change: only the extra pool (entering a dungeon is paid from it when the current is short).</summary>
+public sealed record EnergyUpdate(int Extra)
+{
+    public EnergyReading ApplyTo(EnergyReading reading) => reading with { Extra = Extra };
+}
+
 /// <param name="FromEarlierSession">Loaded from disk: the game has not sent energy since the app started.</param>
 public sealed record EnergyState(EnergyReading Reading, DateTimeOffset At, bool FromEarlierSession);
 
@@ -19,6 +25,23 @@ public static class EnergyParser
 {
     /// <summary>RATmeter reads opcodes little-endian: wire bytes 0C 61 → 0x610C.</summary>
     public const ushort Opcode = 0x610C;
+
+    /// <summary>The energy's id inside the 0C 61 records (the same in every EU capture so far).</summary>
+    private const long EnergyId = 51591;
+
+    /// <summary>
+    /// Extra-only change, <c>00 08 01, id varint, extra varint, …</c> (EU capture 2026-10-07 21:46: 990 → 920 when a
+    /// dungeon entry was paid from the extra pool). Other <c>00 …</c> records of the opcode are not energy.
+    /// </summary>
+    public static EnergyUpdate? ParseUpdate(ReadOnlySpan<byte> body)
+    {
+        if (body.Length < 5 || body[0] != 0x00 || body[1] != 0x08 || body[2] != 0x01) return null;
+        var o = 3;
+        if (!Wire.TryVarint(body, o, out var id, out var len) || id != EnergyId) return null;
+        o += len;
+        if (!Wire.TryVarint(body, o, out var extra, out _) || extra is < 0 or > 1_000_000) return null;
+        return new EnergyUpdate((int)extra);
+    }
 
     public static EnergyReading? Parse(ReadOnlySpan<byte> body)
     {
@@ -58,6 +81,12 @@ public sealed class EnergyTracker
 
     public event Action? Changed;
 
+    /// <summary>A partial change applies to the last known reading; with none known yet it is ignored.</summary>
+    public void OnUpdate(EnergyUpdate update)
+    {
+        if (current is { } known) OnReading(update.ApplyTo(known.Reading));
+    }
+
     public void OnReading(EnergyReading reading)
     {
         var state = new EnergyState(reading, time.GetUtcNow(), FromEarlierSession: false);
@@ -77,6 +106,8 @@ public sealed class EnergyListener(EnergyTracker tracker) : AionDpsMeter.Service
     {
         // RATmeter frame: varint length prefix, 2 opcode bytes, body.
         if (!Wire.TryVarint(packet.Data, 0, out _, out var header) || packet.Data.Length < header + 2) return;
-        if (EnergyParser.Parse(packet.Data.AsSpan(header + 2)) is { } reading) tracker.OnReading(reading);
+        var body = packet.Data.AsSpan(header + 2);
+        if (EnergyParser.Parse(body) is { } reading) tracker.OnReading(reading);
+        else if (EnergyParser.ParseUpdate(body) is { } update) tracker.OnUpdate(update);
     }
 }

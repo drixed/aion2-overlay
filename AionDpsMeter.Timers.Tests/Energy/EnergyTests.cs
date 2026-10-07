@@ -18,6 +18,16 @@ public class EnergyTests
     }
 
     [Fact]
+    public void An_extra_only_update_changes_the_extra_and_keeps_the_current()
+    {
+        // 21:46:45, after entering a dungeon: "00 08 01, id 51591, extra 920" — the extra pool paid the entry.
+        var update = EnergyParser.ParseUpdate(Convert.FromHexString("000801879303980703"));
+        Assert.Equal(new EnergyUpdate(Extra: 920), update);
+        Assert.Equal(new EnergyReading(10, 920), update!.ApplyTo(new EnergyReading(10, 990)));
+        Assert.Null(EnergyParser.ParseUpdate(Convert.FromHexString("000801FFFF03980703"))); // another resource id
+    }
+
+    [Fact]
     public void Other_shapes_of_the_same_opcode_are_ignored()
     {
         Assert.Null(EnergyParser.Parse(Convert.FromHexString("00040C0000000E02")));
@@ -57,5 +67,8 @@ public class EnergyTests
         listener.OnEnergyPacket(new Packet { Data = [(byte)(body.Length + 4), 0x0C, 0x61, .. body], ReceivedAt = 0 });
         listener.OnEnergyPacket(new Packet { Data = [0x05, 0x0C, 0x61, 0x00, 0x04], ReceivedAt = 0 });
         Assert.Equal(new EnergyReading(75, 990), tracker.Current!.Reading);
+        var spend = Convert.FromHexString("000801879303980703");
+        listener.OnEnergyPacket(new Packet { Data = [(byte)(spend.Length + 4), 0x0C, 0x61, .. spend], ReceivedAt = 0 });
+        Assert.Equal(new EnergyReading(75, 920), tracker.Current!.Reading);
     }
 }
