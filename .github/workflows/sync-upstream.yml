@@ -23,6 +23,8 @@ jobs:
       # SYNC_TOKEN (personal token with "repo" + "workflow") is only needed when upstream changes its own
       # .github/workflows files: the default token is not allowed to push those. See docs/USAGE.ru.md.
       GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+      # In a fork gh defaults to the parent repository: every release, issue and label call must target this one.
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
         with:
