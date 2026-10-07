@@ -1,4 +1,6 @@
+using AionDpsMeter.Core.Models;
 using AionDpsMeter.Timers.Bosses;
+using AionDpsMeter.Timers.Overlay;
 using AionDpsMeter.Timers.Schedule;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -27,6 +29,7 @@ public sealed class TimersHostedService(
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
+        Mob.UnknownIsBoss = UnknownBossPolicy.FirstMinuteAfter(DateTime.Now); // Entity.CreatedAt is local time
         try
         {
             schedule.LoadLocal();
