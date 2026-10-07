@@ -22,3 +22,8 @@
 .timers__row--unknown { opacity: .55; }
 .timers__row button, .timers__showall { background: rgba(255, 255, 255, .12); color: inherit; border: 0; border-radius: 3px; padding: 1px 6px; cursor: pointer; }
 .timers__empty { opacity: .7; padding: 6px; font-size: 12px; }
+.timers__list::-webkit-scrollbar { width: 6px; }
+.timers__list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .18); border-radius: 3px; }
+.timers__list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .3); }
+.timers__list::-webkit-scrollbar-track { background: transparent; }
+.timers__list::-webkit-scrollbar-button { display: none; }

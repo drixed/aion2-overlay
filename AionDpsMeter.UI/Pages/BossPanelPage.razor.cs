@@ -6,6 +6,8 @@ using AionDpsMeter.Timers.Fight;
 using AionDpsMeter.Timers.Schedule;
 using AionDpsMeter.UI.ViewModels;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using Microsoft.Extensions.Logging;
 
 namespace AionDpsMeter.UI.Pages
@@ -17,6 +19,8 @@ namespace AionDpsMeter.UI.Pages
         ScheduleSource schedule,
         TimersOptionsStore options,
         TimeProvider time,
+        IJSRuntime js,
+        IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
     {
         [Parameter]
@@ -46,6 +50,35 @@ namespace AionDpsMeter.UI.Pages
         }
 
         protected override void OnParametersSet() => Recompute();
+
+        private ElementReference panel;
+        private DotNetObjectReference<BossPanelPage>? self;
+        private const double MaxWindowHeight = 900;
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender || ViewModel is null) return;
+            self = DotNetObjectReference.Create(this);
+            try
+            {
+                await js.InvokeVoidAsync("aionFit.observe", panel, self);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Main window will not fit its content"); // the window just keeps its size
+            }
+        }
+
+        /// <summary>The panel's natural height changed (card shown, players joined): the main window follows it,
+        /// like the Abyss meter does. Width stays the user's.</summary>
+        [JSInvokable]
+        public void OnContentHeight(double height)
+        {
+            var window = services.GetService<Views.MainWindow>();
+            if (window is null || height <= 0) return;
+            var target = Math.Clamp(height, window.MinHeight, MaxWindowHeight);
+            if (Math.Abs(window.Height - target) >= 1) window.Height = target;
+        }
 
         private async Task TickAsync(CancellationToken ct)
         {
@@ -113,6 +146,7 @@ namespace AionDpsMeter.UI.Pages
 
         public void Dispose()
         {
+            self?.Dispose();
             cts?.Cancel();
             cts?.Dispose();
         }

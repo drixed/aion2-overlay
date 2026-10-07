@@ -5,7 +5,7 @@
 
 @if (ViewModel != null)
 {
-    <div class="boss-panel">
+    <div class="boss-panel" @ref="panel">
         <div class="bp-header" @onmousedown="ViewModel.BeginDrag">
             <span class="bp-dot @(Fight is not null ? "bp-dot--fight" : "")"></span>
             <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>

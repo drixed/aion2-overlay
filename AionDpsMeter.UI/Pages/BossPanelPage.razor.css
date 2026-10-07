@@ -1,5 +1,5 @@
 /* aion2-overlay fork: new file (see FORK_CHANGES.md). */
-.boss-panel { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; color: #e6edf3; user-select: none;
+.boss-panel { display: flex; flex-direction: column; box-sizing: border-box; /* natural height: the window fits it */ color: #e6edf3; user-select: none;
     background: rgba(18, 16, 24, .82); border-radius: 10px; overflow: hidden; font-size: 13px; }
 .bp-header { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: move; }
 .bp-dot { width: 8px; height: 8px; border-radius: 50%; background: #7ee787; flex: 0 0 auto; }
@@ -24,7 +24,7 @@
 .bp-win { color: #7ee787; }
 .bp-enrage { color: #f2cc60; }
 .bp-rage { color: #ff6b6b; }
-.bp-players { flex: 1; min-height: 0; overflow: auto; padding: 0 8px; } /* rows as wide as the boss card */
+.bp-players { overflow: hidden; padding: 0 8px 4px; } /* rows as wide as the boss card */
 .bp-players ::deep .header-module { display: none; } /* upstream's own header: ours replaces it */
 .bp-footer { display: flex; justify-content: space-between; gap: 8px; padding: 5px 10px; font-size: 12px;
     border-top: 1px solid rgba(255, 255, 255, .08); color: #c9d1d9; }
@@ -39,3 +39,7 @@
 .bp-notice-body p { margin: 0 0 8px; color: #c9d1d9; line-height: 1.4; }
 .bp-notice-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
 .bp-link { background: none; border: 0; color: #9aa4b2; text-decoration: underline; cursor: pointer; font-size: 12px; }
+.bp-notice-body::-webkit-scrollbar { width: 6px; }
+.bp-notice-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .18); border-radius: 3px; }
+.bp-notice-body::-webkit-scrollbar-track, .bp-notice-body::-webkit-scrollbar-button { display: none; background: transparent; }
+.bp-players ::deep .players-list { overflow: visible; }
