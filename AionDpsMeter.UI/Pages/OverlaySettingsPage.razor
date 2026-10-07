@@ -1,9 +1,10 @@
 @* aion2-overlay fork: new file (see FORK_CHANGES.md). *@
+@using AionDpsMeter.Timers.Feed
 @using AionDpsMeter.Timers.Overlay
 
 <div class="os">
     <div class="os-header" @onmousedown="Drag">
-        <span class="os-title">✦ Настройки оверлея</span>
+        <span class="os-title">⚙ Настройки</span>
         <button type="button" class="os-close" title="Закрыть" @onclick="Close" @onmousedown:stopPropagation="true">✕</button>
     </div>
     <div class="os-body">
@@ -19,7 +20,6 @@
             </div>
             <div class="os-hint">eDPS (DPS за бой) делит урон на всё время боя, поэтому любое время без атак снижает число. aDPS делит только на твоё активное время — от первого удара до последнего.</div>
         </div>
-
         <div class="os-item">
             <label class="os-row"><span>Только моя группа</span><input type="checkbox" checked="@O.OnlyMyParty" @onchange="e => Set(o => o.OnlyMyParty = e.Value is true)" /></label>
             <div class="os-hint">Показывать только себя и членов своей группы — без случайных игроков рядом. Проценты, DPS группы и сводка считаются по группе.</div>
@@ -53,6 +53,10 @@
 
         <div class="os-section">ОВЕРЛЕЙ</div>
         <div class="os-item">
+            <label class="os-row"><span>Компактная полоса</span><input type="checkbox" checked="@O.Compact" @onchange="e => Set(o => o.Compact = e.Value is true)" /></label>
+            <div class="os-hint">Главное окно — только шапка и твоя строка.</div>
+        </div>
+        <div class="os-item">
             <label class="os-row"><span>Режим фокуса</span><input type="checkbox" checked="@O.FocusMode" @onchange="e => Set(o => o.FocusMode = e.Value is true)" /></label>
             <div class="os-hint">В бою скрывает шапку, объявления и разлом. Наведи курсор — они появятся.</div>
         </div>
@@ -71,20 +75,48 @@
             <div class="os-hint">Увеличивает главное окно и окно таймеров. Высота подстраивается сама, ширину меняй за уголок.</div>
         </div>
 
+        <div class="os-section">ТАЙМЕРЫ И УВЕДОМЛЕНИЯ</div>
+        <div class="os-item">
+            <label class="os-row"><span>Окно таймеров боссов</span><input type="checkbox" checked="@O.ShowBossTimers" @onchange="e => Set(o => o.ShowBossTimers = e.Value is true)" /></label>
+            <div class="os-hint">Отдельное окно с полевыми боссами. Его можно закрыть и крестиком в его шапке.</div>
+        </div>
+        <div class="os-item">
+            <label class="os-row"><span>Звук оповещений</span><input type="checkbox" checked="@O.Sound" @onchange="e => Set(o => o.Sound = e.Value is true)" /></label>
+        </div>
+        @foreach (var kind in Enum.GetValues<FeedKind>())
+        {
+            <div class="os-item">
+                <div class="os-row">
+                    <label class="os-inline"><input type="checkbox" checked="@(!O.HiddenKinds.Contains(kind))" @onchange="e => ToggleKind(kind, e.Value is true)" /> @KindLabel(kind)</label>
+                    <span class="os-lead">предупреждать за
+                        <input type="number" min="0" max="60" value="@O.LeadFor(kind)" @onchange="e => SetLead(kind, e.Value)" /> мин
+                    </span>
+                </div>
+            </div>
+        }
+        @if (O.HiddenIds.Count > 0)
+        {
+            <button type="button" class="os-button" @onclick="ShowHidden">Вернуть скрытые строки (@O.HiddenIds.Count)</button>
+        }
+
         <div class="os-section">ГОРЯЧИЕ КЛАВИШИ</div>
         @foreach (var hotkey in Hotkeys)
         {
             <div class="os-hotkey @(capturing == hotkey.Id ? "capturing" : "")" tabindex="0"
-                 @onclick="() => capturing = hotkey.Id" @onkeydown="e => OnKey(hotkey.Id, e)" @onkeydown:preventDefault="true"
+                 @onclick="() => capturing = hotkey.Id" @onkeydown="e => OnKey(hotkey, e)" @onkeydown:preventDefault="true"
                  @onblur="() => capturing = null">
                 <span>@hotkey.Title</span>
                 <b>@Label(hotkey)</b>
                 @if (HasHotkey(hotkey))
                 {
-                    <button type="button" title="Очистить" @onclick="() => SetHotkey(hotkey.Id, string.Empty)" @onclick:stopPropagation="true">×</button>
+                    <button type="button" title="Очистить" @onclick="() => hotkey.Set(string.Empty)" @onclick:stopPropagation="true">×</button>
                 }
             </div>
         }
         <div class="os-hint">Нажми на строку, затем сочетание. Esc — очистить.</div>
+
+        <div class="os-section">МЕТР</div>
+        <button type="button" class="os-button" @onclick="OpenMeterSettings">Настройки RATmeter →</button>
+        <div class="os-hint">Прозрачность, размер строк, цвета классов, история боёв, оверлеи баффов и перезарядок.</div>
     </div>
 </div>

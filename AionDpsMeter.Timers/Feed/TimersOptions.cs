@@ -35,8 +35,20 @@ public sealed class TimersOptions
     public bool OnlyOverGame { get; set; }
     /// <summary>Percent, 80–150.</summary>
     public int UiScale { get; set; } = 100;
+    // Global hotkeys, as in the Abyss meter. Empty = not set.
+    public string HideOverlayHotkey { get; set; } = "";
+    /// <summary>Ends the current fight (it goes to the history) so the meter starts fresh.</summary>
     public string ResetFightHotkey { get; set; } = "";
+    /// <summary>Clears the meter completely.</summary>
+    public string ClearMeterHotkey { get; set; } = "";
     public string CopySummaryHotkey { get; set; } = "";
+    public string CompactHotkey { get; set; } = "";
+    public string ClickThroughHotkey { get; set; } = "";
+
+    /// <summary>The main window shows only its header and my own row.</summary>
+    public bool Compact { get; set; }
+    /// <summary>The field boss timers window is shown.</summary>
+    public bool ShowBossTimers { get; set; } = true;
 
     /// <summary>Show the fight card for ordinary mobs too, not only bosses.</summary>
     public bool CardForAllTargets { get; set; }

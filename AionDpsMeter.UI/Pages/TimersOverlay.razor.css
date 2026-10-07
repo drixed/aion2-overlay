@@ -27,3 +27,5 @@
 .timers__list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .3); }
 .timers__list::-webkit-scrollbar-track { background: transparent; }
 .timers__list::-webkit-scrollbar-button { display: none; }
+.timers__actions { display: none; gap: 3px; }
+.timers__row:hover .timers__actions { display: inline-flex; }

@@ -24,7 +24,29 @@ namespace AionDpsMeter.UI.Services.TimerWindow
 
         public event Action? EditingChanged;
 
+        private bool watching;
+
+        /// <summary>At startup: the window opens if the user wants it; the runtime (hotkeys, "only over the game")
+        /// starts either way.</summary>
         public void Open()
+        {
+            if (!watching)
+            {
+                watching = true;
+                options.Changed += () => Application.Current.Dispatcher.BeginInvoke(FollowSetting);
+            }
+            if (Application.Current.MainWindow is { } main) runtime.Start(main);
+            if (options.Current.ShowBossTimers) OpenWindow();
+        }
+
+        private void FollowSetting()
+        {
+            var open = windowManager.IsOpen(Key);
+            if (options.Current.ShowBossTimers && !open) OpenWindow();
+            else if (!options.Current.ShowBossTimers && open) windowManager.Close(Key);
+        }
+
+        private void OpenWindow()
         {
             window = new BlazorWindow(App.AppHost.Services, typeof(TimersOverlay))
             {
@@ -42,8 +64,6 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             };
             windowManager.Open(Key, window, isSingleton: true, persistenceMode: WindowPersistenceMode.Bounds);
             ApplyCollapsed();
-            // Started here: this runs once at startup on the UI thread, after the main window exists.
-            if (Application.Current.MainWindow is { } main) runtime.Start(main);
         }
 
         public void ToggleEditing()

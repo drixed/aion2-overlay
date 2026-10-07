@@ -49,6 +49,9 @@ namespace AionDpsMeter.UI.Pages
         private DateTimeOffset dpsCacheAt;
 
         private void OpenOverlaySettings() => overlaySettings.Open();
+
+        /// <summary>Compact bar: header and my own row only.</summary>
+        private bool Compact => Options.Compact;
         private void ToggleCubeMap() => cubeMap.Toggle();
 
         /// <summary>Upstream's player stats are rebuilt on every read: refreshed at most twice a second, only when
@@ -84,6 +87,8 @@ namespace AionDpsMeter.UI.Pages
         private IEnumerable<(PlayerRenderState Player, double Share, double Bar)> Rows()
         {
             var players = ViewModel!.Players;
+            if (Options.Compact)
+                return players.Where(p => p.IsUser).Select(p => (p, p.DamagePercentage, ViewModel.ClampPercent(p.EffectivePercentage)));
             if (!Options.OnlyMyParty)
                 return players.Select(p => (p, p.DamagePercentage, ViewModel.ClampPercent(p.EffectivePercentage)));
             var rows = players.Select(p => new PartyRow(p.PlayerId, p.IsUser, LevelOf(p.PlayerId), p.TotalDamage)).ToList();

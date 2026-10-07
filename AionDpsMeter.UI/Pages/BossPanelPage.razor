@@ -15,13 +15,12 @@
                 <button type="button" @onclick="ViewModel.OpenHistory" @onmousedown:stopPropagation="true" title="История боёв">☰</button>
                 <button type="button" @onclick="ViewModel.OpenStatEffCalc" @onmousedown:stopPropagation="true" title="Калькулятор статов">⚔</button>
                 <button type="button" @onclick="ToggleCubeMap" @onmousedown:stopPropagation="true" title="Карта кубов">🗺</button>
-                <button type="button" @onclick="OpenOverlaySettings" @onmousedown:stopPropagation="true" title="Настройки оверлея">✦</button>
-                <button type="button" @onclick="ViewModel.OpenSettings" @onmousedown:stopPropagation="true" title="Настройки RATmeter">⚙</button>
+                <button type="button" @onclick="OpenOverlaySettings" @onmousedown:stopPropagation="true" title="Настройки">⚙</button>
                 <button type="button" @onclick="ViewModel.Minimize" @onmousedown:stopPropagation="true" title="Свернуть">_</button>
                 <button type="button" @onclick="ViewModel.Close" @onmousedown:stopPropagation="true" title="Закрыть">✕</button>
             </div>
         </div>
-        @if (ActiveNotice is { } notice)
+        @if (ActiveNotice is { } notice && !Compact)
         {
             <div class="bp-notice">
                 <span class="bp-notice-icon">⚠</span>
@@ -43,7 +42,7 @@
                 </div>
             }
         }
-        @if (Fight is { } f && !noticeOpen)
+        @if (Fight is { } f && !noticeOpen && !Compact)
         {
             <div class="bp-card">
                 <div class="bp-card-top">
@@ -65,7 +64,7 @@
                 </div>
             </div>
         }
-        @if (ViewModel.UpdateAvailable && !noticeOpen)
+        @if (ViewModel.UpdateAvailable && !noticeOpen && !Compact)
         {
             <div class="bp-notice">
                 <span class="bp-notice-icon">⬆</span>
@@ -91,7 +90,7 @@
                 </div>
             }
         </div>
-        @if (NextRift is not null || NextEvent is not null || Energy is not null)
+        @if (!Compact && (NextRift is not null || NextEvent is not null || Energy is not null))
         {
             <div class="bp-footer">
                 <div class="bp-footer-line">

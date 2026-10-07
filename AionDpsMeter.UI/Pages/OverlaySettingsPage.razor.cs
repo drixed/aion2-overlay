@@ -2,14 +2,17 @@
 using AionDpsMeter.Timers.Feed;
 using AionDpsMeter.Timers.Overlay;
 using AionDpsMeter.UI.Services.TimerWindow;
+using AionDpsMeter.UI.Services.Windowing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
 namespace AionDpsMeter.UI.Pages
 {
-    public partial class OverlaySettingsPage(TimersOptionsStore store, OverlaySettingsWindow window) : ComponentBase
+    /// <summary>The one settings window behind ⚙: the fork's numbers, overlay, timers, hotkeys — and a way into
+    /// RATmeter's own settings.</summary>
+    public partial class OverlaySettingsPage(TimersOptionsStore store, OverlaySettingsWindow window, WindowHelper windowHelper) : ComponentBase
     {
-        private sealed record HotkeyRow(string Id, string Title, Func<string> Get);
+        private sealed record HotkeyRow(string Id, string Title, Func<string> Get, Action<string> Set);
 
         private string? capturing;
 
@@ -17,8 +20,12 @@ namespace AionDpsMeter.UI.Pages
 
         private IReadOnlyList<HotkeyRow> Hotkeys =>
         [
-            new("reset", "Сбросить бой", () => O.ResetFightHotkey),
-            new("copy", "Копировать сводку", () => O.CopySummaryHotkey),
+            new("hide", "Скрыть оверлей", () => O.HideOverlayHotkey, v => Set(o => o.HideOverlayHotkey = v)),
+            new("reset", "Сбросить бой", () => O.ResetFightHotkey, v => Set(o => o.ResetFightHotkey = v)),
+            new("clear", "Очистить метр", () => O.ClearMeterHotkey, v => Set(o => o.ClearMeterHotkey = v)),
+            new("copy", "Копировать сводку", () => O.CopySummaryHotkey, v => Set(o => o.CopySummaryHotkey = v)),
+            new("compact", "Переключить компактную полосу", () => O.CompactHotkey, v => Set(o => o.CompactHotkey = v)),
+            new("click", "Переключить сквозной клик", () => O.ClickThroughHotkey, v => Set(o => o.ClickThroughHotkey = v)),
         ];
 
         private string Label(HotkeyRow row) =>
@@ -28,6 +35,7 @@ namespace AionDpsMeter.UI.Pages
 
         private void Drag() => window.Drag();
         private void Close() => window.Close();
+        private void OpenMeterSettings() => windowHelper.OpenSettings();
 
         private void Set(Action<TimersOptions> change)
         {
@@ -40,19 +48,43 @@ namespace AionDpsMeter.UI.Pages
             if (int.TryParse(value?.ToString(), out var percent)) Set(o => o.UiScale = Math.Clamp(percent, 80, 150));
         }
 
-        private void OnKey(string id, KeyboardEventArgs e)
+        private void SetLead(FeedKind kind, object? value)
         {
-            if (capturing != id) return;
-            var text = HotkeyText.FromKey(e.Key, e.CtrlKey, e.ShiftKey, e.AltKey);
-            if (text is null) return; // a modifier alone: keep waiting
-            SetHotkey(id, text);
-            capturing = null;
+            if (!int.TryParse(value?.ToString(), out var minutes)) return;
+            minutes = Math.Clamp(minutes, 0, 60);
+            Set(o =>
+            {
+                switch (kind)
+                {
+                    case FeedKind.Boss: o.BossLeadMinutes = minutes; break;
+                    case FeedKind.Rift: o.RiftLeadMinutes = minutes; break;
+                    default: o.EventLeadMinutes = minutes; break;
+                }
+            });
         }
 
-        private void SetHotkey(string id, string text) => Set(o =>
+        private void ToggleKind(FeedKind kind, bool show) => Set(o =>
         {
-            if (id == "reset") o.ResetFightHotkey = text;
-            else o.CopySummaryHotkey = text;
+            if (show) o.HiddenKinds.Remove(kind);
+            else o.HiddenKinds.Add(kind);
         });
+
+        private void ShowHidden() => Set(o => o.HiddenIds.Clear());
+
+        private static string KindLabel(FeedKind kind) => kind switch
+        {
+            FeedKind.Rift => "Разломы",
+            FeedKind.Boss => "Боссы",
+            _ => "Ивенты",
+        };
+
+        private void OnKey(HotkeyRow row, KeyboardEventArgs e)
+        {
+            if (capturing != row.Id) return;
+            var text = HotkeyText.FromKey(e.Key, e.CtrlKey, e.ShiftKey, e.AltKey);
+            if (text is null) return; // a modifier alone: keep waiting
+            row.Set(text);
+            capturing = null;
+        }
     }
 }

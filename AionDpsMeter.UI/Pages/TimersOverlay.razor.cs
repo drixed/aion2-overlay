@@ -29,30 +29,14 @@ namespace AionDpsMeter.UI.Pages
 
         // The markup (the other half of this partial class) cannot see primary-constructor parameters.
         private TimersOptions Options => optionsStore.Current;
-        private bool IsEditing => controller.IsEditing;
         private bool Collapsed => Options.Collapsed;
         private void Drag() => controller.Drag();
-        private void ToggleSettings() => controller.ToggleEditing();
+        private void HideWindow()
+        {
+            Options.ShowBossTimers = false;
+            optionsStore.Save(); // the controller closes the window
+        }
         private void ToggleCollapsed() => controller.SetCollapsed(!Options.Collapsed);
-
-        private void SetSound(bool on)
-        {
-            Options.Sound = on;
-            optionsStore.Save();
-        }
-
-        private void SetLead(FeedKind kind, object? value)
-        {
-            if (!int.TryParse(value?.ToString(), out var minutes)) return;
-            minutes = Math.Clamp(minutes, 0, 60);
-            switch (kind)
-            {
-                case FeedKind.Boss: Options.BossLeadMinutes = minutes; break;
-                case FeedKind.Rift: Options.RiftLeadMinutes = minutes; break;
-                default: Options.EventLeadMinutes = minutes; break;
-            }
-            optionsStore.Save();
-        }
 
         protected override void OnInitialized()
         {
@@ -119,33 +103,11 @@ namespace AionDpsMeter.UI.Pages
             Recompute();
         }
 
-        private void ShowAll()
-        {
-            Options.HiddenIds.Clear();
-            optionsStore.Save();
-            Recompute();
-        }
-
-        private void ToggleKind(FeedKind kind, bool show)
-        {
-            if (show) Options.HiddenKinds.Remove(kind);
-            else Options.HiddenKinds.Add(kind);
-            optionsStore.Save();
-            Recompute();
-        }
-
         private static string KindIcon(FeedKind kind) => kind switch
         {
             FeedKind.Rift => "◈",
             FeedKind.Boss => "☠",
             _ => "★",
-        };
-
-        private static string KindLabel(FeedKind kind) => kind switch
-        {
-            FeedKind.Rift => "Разломы",
-            FeedKind.Boss => "Боссы",
-            _ => "Ивенты",
         };
 
         public void Dispose()

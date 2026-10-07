@@ -31,3 +31,10 @@
 .os-hotkey b { color: #7ee787; font-size: 12px; }
 .os-hotkey.capturing { border-color: #2ea043; }
 .os-hotkey button { background: rgba(255, 255, 255, .1); border: 0; color: #e6edf3; border-radius: 4px; padding: 0 6px; cursor: pointer; }
+.os-inline { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.os-inline input { accent-color: #2ea043; }
+.os-lead { font-size: 12px; color: #9aa4b2; }
+.os-lead input { width: 44px; margin: 0 4px; background: rgba(0, 0, 0, .4); color: inherit; border: 1px solid rgba(255, 255, 255, .2); border-radius: 3px; }
+.os-button { width: 100%; margin: 6px 0 2px; padding: 7px 10px; border-radius: 6px; cursor: pointer; text-align: left;
+    background: rgba(255, 255, 255, .05); color: #e6edf3; border: 1px solid rgba(255, 255, 255, .1); }
+.os-button:hover { border-color: #2ea043; }
