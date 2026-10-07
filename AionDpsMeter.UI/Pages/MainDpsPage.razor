@@ -5,6 +5,8 @@
 @using AionDpsMeter.UI.ViewModels
 @implements IDisposable
 @page "/"
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore TimersOptions
+@if (TimersOptions.Current.UseBossPanel) { <BossPanelPage ViewModel="@viewModel" /> } else { <text>@* aion2-overlay fork: the boss panel or upstream's styles *@
 @if(UiStyle == 1)
 {
     <MainDpsStyle2 viewModel="@viewModel" />
@@ -13,6 +15,7 @@ else
 {
    <MainDpsMinimal viewModel="@viewModel" /> 
 }
+</text> } @* aion2-overlay fork *@
 
 @code {
     [Inject] private CombatSessionManager SessionManager { get; set; } = null!;

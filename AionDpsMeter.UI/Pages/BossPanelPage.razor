@@ -1,0 +1,51 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Feed
+@implements IDisposable
+
+@if (ViewModel != null)
+{
+    <div class="boss-panel">
+        <div class="bp-header" @onmousedown="ViewModel.BeginDrag">
+            <span class="bp-dot @(Fight is not null ? "bp-dot--fight" : "")"></span>
+            <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
+            <span class="bp-time">@ViewModel.CombatDuration</span>
+            <span class="bp-ping" style="color:@ViewModel.PingColor">@ViewModel.PingDisplay</span>
+            <div class="bp-controls">
+                <button type="button" @onclick="ViewModel.OpenHistory" @onmousedown:stopPropagation="true" title="История боёв">☰</button>
+                <button type="button" @onclick="ViewModel.OpenStatEffCalc" @onmousedown:stopPropagation="true" title="Калькулятор статов">⚔</button>
+                <button type="button" @onclick="ViewModel.OpenSettings" @onmousedown:stopPropagation="true" title="Настройки">⚙</button>
+                <button type="button" @onclick="ViewModel.Minimize" @onmousedown:stopPropagation="true" title="Свернуть">_</button>
+                <button type="button" @onclick="ViewModel.Close" @onmousedown:stopPropagation="true" title="Закрыть">✕</button>
+            </div>
+        </div>
+        @if (Fight is { } f)
+        {
+            <div class="bp-card">
+                <div class="bp-card-top">
+                    <span class="bp-skull">☠</span>
+                    <span class="bp-name" title="@f.Name">@f.Name</span>
+                    <span class="bp-hp">@Hp(f.HpCurrent) / @Hp(f.HpTotal) · <b>@f.HpPercent.ToString("0", CultureInfo.InvariantCulture)%</b></span>
+                </div>
+                <div class="bp-track"><div class="bp-fill" style="width:@(f.HpPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></div></div>
+                <div class="bp-card-bottom">
+                    <span>До победы <b class="bp-win">@(f.ToKill is { } k ? FeedText.Span(k) : "—")</b></span>
+                    @if (f.Enrage is not null)
+                    {
+                        <span>До ярости <b class="@(f.Enraged ? "bp-rage" : "bp-enrage")">@(f.Enraged ? "ярость!" : FeedText.Span(f.ToEnrage!.Value))</b></span>
+                    }
+                </div>
+            </div>
+        }
+        <div class="bp-players">
+            <MainDpsMinimal ViewModel="@ViewModel" />
+        </div>
+        @if (NextEvent is { } e)
+        {
+            <div class="bp-footer">
+                <span>◈ @e.Title@(e.Verified ? "" : " (не проверено)")</span>
+                <span class="bp-footer-time">@FeedText.Format(e, now, TimeZoneInfo.Local)</span>
+            </div>
+        }
+    </div>
+}

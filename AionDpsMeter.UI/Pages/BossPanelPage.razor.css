@@ -1,0 +1,31 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). */
+.boss-panel { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; color: #e6edf3; user-select: none;
+    background: rgba(18, 16, 24, .82); border-radius: 10px; overflow: hidden; font-size: 13px; }
+.bp-header { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: move; }
+.bp-dot { width: 8px; height: 8px; border-radius: 50%; background: #7ee787; flex: 0 0 auto; }
+.bp-dot--fight { background: #f2cc60; box-shadow: 0 0 6px #f2cc60; }
+.bp-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-time { color: #7ee787; font-variant-numeric: tabular-nums; }
+.bp-ping { font-size: 11px; margin-left: auto; }
+.bp-controls { display: flex; gap: 2px; }
+.bp-controls button { background: none; border: 0; color: #9aa4b2; cursor: pointer; padding: 2px 5px; font-size: 13px; }
+.bp-controls button:hover { color: #fff; }
+.bp-card { margin: 0 8px 6px; padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .08); }
+.bp-card-top { display: flex; align-items: center; gap: 6px; }
+.bp-skull { opacity: .8; }
+.bp-name { font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-hp { color: #9aa4b2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bp-hp b { color: #ff8fa3; }
+.bp-track { height: 6px; margin: 6px 0; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.bp-fill { height: 100%; background: linear-gradient(90deg, #ff6b81, #ff9aa8); transition: width .2s; }
+.bp-card-bottom { display: flex; justify-content: space-between; color: #9aa4b2; font-size: 12px; }
+.bp-card-bottom b { font-variant-numeric: tabular-nums; }
+.bp-win { color: #7ee787; }
+.bp-enrage { color: #f2cc60; }
+.bp-rage { color: #ff6b6b; }
+.bp-players { flex: 1; min-height: 0; overflow: auto; }
+.bp-players ::deep .header-module { display: none; } /* upstream's own header: ours replaces it */
+.bp-footer { display: flex; justify-content: space-between; gap: 8px; padding: 5px 10px; font-size: 12px;
+    border-top: 1px solid rgba(255, 255, 255, .08); color: #c9d1d9; }
+.bp-footer-time { font-variant-numeric: tabular-nums; color: #f2cc60; white-space: nowrap; }
