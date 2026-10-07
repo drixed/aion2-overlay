@@ -54,6 +54,17 @@ public class ScheduleJsonTests
     }
 
     [Fact]
+    public void A_notice_parses_and_an_incomplete_one_is_ignored()
+    {
+        var data = ScheduleJson.Parse("""
+            { "notice": { "id": "patch-2026-10", "title": "Метр обновляется под новый патч", "text": "Вышел патч…" } }
+            """);
+        Assert.Equal(new Notice("patch-2026-10", "Метр обновляется под новый патч", "Вышел патч…"), data.Notice);
+        Assert.Null(ScheduleJson.Parse("""{ "notice": { "id": "", "title": "x" } }""").Notice);
+        Assert.Null(ScheduleData.Empty.Notice);
+    }
+
+    [Fact]
     public void Invalid_json_throws_FormatException()
     {
         Assert.Throws<FormatException>(() => ScheduleJson.Parse("{ not json"));

@@ -34,6 +34,14 @@ public class BossFightTests
     }
 
     [Fact]
+    public void A_long_solo_fight_still_gets_an_estimate()
+    {
+        // The screenshot: Blue Wave Kelpina, 99.38M HP left at 5.67K/s — almost five hours, not "—".
+        var f = BossFight.Build("Kelpina", 99_380_000, 126_320_000, 5_670, TimeSpan.FromSeconds(105), null);
+        Assert.Equal(TimeSpan.FromSeconds(17_528), f.ToKill);
+    }
+
+    [Fact]
     public void Enrage_counts_down_from_the_fight_start()
     {
         var f = BossFight.Build("B", 1, 2, 1, TimeSpan.FromSeconds(57), BossFight.DefaultEnrage);
@@ -49,9 +57,10 @@ public class BossFightTests
     public void Enrage_timer_comes_from_overrides_then_boss_kind()
     {
         var overrides = new Dictionary<int, int> { [2900001] = 420, [2900002] = 0 };
-        Assert.Equal(TimeSpan.FromMinutes(7), BossFight.EnrageFor(2900001, isFieldBoss: false, overrides));
-        Assert.Null(BossFight.EnrageFor(2900002, isFieldBoss: false, overrides));
-        Assert.Null(BossFight.EnrageFor(2400800, isFieldBoss: true, NoOverrides));
-        Assert.Equal(TimeSpan.FromMinutes(5), BossFight.EnrageFor(2900003, isFieldBoss: false, NoOverrides));
+        Assert.Equal(TimeSpan.FromMinutes(7), BossFight.EnrageFor(2900001, isBoss: true, isFieldBoss: false, overrides));
+        Assert.Null(BossFight.EnrageFor(2900002, isBoss: true, isFieldBoss: false, overrides));
+        Assert.Null(BossFight.EnrageFor(2400800, isBoss: true, isFieldBoss: true, NoOverrides));
+        Assert.Equal(TimeSpan.FromMinutes(5), BossFight.EnrageFor(2900003, isBoss: true, isFieldBoss: false, NoOverrides));
+        Assert.Null(BossFight.EnrageFor(2100001, isBoss: false, isFieldBoss: false, NoOverrides)); // ordinary target: no enrage
     }
 }

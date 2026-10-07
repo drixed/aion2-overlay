@@ -42,17 +42,22 @@ public class TimersOptionsTests
     }
 
     [Fact]
-    public void The_edit_hotkey_is_a_setting_with_an_uncontended_default()
+    public void Window_state_and_dismissed_notices_round_trip()
     {
         using var dir = new TempDir();
         var store = new TimersOptionsStore(dir.File("timers-settings.json"));
         store.Load();
-        Assert.Equal("Ctrl+Shift+F9", store.Current.EditHotkey);
-        store.Current.EditHotkey = "Alt+F2";
+        Assert.False(store.Current.Collapsed);
+        Assert.False(store.Current.IsDismissed("patch-1"));
+        store.Current.Collapsed = true;
+        store.Current.DismissedNotices.Add("patch-1");
         store.Save();
+
         var again = new TimersOptionsStore(dir.File("timers-settings.json"));
         again.Load();
-        Assert.Equal("Alt+F2", again.Current.EditHotkey);
+        Assert.True(again.Current.Collapsed);
+        Assert.True(again.Current.IsDismissed("patch-1"));
+        Assert.False(again.Current.IsDismissed("patch-2"));
     }
 
     [Fact]

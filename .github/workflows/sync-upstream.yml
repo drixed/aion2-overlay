@@ -106,6 +106,18 @@ jobs:
           }
           gh release create "v$v" "Aion2Overlay-v$v-win-x64.zip" --target (git rev-parse HEAD) --title "v$v" --notes $notes
 
+      - name: Clear the automatic patch notice
+        shell: pwsh
+        run: |
+          $json = Get-Content schedule.json -Raw | ConvertFrom-Json -AsHashtable
+          if ($json.notice -and "$($json.notice.id)" -like "auto-sync*") {
+            $json.Remove("notice")
+            ($json | ConvertTo-Json -Depth 10) | Set-Content schedule.json -Encoding utf8NoBOM
+            git add schedule.json
+            git commit -m "chore: clear the automatic patch notice"
+            git push origin HEAD:master
+          }
+
       - name: Report failure
         if: failure()
         shell: pwsh
@@ -118,3 +130,19 @@ jobs:
           $open = gh issue list --state open --label sync-failure --json number -q '.[0].number'
           if ($open) { gh issue comment $open --body $body }
           else { gh issue create --title "Автообновление сломалось" --label sync-failure --body $body }
+
+          # Tell the players in the app (banner in the main window), once per failure streak.
+          git merge --abort 2>$null
+          git reset --hard origin/master | Out-Null
+          $json = Get-Content schedule.json -Raw | ConvertFrom-Json -AsHashtable
+          if (-not ($json.notice -and "$($json.notice.id)" -like "auto-sync*")) {
+            $json.notice = [ordered]@{
+              id = "auto-sync-" + (Get-Date -Format "yyyyMMdd")
+              title = "Метр обновляется под новый патч"
+              text = "Вышел новый патч игры, и метр сейчас обновляется под него. Пока это не завершено, что-то может работать непредсказуемо.`nКогда изменения будут готовы, программа предложит обновиться.`nСпасибо за терпение."
+            }
+            ($json | ConvertTo-Json -Depth 10) | Set-Content schedule.json -Encoding utf8NoBOM
+            git add schedule.json
+            git commit -m "chore: automatic patch notice"
+            git push origin HEAD:master
+          }

@@ -4,7 +4,8 @@
 (function () {
     const ru = {
         "Settings": "Настройки", "Close": "Закрыть", "Close settings": "Закрыть настройки",
-        "Appearance": "Внешний вид", "Hotkeys": "Горячие клавиши", "Tracking": "Учёт урона", "Developer": "Разработчику",
+        "Appearance": "Вид", "Hotkeys": "Клавиши", "Tracking": "Учёт", "Developer": "Отладка",
+        "[BETA] Overlays": "Оверлеи β",
         "Window layout": "Расположение окон", "WINDOW LAYOUT": "РАСПОЛОЖЕНИЕ ОКОН", "WINDOW": "ОКНО",
         "PLAYER LIST": "СПИСОК ИГРОКОВ", "HISTORY": "ИСТОРИЯ", "BUFF OVERLAY": "ОВЕРЛЕЙ БАФФОВ",
         "SKILL COOLDOWNS": "ПЕРЕЗАРЯДКА УМЕНИЙ", "Settings groups": "Разделы настроек",

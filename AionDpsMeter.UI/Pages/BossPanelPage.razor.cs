@@ -23,14 +23,20 @@ namespace AionDpsMeter.UI.Pages
         public MainDpsViewModel? ViewModel { get; set; }
 
         private BossFightView? Fight;
+        private bool fightIsBoss;
+        private bool noticeOpen;
+        private string? snoozedNotice; // «Напомнить позже»: hidden until the app restarts
+
+        private Notice? ActiveNotice =>
+            schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
         private FeedItem? NextEvent;
         private DateTimeOffset now;
         private CancellationTokenSource? cts;
         private bool loggedFailure;
 
         private string HeaderTitle =>
-            Fight is not null ? "Бой с боссом"
-            : ViewModel?.HasActiveTarget == true && ViewModel.ActiveTargetName.Length > 0 ? ViewModel.ActiveTargetName
+            Fight is not null && fightIsBoss ? "Бой с боссом"
+            : Fight is not null ? Fight.Name
             : "Ожидание боя";
 
         protected override void OnInitialized()
@@ -60,11 +66,14 @@ namespace AionDpsMeter.UI.Pages
             now = time.GetUtcNow();
             try
             {
+                // Any target with HP gets the card (upstream's mob table does not flag every boss); the "boss fight"
+                // title and the enrage timer are for bosses only.
                 var target = sessions.GetActiveTargetInfo();
-                Fight = target is { IsBoss: true, IsDummy: false, HpTotal: > 0 }
-                    ? BossFight.Build(target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),
+                fightIsBoss = target is { IsBoss: true, IsDummy: false };
+                Fight = target is { HpTotal: > 0 }
+                    ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),
                         sessions.GetCombatDuration(),
-                        BossFight.EnrageFor(target.MobCode, tracker.IsFieldBoss(target.MobCode), schedule.Current.Enrage))
+                        BossFight.EnrageFor(target.MobCode, fightIsBoss, tracker.IsFieldBoss(target.MobCode), schedule.Current.Enrage))
                     : null;
                 NextEvent = TimersFeed.BuildSchedule(now, schedule.Current).FirstOrDefault(options.Current.Shows);
             }
@@ -77,6 +86,30 @@ namespace AionDpsMeter.UI.Pages
         }
 
         private static string Hp(long value) => DamageFormatter.Format(value);
+
+        /// <summary>The party total only adds information when more than one player is in the list.</summary>
+        private bool ShowPartyDps => ViewModel is { Players.Count: > 1 };
+
+        private static IEnumerable<string> Paragraphs(string text) =>
+            text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        private void ToggleNotice() => noticeOpen = !noticeOpen;
+
+        private void RemindLater()
+        {
+            snoozedNotice = ActiveNotice?.Id;
+            noticeOpen = false;
+        }
+
+        private void DismissNotice()
+        {
+            if (ActiveNotice is { } n)
+            {
+                options.Current.DismissedNotices.Add(n.Id);
+                options.Save();
+            }
+            noticeOpen = false;
+        }
 
         public void Dispose()
         {

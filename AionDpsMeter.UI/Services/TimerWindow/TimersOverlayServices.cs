@@ -8,6 +8,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
     {
         public static IServiceCollection AddTimersOverlay(this IServiceCollection services)
         {
+            ForkCulture.Apply(); // runs during host setup, before any window renders a number
             services.AddTimers();
             services.AddSingleton<TimersWindowController>();
             return services;

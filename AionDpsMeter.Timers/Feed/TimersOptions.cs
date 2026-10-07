@@ -10,8 +10,16 @@ public sealed class TimersOptions
     public int EventLeadMinutes { get; set; } = 5;
     public bool Sound { get; set; } = true;
 
-    /// <summary>Toggles the overlay's edit mode. Upstream's hotkey syntax ("Ctrl+Shift+F9"); empty turns it off.</summary>
-    public string EditHotkey { get; set; } = "Ctrl+Shift+F9";
+    /// <summary>The timers window is folded down to its header.</summary>
+    public bool Collapsed { get; set; }
+
+    /// <summary>Height to restore when the folded window opens again.</summary>
+    public double ExpandedHeight { get; set; } = 460;
+
+    /// <summary>Notice ids the user answered «Понятно» to.</summary>
+    public HashSet<string> DismissedNotices { get; set; } = [];
+
+    public bool IsDismissed(string noticeId) => DismissedNotices.Contains(noticeId);
     /// <summary>"boss" — the fork's boss panel as the main window; "upstream" — RATmeter's own style.</summary>
     public string MainStyle { get; set; } = "boss";
 

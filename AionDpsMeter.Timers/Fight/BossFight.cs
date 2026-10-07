@@ -23,11 +23,13 @@ public static class BossFight
     /// <summary>Upstream's party DPS is damage / fight duration: in the first seconds it is infinite or wildly high.</summary>
     public static readonly TimeSpan MinimumSample = TimeSpan.FromSeconds(3);
 
-    private static readonly double MaxShownSeconds = (TimeSpan.FromMinutes(100) - TimeSpan.FromSeconds(1)).TotalSeconds;
+    /// <summary>A solo player on a field boss can honestly need hours; beyond a day the number means nothing.</summary>
+    private static readonly double MaxShownSeconds = TimeSpan.FromHours(24).TotalSeconds;
 
-    public static TimeSpan? EnrageFor(int mobCode, bool isFieldBoss, IReadOnlyDictionary<int, int> overrides) =>
+    /// <summary>schedule.json override first; otherwise ordinary targets and field bosses have none, other bosses 5:00.</summary>
+    public static TimeSpan? EnrageFor(int mobCode, bool isBoss, bool isFieldBoss, IReadOnlyDictionary<int, int> overrides) =>
         overrides.TryGetValue(mobCode, out var seconds) ? (seconds > 0 ? TimeSpan.FromSeconds(seconds) : null)
-        : isFieldBoss ? null
+        : !isBoss || isFieldBoss ? null
         : DefaultEnrage;
 
     public static BossFightView Build(string name, long hpCurrent, long hpTotal, double partyDps, TimeSpan elapsed, TimeSpan? enrage)

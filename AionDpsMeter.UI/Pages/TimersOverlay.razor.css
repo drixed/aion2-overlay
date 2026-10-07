@@ -1,19 +1,24 @@
 /* aion2-overlay fork: new file (see FORK_CHANGES.md). */
-.timers { display: flex; flex-direction: column; height: 100%; font-size: 13px; color: #e6edf3; padding: 6px; user-select: none; box-sizing: border-box; }
-.timers--editing { background: rgba(0, 0, 0, .55); border: 1px dashed rgba(255, 255, 255, .5); border-radius: 6px; }
-.timers__bar { cursor: move; padding: 4px 6px; margin-bottom: 4px; background: rgba(255, 255, 255, .08); border-radius: 4px; font-size: 11px; }
-.timers__filters { display: flex; gap: 10px; margin-bottom: 6px; font-size: 12px; }
-.timers__toast { background: rgba(255, 170, 0, .9); color: #111; padding: 4px 6px; border-radius: 4px; margin-bottom: 4px; font-weight: 700; }
-.timers__row { display: flex; align-items: center; gap: 6px; padding: 3px 6px; margin-bottom: 2px; background: rgba(0, 0, 0, .45); border-radius: 4px; text-shadow: 0 0 2px #000; }
+.timers { display: flex; flex-direction: column; height: 100%; font-size: 13px; color: #e6edf3; user-select: none; box-sizing: border-box;
+    background: rgba(18, 16, 24, .82); border-radius: 10px; overflow: hidden; }
+.timers__header { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 10px; cursor: move; flex: 0 0 auto; }
+.timers__title { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.timers__header button { background: none; border: 0; color: #9aa4b2; cursor: pointer; padding: 2px 5px; font-size: 13px; }
+.timers__header button:hover, .timers__header button.is-on { color: #fff; }
+.timers__settings { margin: 0 8px 6px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, .06); font-size: 12px; }
+.timers__filters, .timers__leads { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
+.timers__leads input { width: 42px; margin-left: 4px; background: rgba(0, 0, 0, .4); color: inherit; border: 1px solid rgba(255, 255, 255, .2); border-radius: 3px; }
+.timers__setting { display: block; margin-bottom: 4px; }
+.timers__toast { background: rgba(255, 170, 0, .9); color: #111; padding: 4px 8px; margin: 0 8px 4px; border-radius: 4px; font-weight: 700; }
+.timers__list { flex: 1; min-height: 0; overflow: auto; padding: 0 6px 6px; }
+.timers__row { display: flex; align-items: center; gap: 6px; padding: 3px 6px; margin-bottom: 2px; background: rgba(255, 255, 255, .04); border-radius: 4px; }
 .timers__icon { width: 16px; text-align: center; }
-.timers__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.timers__title small { opacity: .6; margin-left: 6px; }
-.timers__title em { opacity: .6; font-size: 11px; font-style: normal; }
+.timers__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timers__name small { opacity: .6; margin-left: 6px; }
+.timers__name em { opacity: .6; font-size: 11px; font-style: normal; }
 .timers__time { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .timers__row--active .timers__time, .timers__row--alive .timers__time { color: #7ee787; }
 .timers__row--overdue .timers__time { color: #ffa657; }
 .timers__row--unknown { opacity: .55; }
-.timers button { background: rgba(255, 255, 255, .12); color: inherit; border: 0; border-radius: 3px; padding: 1px 6px; cursor: pointer; }
+.timers__row button, .timers__showall { background: rgba(255, 255, 255, .12); color: inherit; border: 0; border-radius: 3px; padding: 1px 6px; cursor: pointer; }
 .timers__empty { opacity: .7; padding: 6px; font-size: 12px; }
-.timers__list { flex: 1; min-height: 0; overflow: auto; }
-.timers__hint { opacity: .35; font-size: 10px; padding: 2px 6px; text-align: right; }

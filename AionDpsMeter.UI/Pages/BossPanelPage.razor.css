@@ -4,10 +4,9 @@
 .bp-header { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: move; }
 .bp-dot { width: 8px; height: 8px; border-radius: 50%; background: #7ee787; flex: 0 0 auto; }
 .bp-dot--fight { background: #f2cc60; box-shadow: 0 0 6px #f2cc60; }
-.bp-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bp-time { color: #7ee787; font-variant-numeric: tabular-nums; }
-.bp-total { color: #c9d1d9; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bp-ping { font-size: 11px; margin-left: auto; }
+.bp-title { flex: 0 1 auto; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-time { color: #7ee787; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bp-ping { font-size: 11px; margin-left: auto; white-space: nowrap; }
 .bp-controls { display: flex; gap: 2px; }
 .bp-controls button { background: none; border: 0; color: #9aa4b2; cursor: pointer; padding: 2px 5px; font-size: 13px; }
 .bp-controls button:hover { color: #fff; }
@@ -25,8 +24,18 @@
 .bp-win { color: #7ee787; }
 .bp-enrage { color: #f2cc60; }
 .bp-rage { color: #ff6b6b; }
-.bp-players { flex: 1; min-height: 0; overflow: auto; }
+.bp-players { flex: 1; min-height: 0; overflow: auto; padding: 0 8px; } /* rows as wide as the boss card */
 .bp-players ::deep .header-module { display: none; } /* upstream's own header: ours replaces it */
 .bp-footer { display: flex; justify-content: space-between; gap: 8px; padding: 5px 10px; font-size: 12px;
     border-top: 1px solid rgba(255, 255, 255, .08); color: #c9d1d9; }
 .bp-footer-time { font-variant-numeric: tabular-nums; color: #f2cc60; white-space: nowrap; }
+.bp-notice { display: flex; align-items: center; gap: 6px; margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px;
+    background: rgba(242, 204, 96, .12); border: 1px solid rgba(242, 204, 96, .35); color: #f2cc60; font-size: 12px; }
+.bp-notice-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-notice-btn, .bp-primary { background: rgba(242, 204, 96, .18); color: #f2cc60; border: 1px solid rgba(242, 204, 96, .5);
+    border-radius: 5px; padding: 2px 10px; cursor: pointer; font-size: 12px; }
+.bp-notice-body { flex: 1; overflow: auto; margin: 0 8px 8px; padding: 10px 12px; border-radius: 8px; background: rgba(255, 255, 255, .05); }
+.bp-notice-body h3 { margin: 0 0 8px; font-size: 15px; }
+.bp-notice-body p { margin: 0 0 8px; color: #c9d1d9; line-height: 1.4; }
+.bp-notice-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+.bp-link { background: none; border: 0; color: #9aa4b2; text-decoration: underline; cursor: pointer; font-size: 12px; }

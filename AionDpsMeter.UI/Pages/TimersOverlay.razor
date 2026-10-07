@@ -2,60 +2,83 @@
 @using AionDpsMeter.Timers.Feed
 @implements IDisposable
 
-<div class="timers @(IsEditing ? "timers--editing" : "")">
-    @if (IsEditing)
-    {
-        <div class="timers__bar" @onmousedown="Drag">Таймеры — тащи за эту полосу · @EditHotkey закрепить</div>
-        <div class="timers__filters">
-            @foreach (var kind in Enum.GetValues<FeedKind>())
-            {
-                <label>
-                    <input type="checkbox" checked="@(!Options.HiddenKinds.Contains(kind))"
-                           @onchange="e => ToggleKind(kind, e.Value is true)" />
-                    @KindLabel(kind)
-                </label>
-            }
-        </div>
-    }
-    @if (toast is not null)
-    {
-        <div class="timers__toast">@toast</div>
-    }
-    <div class="timers__list">
-    @foreach (var item in visible)
-    {
-        <div class="timers__row timers__row--@item.Status.ToString().ToLowerInvariant()">
-            <span class="timers__icon">@KindIcon(item.Kind)</span>
-            <span class="timers__title">
-                @item.Title
-                @if (!item.Verified)
-                {
-                    <em> (не проверено)</em>
-                }
-                @if (item.Zone is not null)
-                {
-                    <small>@item.Zone</small>
-                }
-            </span>
-            <span class="timers__time">@FeedText.Format(item, now, TimeZoneInfo.Local)</span>
-            @if (IsEditing)
-            {
-                if (item.Kind == FeedKind.Boss)
-                {
-                    <button @onclick="() => MarkKilled(item)">убит</button>
-                }
-                <button title="Скрыть" @onclick="() => Hide(item)">×</button>
-            }
-        </div>
-    }
+<div class="timers">
+    <div class="timers__header" @onmousedown="Drag">
+        <span class="timers__title">☠ @(Collapsed && toast is not null ? toast : "Таймеры боссов")</span>
+        <button type="button" title="Настройки и уведомления" @onclick="ToggleSettings" @onmousedown:stopPropagation="true"
+                class="@(IsEditing ? "is-on" : "")">⚙</button>
+        <button type="button" title="@(Collapsed ? "Развернуть" : "Свернуть")" @onclick="ToggleCollapsed" @onmousedown:stopPropagation="true">@(Collapsed ? "▸" : "▾")</button>
     </div>
-    @if (visible.Count == 0 && IsEditing)
+    @if (!Collapsed)
     {
-        <div class="timers__empty">Боссов пока нет. Открой карту в игре — появятся полевые боссы.</div>
+        @if (IsEditing)
+        {
+            <div class="timers__settings">
+                <div class="timers__filters">
+                    @foreach (var kind in Enum.GetValues<FeedKind>())
+                    {
+                        <label>
+                            <input type="checkbox" checked="@(!Options.HiddenKinds.Contains(kind))"
+                                   @onchange="e => ToggleKind(kind, e.Value is true)" />
+                            @KindLabel(kind)
+                        </label>
+                    }
+                </div>
+                <label class="timers__setting">
+                    <input type="checkbox" checked="@Options.Sound" @onchange="e => SetSound(e.Value is true)" /> Звук оповещений
+                </label>
+                <div class="timers__setting">Предупреждать за, мин:</div>
+                <div class="timers__leads">
+                    @foreach (var kind in Enum.GetValues<FeedKind>())
+                    {
+                        <label>
+                            @KindLabel(kind)
+                            <input type="number" min="0" max="60" value="@Options.LeadFor(kind)"
+                                   @onchange="e => SetLead(kind, e.Value)" />
+                        </label>
+                    }
+                </div>
+                @if (Options.HiddenIds.Count > 0)
+                {
+                    <button class="timers__showall" @onclick="ShowAll">Показать скрытые (@Options.HiddenIds.Count)</button>
+                }
+            </div>
+        }
+        @if (toast is not null)
+        {
+            <div class="timers__toast">@toast</div>
+        }
+        <div class="timers__list">
+            @foreach (var item in visible)
+            {
+                <div class="timers__row timers__row--@item.Status.ToString().ToLowerInvariant()">
+                    <span class="timers__icon">@KindIcon(item.Kind)</span>
+                    <span class="timers__name">
+                        @item.Title
+                        @if (!item.Verified)
+                        {
+                            <em> (не проверено)</em>
+                        }
+                        @if (item.Zone is not null)
+                        {
+                            <small>@item.Zone</small>
+                        }
+                    </span>
+                    <span class="timers__time">@FeedText.Format(item, now, TimeZoneInfo.Local)</span>
+                    @if (IsEditing)
+                    {
+                        if (item.BossKey is not null)
+                        {
+                            <button @onclick="() => MarkKilled(item)">убит</button>
+                        }
+                        <button title="Скрыть" @onclick="() => Hide(item)">×</button>
+                    }
+                </div>
+            }
+            @if (visible.Count == 0)
+            {
+                <div class="timers__empty">Боссов пока нет. Открой карту в игре — появятся полевые боссы.</div>
+            }
+        </div>
     }
-    @if (IsEditing && Options.HiddenIds.Count > 0)
-    {
-        <button class="timers__showall" @onclick="ShowAll">Показать скрытые (@Options.HiddenIds.Count)</button>
-    }
-    <div class="timers__hint">@EditHotkey — переместить / размер</div>
 </div>
