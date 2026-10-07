@@ -56,6 +56,21 @@ public class TimersOptionsTests
     }
 
     [Fact]
+    public void The_boss_panel_is_the_default_main_style()
+    {
+        var options = new TimersOptions();
+        Assert.True(options.UseBossPanel);
+        options.MainStyle = "upstream";
+        Assert.False(options.UseBossPanel);
+
+        using var dir = new TempDir();
+        var store = new TimersOptionsStore(dir.File("timers-settings.json"));
+        store.Load();
+        store.Save();
+        Assert.DoesNotContain("UseBossPanel", File.ReadAllText(dir.File("timers-settings.json")));
+    }
+
+    [Fact]
     public void A_corrupt_settings_file_gives_defaults()
     {
         using var dir = new TempDir();

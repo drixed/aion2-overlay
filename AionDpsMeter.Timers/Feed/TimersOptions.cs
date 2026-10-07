@@ -12,6 +12,12 @@ public sealed class TimersOptions
 
     /// <summary>Toggles the overlay's edit mode. Upstream's hotkey syntax ("Ctrl+Shift+F9"); empty turns it off.</summary>
     public string EditHotkey { get; set; } = "Ctrl+Shift+F9";
+    /// <summary>"boss" — the fork's boss panel as the main window; "upstream" — RATmeter's own style.</summary>
+    public string MainStyle { get; set; } = "boss";
+
+    [JsonIgnore]
+    public bool UseBossPanel => !string.Equals(MainStyle, "upstream", StringComparison.OrdinalIgnoreCase);
+
     public HashSet<FeedKind> HiddenKinds { get; set; } = [];
     public HashSet<string> HiddenIds { get; set; } = [];
 

@@ -43,29 +43,55 @@ public class TimersFeedTests
     {
         var items = TimersFeed.Build(Now, Data(), [
             Boss(2400800, next: Now.AddMinutes(20)),
-            Boss(-111003, alive: true, since: Now.AddMinutes(-3)),
-            Boss(-111004, next: Now.AddMinutes(-10)),
-            Boss(-111005, next: Now.AddHours(-3)),
+            Boss(2400003, alive: true, since: Now.AddMinutes(-3)),
+            Boss(2400004, next: Now.AddMinutes(-10)),
+            Boss(2400005, next: Now.AddHours(-3)),
         ], Catalog);
 
         Assert.Equal(FeedStatus.Upcoming, items.Single(i => i.BossKey == 2400800).Status);
         Assert.Equal("Гартуа", items.Single(i => i.BossKey == 2400800).Title);
         Assert.Equal("Альтгард", items.Single(i => i.BossKey == 2400800).Zone);
-        Assert.Equal(FeedStatus.Alive, items.Single(i => i.BossKey == -111003).Status);
-        Assert.Equal(FeedStatus.Overdue, items.Single(i => i.BossKey == -111004).Status);
-        Assert.Equal(FeedStatus.Unknown, items.Single(i => i.BossKey == -111005).Status);
-        Assert.Equal("Босс №21", TimersFeed.Build(Now, Data(), [Boss(-111021)], Catalog).Single().Title);
+        Assert.Equal(FeedStatus.Alive, items.Single(i => i.BossKey == 2400003).Status);
+        Assert.Equal(FeedStatus.Overdue, items.Single(i => i.BossKey == 2400004).Status);
+        Assert.Equal(FeedStatus.Unknown, items.Single(i => i.BossKey == 2400005).Status);
     }
 
     [Fact]
     public void Items_are_ordered_running_first_then_soonest()
     {
         var items = TimersFeed.Build(Now, Data(Rift()), [
-            Boss(-111001, next: Now.AddMinutes(5)),
-            Boss(-111002, alive: true, since: Now.AddMinutes(-1)),
-            Boss(-111003, next: Now.AddHours(-5)),
+            Boss(2400001, next: Now.AddMinutes(5)),
+            Boss(2400002, alive: true, since: Now.AddMinutes(-1)),
+            Boss(2400003, next: Now.AddHours(-5)),
         ], Catalog);
-        Assert.Equal([-111002, -111001, null, -111003], items.Select(i => i.BossKey));
+        Assert.Equal([2400002, 2400001, null, 2400003], items.Select(i => i.BossKey));
+    }
+
+    [Fact]
+    public void Unnamed_bosses_collapse_into_one_row_per_map()
+    {
+        var items = TimersFeed.BuildBosses(Now, Data(), [
+            new BossTimer(1, -101001, 1010, 101001, true, null, null, null, null),
+            new BossTimer(1, -101002, 1010, 101002, true, null, null, null, null),
+            new BossTimer(1, -101003, 1010, 101003, false, null, Now.AddMinutes(7), null, null),
+            new BossTimer(1, 2400800, 1110, 111021, false, null, Now.AddMinutes(20), null, null),
+        ], Catalog);
+
+        Assert.Equal(2, items.Count);
+        var group = items.Single(i => i.Id == "map:1010");
+        Assert.Equal("Карта 1010: живы 2 из 3", group.Title);
+        Assert.Equal(FeedStatus.Upcoming, group.Status);
+        Assert.Equal(Now.AddMinutes(7), group.At);
+        Assert.Null(group.BossKey);
+        Assert.Equal("Альтгард: живы 1 из 1", TimersFeed.BuildBosses(Now, Data(),
+            [new BossTimer(1, -111001, 1110, 111001, true, null, null, null, null)], Catalog).Single().Title);
+    }
+
+    [Fact]
+    public void Schedule_and_bosses_can_be_built_separately()
+    {
+        Assert.Equal(["rift"], TimersFeed.BuildSchedule(Now, Data(Rift())).Select(i => i.Id));
+        Assert.Empty(TimersFeed.BuildBosses(Now, Data(Rift()), [], Catalog));
     }
 
     [Fact]
