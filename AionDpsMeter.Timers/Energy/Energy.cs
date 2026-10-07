@@ -7,10 +7,12 @@ namespace AionDpsMeter.Timers.Energy;
 /// the packet; it comes from schedule.json).</summary>
 public sealed record EnergyReading(int Current, int Extra);
 
-/// <summary>A partial change: only the extra pool (entering a dungeon is paid from it when the current is short).</summary>
+/// <summary>A partial change: only the extra pool. The game spends the current energy first, so when the extra went
+/// down the current is already at 0 (seen: "10 (+990)" → "0 (+920)" for an entry costing 80).</summary>
 public sealed record EnergyUpdate(int Extra)
 {
-    public EnergyReading ApplyTo(EnergyReading reading) => reading with { Extra = Extra };
+    public EnergyReading ApplyTo(EnergyReading reading) =>
+        Extra < reading.Extra ? new EnergyReading(0, Extra) : reading with { Extra = Extra };
 }
 
 /// <param name="FromEarlierSession">Loaded from disk: the game has not sent energy since the app started.</param>

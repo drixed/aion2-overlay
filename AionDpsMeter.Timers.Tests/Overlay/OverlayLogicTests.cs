@@ -71,13 +71,24 @@ public class OverlayLogicTests
     }
 
     [Theory]
-    [InlineData("r", true, true, false, "Ctrl+Shift+R")]
-    [InlineData("F9", false, false, true, "Alt+F9")]
-    [InlineData("1", true, false, false, "Ctrl+D1")]
-    [InlineData("Control", true, false, false, null)]   // modifier alone: keep waiting
-    [InlineData("Escape", false, false, false, "")]      // cancels → clears
-    public void A_pressed_key_becomes_upstreams_hotkey_text(string key, bool ctrl, bool shift, bool alt, string? expected)
+    [InlineData("r", "KeyR", true, true, false, "Ctrl+Shift+R")]
+    [InlineData("к", "KeyR", true, false, false, "Ctrl+R")]       // Russian layout: the key's place counts, not its letter
+    [InlineData("F9", "F9", false, false, true, "Alt+F9")]
+    [InlineData("1", "Digit1", true, false, false, "Ctrl+D1")]
+    [InlineData("Control", "ControlLeft", true, false, false, null)] // modifier alone: keep waiting
+    [InlineData("Escape", "Escape", false, false, false, "")]        // clears
+    public void A_pressed_key_becomes_upstreams_hotkey_text(string key, string code, bool ctrl, bool shift, bool alt, string? expected)
     {
-        Assert.Equal(expected, HotkeyText.FromKey(key, ctrl, shift, alt));
+        Assert.Equal(expected, HotkeyText.FromKey(key, code, ctrl, shift, alt));
+    }
+
+    [Theory]
+    [InlineData("Ctrl+К", "Ctrl+R")]          // "Ctrl+К" saved by an earlier version on a Russian layout
+    [InlineData("Ctrl+Shift+ф", "Ctrl+Shift+A")]
+    [InlineData("Alt+F9", "Alt+F9")]
+    [InlineData("", "")]
+    public void Saved_russian_letters_map_to_the_same_keys(string saved, string expected)
+    {
+        Assert.Equal(expected, HotkeyText.Normalize(saved));
     }
 }

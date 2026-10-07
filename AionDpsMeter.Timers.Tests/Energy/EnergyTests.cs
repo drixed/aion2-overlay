@@ -23,7 +23,9 @@ public class EnergyTests
         // 21:46:45, after entering a dungeon: "00 08 01, id 51591, extra 920" — the extra pool paid the entry.
         var update = EnergyParser.ParseUpdate(Convert.FromHexString("000801879303980703"));
         Assert.Equal(new EnergyUpdate(Extra: 920), update);
-        Assert.Equal(new EnergyReading(10, 920), update!.ApplyTo(new EnergyReading(10, 990)));
+        // In game: "10 (+990)" → "0 (+920)": the entry cost 80, the current is spent first, the rest from the extra.
+        Assert.Equal(new EnergyReading(0, 920), update!.ApplyTo(new EnergyReading(10, 990)));
+        Assert.Equal(new EnergyReading(10, 1030), new EnergyUpdate(1030).ApplyTo(new EnergyReading(10, 990))); // a refill keeps the current
         Assert.Null(EnergyParser.ParseUpdate(Convert.FromHexString("000801FFFF03980703"))); // another resource id
     }
 
@@ -69,6 +71,6 @@ public class EnergyTests
         Assert.Equal(new EnergyReading(75, 990), tracker.Current!.Reading);
         var spend = Convert.FromHexString("000801879303980703");
         listener.OnEnergyPacket(new Packet { Data = [(byte)(spend.Length + 4), 0x0C, 0x61, .. spend], ReceivedAt = 0 });
-        Assert.Equal(new EnergyReading(75, 920), tracker.Current!.Reading);
+        Assert.Equal(new EnergyReading(0, 920), tracker.Current!.Reading);
     }
 }

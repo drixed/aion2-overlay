@@ -72,7 +72,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         private void Register(HotkeyId id, string text)
         {
             UnregisterHotKey(source!.Handle, (int)id);
-            var (modifiers, vk) = HotkeyParser.Parse(text);
+            var (modifiers, vk) = HotkeyParser.Parse(HotkeyText.Normalize(text));
             if (vk == 0) return;
             if (!RegisterHotKey(source.Handle, (int)id, modifiers | ModNoRepeat, vk))
                 logger.LogWarning("Hotkey {Hotkey} is taken by another program", text);

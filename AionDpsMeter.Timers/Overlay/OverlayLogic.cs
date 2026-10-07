@@ -49,19 +49,25 @@ public static class OverlayFocus
         foregroundProcessName is not null && Ours.Any(n => string.Equals(n, foregroundProcessName, StringComparison.OrdinalIgnoreCase));
 }
 
-/// <summary>Turns a key pressed in the settings page into upstream's hotkey syntax ("Ctrl+Shift+R").</summary>
+/// <summary>Turns a key pressed in the settings page into upstream's hotkey syntax ("Ctrl+Shift+R"), by the key's place
+/// on the keyboard: on a Russian layout "к" is the R key, and Windows registers hotkeys by key, not by letter.</summary>
 public static class HotkeyText
 {
-    /// <param name="key">The browser's KeyboardEvent.key.</param>
+    // Russian ЙЦУКЕН letters → the Latin letter on the same key (letters on punctuation keys are left out).
+    private const string Russian = "йцукенгшщзфывапролдячсмитьЙЦУКЕНГШЩЗФЫВАПРОЛДЯЧСМИТЬ";
+    private const string Latin = "QWERTYUIOPASDFGHJKLZXCVBNMQWERTYUIOPASDFGHJKLZXCVBNM";
+
+    /// <param name="key">The browser's KeyboardEvent.key (layout-dependent).</param>
+    /// <param name="code">The browser's KeyboardEvent.code (the physical key: "KeyR", "Digit1", "F9").</param>
     /// <returns>The hotkey; "" for Escape (no hotkey); null while only a modifier is held.</returns>
-    public static string? FromKey(string key, bool ctrl, bool shift, bool alt)
+    public static string? FromKey(string key, string code, bool ctrl, bool shift, bool alt)
     {
-        if (key is "Escape") return "";
+        if (key is "Escape" || code is "Escape") return "";
         if (key is "Control" or "Shift" or "Alt" or "Meta") return null;
         string main;
-        if (key.Length == 1 && char.IsLetter(key[0])) main = key.ToUpperInvariant();
-        else if (key.Length == 1 && char.IsDigit(key[0])) main = "D" + key; // WPF's Key names digits D0–D9
-        else if (key.Length is >= 2 and <= 3 && key[0] == 'F' && int.TryParse(key[1..], out var f) && f is >= 1 and <= 24) main = key;
+        if (code.Length == 4 && code.StartsWith("Key", StringComparison.Ordinal)) main = code[3].ToString();
+        else if (code.Length == 6 && code.StartsWith("Digit", StringComparison.Ordinal)) main = "D" + code[5]; // WPF's Key names digits D0–D9
+        else if (code.Length is >= 2 and <= 3 && code[0] == 'F' && int.TryParse(code[1..], out var f) && f is >= 1 and <= 24) main = code;
         else return null;
         var parts = new List<string>();
         if (ctrl) parts.Add("Ctrl");
@@ -69,5 +75,18 @@ public static class HotkeyText
         if (alt) parts.Add("Alt");
         parts.Add(main);
         return string.Join("+", parts);
+    }
+
+    /// <summary>A saved hotkey with Russian letters (written by an earlier version) → the same keys in Latin.</summary>
+    public static string Normalize(string hotkey)
+    {
+        if (string.IsNullOrEmpty(hotkey)) return hotkey;
+        var chars = hotkey.ToCharArray();
+        for (var i = 0; i < chars.Length; i++)
+        {
+            var at = Russian.IndexOf(chars[i]);
+            if (at >= 0) chars[i] = Latin[at];
+        }
+        return new string(chars);
     }
 }

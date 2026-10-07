@@ -28,7 +28,7 @@ namespace AionDpsMeter.UI.Pages
         ];
 
         private string Label(HotkeyRow row) =>
-            capturing == row.Id ? "Нажми сочетание…" : string.IsNullOrEmpty(row.Get()) ? "Не задано" : row.Get();
+            capturing == row.Id ? "Нажми сочетание…" : string.IsNullOrEmpty(row.Get()) ? "Не задано" : HotkeyText.Normalize(row.Get());
 
         private void Set(Action<TimersOptions> change)
         {
@@ -74,7 +74,7 @@ namespace AionDpsMeter.UI.Pages
         private void OnKey(HotkeyRow row, KeyboardEventArgs e)
         {
             if (capturing != row.Id) return;
-            var text = HotkeyText.FromKey(e.Key, e.CtrlKey, e.ShiftKey, e.AltKey);
+            var text = HotkeyText.FromKey(e.Key, e.Code, e.CtrlKey, e.ShiftKey, e.AltKey);
             if (text is null) return; // a modifier alone: keep waiting
             row.Set(text);
             capturing = null;
