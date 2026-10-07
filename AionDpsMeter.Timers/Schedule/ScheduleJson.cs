@@ -37,7 +37,11 @@ public static class ScheduleJson
         foreach (var (key, minutes) in file.RespawnMinutes ?? new())
             if (int.TryParse(key, out var code) && minutes > 0) respawn[code] = minutes;
 
-        return new ScheduleData(events, maps, respawn);
+        var enrage = new Dictionary<int, int>();
+        foreach (var (key, seconds) in file.EnrageSeconds ?? new())
+            if (int.TryParse(key, out var code) && seconds >= 0) enrage[code] = seconds;
+
+        return new ScheduleData(events, maps, respawn, enrage);
     }
 
     private static bool TryEvent(EventDto dto, out ScheduledEvent e)
@@ -114,6 +118,7 @@ public static class ScheduleJson
         public List<EventDto>? Events { get; set; }
         public Dictionary<string, MapDto>? FieldBossMaps { get; set; }
         public Dictionary<string, int>? RespawnMinutes { get; set; }
+        public Dictionary<string, int>? EnrageSeconds { get; set; }
     }
 
     internal sealed class EventDto

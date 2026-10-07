@@ -44,6 +44,16 @@ public class ScheduleJsonTests
     }
 
     [Fact]
+    public void Enrage_overrides_parse_and_zero_means_none()
+    {
+        var data = ScheduleJson.Parse("""{ "enrageSeconds": { "2400800": 0, "2900001": 420, "x": 5, "2900002": -1 } }""");
+        Assert.Equal(0, data.Enrage[2400800]);
+        Assert.Equal(420, data.Enrage[2900001]);
+        Assert.Equal(2, data.Enrage.Count);
+        Assert.Empty(ScheduleData.Empty.Enrage);
+    }
+
+    [Fact]
     public void Invalid_json_throws_FormatException()
     {
         Assert.Throws<FormatException>(() => ScheduleJson.Parse("{ not json"));

@@ -47,6 +47,12 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
         lock (gate) return RespawnOf(code);
     }
 
+    /// <summary>A boss of a field map (known from schedule.json or learned): it respawns and has no enrage timer.</summary>
+    public bool IsFieldBoss(int code)
+    {
+        lock (gate) return IsFieldBlock(code / 1000);
+    }
+
     public void OnList(int serverId, FieldBossList list)
     {
         lock (gate)

@@ -122,6 +122,17 @@ public class FieldBossTrackerTests
     }
 
     [Fact]
+    public void IsFieldBoss_follows_known_and_learned_maps()
+    {
+        var t = Tracker();
+        Assert.True(t.IsFieldBoss(2400800));
+        Assert.False(t.IsFieldBoss(2500001));
+        t.OnList(1, List(77, 2, Slot(77, 1, true, time.GetUtcNow()), Slot(77, 2, true, time.GetUtcNow())));
+        t.OnKill(1, 2500002);
+        Assert.True(t.IsFieldBoss(2500001));
+    }
+
+    [Fact]
     public void MarkKilled_works_on_tracked_entries_only()
     {
         var t = Tracker();
