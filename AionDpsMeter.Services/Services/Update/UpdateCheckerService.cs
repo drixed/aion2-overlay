@@ -10,7 +10,7 @@ namespace AionDpsMeter.Services.Services.Update
 
         public ReleaseInfo? LatestReleaseInfo { get; private set; }
 
-        private const string ReleasesApiUrl = "https://api.github.com/repos/Kuroukihime/AIon2-Dps-Meter/releases/latest";
+        private const string ReleasesApiUrl = "https://api.github.com/repos/drixed/aion2-overlay/releases/latest"; // aion2-overlay fork
 
         private static readonly HttpClient _httpClient = new()
         {
