@@ -90,19 +90,27 @@
                 </div>
             }
         </div>
-        @if (NextEvent is not null || Energy is not null)
+        @if (NextRift is not null || NextEvent is not null || Energy is not null)
         {
             <div class="bp-footer">
+                <div class="bp-footer-line">
+                    @if (NextRift is { } r)
+                    {
+                        <span class="bp-footer-event">◈ @r.Title@(r.Verified ? "" : " (не проверено)") <b class="bp-footer-time">@FeedText.Format(r, now, TimeZoneInfo.Local)</b></span>
+                    }
+                    @if (Energy is { } en)
+                    {
+                        <span class="bp-energy @(en.FromEarlierSession ? "bp-energy--old" : "")"
+                              title="@(en.FromEarlierSession ? $"Последнее известное значение ({en.At.ToLocalTime():HH:mm}); игра пришлёт новое при пополнении" : "Энергия")">
+                            ⚡ @en.Reading.Current<span class="bp-energy-extra">(+@en.Reading.Extra)</span>
+                        </span>
+                    }
+                </div>
                 @if (NextEvent is { } e)
                 {
-                    <span class="bp-footer-event">◈ @e.Title@(e.Verified ? "" : " (не проверено)") <b class="bp-footer-time">@FeedText.Format(e, now, TimeZoneInfo.Local)</b></span>
-                }
-                @if (Energy is { } en)
-                {
-                    <span class="bp-energy @(en.FromEarlierSession ? "bp-energy--old" : "")"
-                          title="@(en.FromEarlierSession ? $"Последнее известное значение ({en.At.ToLocalTime():HH:mm}); игра пришлёт новое при пополнении" : "Энергия")">
-                        ⚡ @en.Reading.Current<span class="bp-energy-extra">(+@en.Reading.Extra)</span>
-                    </span>
+                    <div class="bp-footer-line">
+                        <span class="bp-footer-event">★ @e.Title@(e.Verified ? "" : " (не проверено)") <b class="bp-footer-time">@FeedText.Format(e, now, TimeZoneInfo.Local)</b></span>
+                    </div>
                 }
             </div>
         }

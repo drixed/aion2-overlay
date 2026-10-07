@@ -38,6 +38,7 @@ namespace AionDpsMeter.UI.Pages
 
         private Notice? ActiveNotice =>
             schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
+        private FeedItem? NextRift;
         private FeedItem? NextEvent;
         private EnergyState? Energy => energy.Current;
         private TimersOptions Options => options.Current;
@@ -83,6 +84,7 @@ namespace AionDpsMeter.UI.Pages
         private ElementReference panel;
         private DotNetObjectReference<BossPanelPage>? self;
         private const double MaxWindowHeight = 900;
+        private const double BottomSlack = 4; // keeps the last line off the window's edge (and the resize grip)
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -105,7 +107,7 @@ namespace AionDpsMeter.UI.Pages
         {
             var window = services.GetService<Views.MainWindow>();
             if (window is null || height <= 0) return;
-            var target = Math.Clamp(height, window.MinHeight, MaxWindowHeight);
+            var target = Math.Clamp(height + BottomSlack, window.MinHeight, MaxWindowHeight);
             if (Math.Abs(window.Height - target) >= 1) window.Height = target;
         }
 
@@ -136,7 +138,10 @@ namespace AionDpsMeter.UI.Pages
                         sessions.GetCombatDuration(),
                         BossFight.EnrageFor(target.MobCode, fightIsBoss, tracker.IsFieldBoss(target.MobCode), schedule.Current.Enrage))
                     : null;
-                NextEvent = TimersFeed.BuildSchedule(now, schedule.Current).FirstOrDefault(options.Current.Shows);
+                // The rift and the next other event each get a line, so hourly events never push the rift out.
+                var upcoming = TimersFeed.BuildSchedule(now, schedule.Current).Where(options.Current.Shows).ToList();
+                NextRift = upcoming.FirstOrDefault(i => i.Kind == FeedKind.Rift);
+                NextEvent = upcoming.FirstOrDefault(i => i.Kind != FeedKind.Rift);
             }
             catch (Exception ex)
             {

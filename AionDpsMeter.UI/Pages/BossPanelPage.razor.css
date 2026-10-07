@@ -25,8 +25,9 @@
 .bp-enrage { color: #f2cc60; }
 .bp-rage { color: #ff6b6b; }
 .bp-players { overflow: hidden; padding: 0 8px 4px; } /* rows as wide as the boss card */
-.bp-footer { display: flex; justify-content: space-between; gap: 8px; padding: 5px 10px; font-size: 12px;
+.bp-footer { display: flex; flex-direction: column; gap: 2px; padding: 5px 10px; font-size: 12px;
     border-top: 1px solid rgba(255, 255, 255, .08); color: #c9d1d9; }
+.bp-footer-line { display: flex; justify-content: space-between; gap: 8px; }
 .bp-footer-event { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bp-footer-time { font-weight: 400; font-variant-numeric: tabular-nums; color: #f2cc60; white-space: nowrap; }
 .bp-energy { white-space: nowrap; font-variant-numeric: tabular-nums; color: #e6edf3; }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Время — в часовом поясе timeZone. verified=false: не сверено на EU, оверлей пометит событие «(не проверено)». После правки этого файла на GitHub программа подхватит его при следующем запуске. enrageSeconds: код босса → секунды до ярости (0 — нет ярости); по умолчанию 300 у боссов данжей, у полевых — нет.",
+  "_note": "Время — в часовом поясе timeZone (сервер EU). verified=false: не сверено на EU, оверлей пометит «(не проверено)». Ивенты — по shugo.gg (глобальные сервера). После правки этого файла на GitHub программа подхватит его при следующем запуске. enrageSeconds: код босса → секунды до ярости (0 — нет ярости); по умолчанию 300 у боссов данжей, у полевых — нет.",
   "events": [
     {
       "id": "rift",
@@ -8,13 +8,116 @@
       "category": "rift",
       "kind": "fixed",
       "timeZone": "Europe/Berlin",
-      "times": ["02:00", "05:00", "08:00", "11:00", "14:00", "17:00", "20:00", "23:00"],
+      "times": [
+        "02:00",
+        "05:00",
+        "08:00",
+        "11:00",
+        "14:00",
+        "17:00",
+        "20:00",
+        "23:00"
+      ],
       "durationMinutes": 0,
+      "verified": true
+    },
+    {
+      "id": "shugo-festival",
+      "name": "Фестиваль шуго",
+      "category": "event",
+      "kind": "interval",
+      "timeZone": "Europe/Berlin",
+      "anchor": "2026-10-01T00:00:00+02:00",
+      "periodMinutes": 60,
+      "durationMinutes": 10,
+      "verified": false
+    },
+    {
+      "id": "dimensional-invasion",
+      "name": "Вторжение измерения",
+      "category": "event",
+      "kind": "interval",
+      "timeZone": "Europe/Berlin",
+      "anchor": "2026-10-01T00:30:00+02:00",
+      "periodMinutes": 60,
+      "durationMinutes": 15,
+      "verified": false
+    },
+    {
+      "id": "artifact-siege",
+      "name": "Осада артефактов",
+      "category": "event",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "times": [
+        "21:00"
+      ],
+      "days": [
+        "Monday",
+        "Thursday",
+        "Saturday"
+      ],
+      "durationMinutes": 30,
+      "verified": false
+    },
+    {
+      "id": "siege-bosses",
+      "name": "Боссы осады",
+      "category": "event",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "times": [
+        "21:30"
+      ],
+      "days": [
+        "Monday",
+        "Thursday",
+        "Saturday"
+      ],
+      "durationMinutes": 30,
+      "verified": false
+    },
+    {
+      "id": "nahma",
+      "name": "Генерал-страж Нахма",
+      "category": "event",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "times": [
+        "21:00"
+      ],
+      "days": [
+        "Friday",
+        "Sunday"
+      ],
+      "durationMinutes": 30,
+      "verified": false
+    },
+    {
+      "id": "kaira",
+      "name": "Наблюдатель Кайра",
+      "category": "event",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "times": [
+        "01:00",
+        "04:00",
+        "07:00",
+        "10:00",
+        "13:00",
+        "16:00",
+        "19:00",
+        "22:00"
+      ],
+      "durationMinutes": 30,
       "verified": false
     }
   ],
   "fieldBossMaps": {
-    "1110": { "block": 2400, "name": "Альтгард" }
+    "1110": {
+      "block": 2400,
+      "name": "Альтгард"
+    }
   },
   "respawnMinutes": {},
   "enrageSeconds": {},
