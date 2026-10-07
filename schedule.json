@@ -30,7 +30,7 @@
       "anchor": "2026-10-01T00:00:00+02:00",
       "periodMinutes": 60,
       "durationMinutes": 10,
-      "verified": false
+      "verified": true
     },
     {
       "id": "dimensional-invasion",

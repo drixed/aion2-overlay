@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using AionDpsMeter.Services.Services.Entity;
 using AionDpsMeter.Services.Services.Session;
 using AionDpsMeter.Timers.Feed;
 using AionDpsMeter.Timers.Overlay;
@@ -14,7 +15,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
 {
     /// <summary>Overlay behaviour that lives outside the pages: "only over the game" (topmost follows the foreground
     /// window) and the fork's global hotkeys (reset fight, copy summary). Runs on the UI thread.</summary>
-    public sealed class OverlayRuntime(TimersOptionsStore options, CombatSessionManager sessions, ILogger<OverlayRuntime> logger)
+    public sealed class OverlayRuntime(TimersOptionsStore options, CombatSessionManager sessions, EntityTracker entities, ILogger<OverlayRuntime> logger)
     {
         private const int WmHotkey = 0x0312;
         private const int ResetId = 9201, CopyId = 9202;
@@ -84,10 +85,18 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             try
             {
                 var stats = sessions.PlayerStats.Where(p => p.TotalDamage > 0).OrderByDescending(p => p.TotalDamage).ToList();
+                IReadOnlyDictionary<long, double>? partyShares = null;
+                if (options.Current.OnlyMyParty)
+                {
+                    partyShares = PartyFilter.Shares(stats.Select(p =>
+                        new PartyRow(p.PlayerId, p.IsUser, entities.GetPlayerEntity((int)p.PlayerId)?.CharacterLevel ?? 0, p.TotalDamage)));
+                    stats = stats.Where(p => partyShares.ContainsKey(p.PlayerId)).ToList();
+                }
                 if (stats.Count == 0) return;
                 var active = options.Current.DpsMode == DpsMode.Active;
                 var lines = stats.Select(p => new SummaryLine(p.PlayerName,
-                    active ? DpsMath.Active(p.TotalDamage, p.FirstHit, p.LastHit) : p.DamagePerSecond, p.DamagePercentage));
+                    active ? DpsMath.Active(p.TotalDamage, p.FirstHit, p.LastHit) : p.DamagePerSecond,
+                    partyShares?[p.PlayerId] ?? p.DamagePercentage));
                 var target = sessions.GetActiveTargetInfo() is { MobCode: > 0 } mob ? mob.Name : "Бой";
                 Clipboard.SetText(FightSummary.Format(target, sessions.GetCombatDuration(), lines, options.Current.SummaryMultiline));
             }

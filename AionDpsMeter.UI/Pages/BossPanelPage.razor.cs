@@ -1,4 +1,5 @@
 // aion2-overlay fork: new file (see FORK_CHANGES.md).
+using AionDpsMeter.Services.Services.Entity;
 using AionDpsMeter.Services.Services.Session;
 using AionDpsMeter.Timers.Bosses;
 using AionDpsMeter.Timers.Energy;
@@ -23,6 +24,7 @@ namespace AionDpsMeter.UI.Pages
         TimersOptionsStore options,
         TimeProvider time,
         EnergyTracker energy,
+        EntityTracker entities,
         OverlaySettingsWindow overlaySettings,
         IJSRuntime js,
         IServiceProvider services,
@@ -42,27 +44,64 @@ namespace AionDpsMeter.UI.Pages
         private FeedItem? NextEvent;
         private EnergyState? Energy => energy.Current;
         private TimersOptions Options => options.Current;
-        private Dictionary<long, double> activeDps = new();
-        private DateTimeOffset activeDpsAt;
+        private Dictionary<long, (double Effective, double Active)> dpsCache = new();
+        private DateTimeOffset dpsCacheAt;
 
         private void OpenOverlaySettings() => overlaySettings.Open();
 
-        /// <summary>eDPS is upstream's number; aDPS is recomputed from first/last hit (at most twice a second: upstream's
-        /// player stats are rebuilt on every read).</summary>
-        private string DpsOf(PlayerRenderState player)
+        /// <summary>Upstream's player stats are rebuilt on every read: refreshed at most twice a second, only when
+        /// aDPS or the party filter needs them.</summary>
+        private Dictionary<long, (double Effective, double Active)> Dps()
         {
-            if (Options.DpsMode != DpsMode.Active) return player.DpsFormatted;
-            if (now - activeDpsAt > TimeSpan.FromMilliseconds(500))
+            if (now - dpsCacheAt > TimeSpan.FromMilliseconds(500))
             {
-                activeDpsAt = now;
+                dpsCacheAt = now;
                 try
                 {
-                    activeDps = sessions.PlayerStats.ToDictionary(p => p.PlayerId, p => DpsMath.Active(p.TotalDamage, p.FirstHit, p.LastHit));
+                    dpsCache = sessions.PlayerStats.ToDictionary(p => p.PlayerId,
+                        p => (p.DamagePerSecond, DpsMath.Active(p.TotalDamage, p.FirstHit, p.LastHit)));
                 }
                 catch (Exception) { }
             }
-            return activeDps.TryGetValue(player.PlayerId, out var dps) ? DamageFormatter.Format(dps) : player.DpsFormatted;
+            return dpsCache;
         }
+
+        private string DpsOf(PlayerRenderState player) =>
+            Options.DpsMode == DpsMode.Active && Dps().TryGetValue(player.PlayerId, out var dps)
+                ? DamageFormatter.Format(dps.Active)
+                : player.DpsFormatted;
+
+        private int LevelOf(long playerId)
+        {
+            try { return entities.GetPlayerEntity((int)playerId)?.CharacterLevel ?? 0; }
+            catch (Exception) { return 0; }
+        }
+
+        /// <summary>The rows to show with their share and bar: everyone (upstream's numbers) or only my party
+        /// (recomputed within it).</summary>
+        private IEnumerable<(PlayerRenderState Player, double Share, double Bar)> Rows()
+        {
+            var players = ViewModel!.Players;
+            if (!Options.OnlyMyParty)
+                return players.Select(p => (p, p.DamagePercentage, ViewModel.ClampPercent(p.EffectivePercentage)));
+            var rows = players.Select(p => new PartyRow(p.PlayerId, p.IsUser, LevelOf(p.PlayerId), p.TotalDamage)).ToList();
+            var shares = PartyFilter.Shares(rows);
+            var bars = PartyFilter.Bars(rows);
+            return players.Where(p => shares.ContainsKey(p.PlayerId)).Select(p => (p, shares[p.PlayerId], bars[p.PlayerId]));
+        }
+
+        private string PartyDpsText
+        {
+            get
+            {
+                if (!Options.OnlyMyParty && Options.DpsMode == DpsMode.Effective) return ViewModel!.TotalRaidDamageFormatted;
+                var dps = Dps();
+                var total = Rows().Sum(r => dps.TryGetValue(r.Player.PlayerId, out var d)
+                    ? (Options.DpsMode == DpsMode.Active ? d.Active : d.Effective) : 0);
+                return $"{DamageFormatter.Format(total)}/s";
+            }
+        }
+
         private DateTimeOffset now;
         private CancellationTokenSource? cts;
         private bool loggedFailure;
@@ -154,7 +193,7 @@ namespace AionDpsMeter.UI.Pages
         private static string Hp(long value) => DamageFormatter.Format(value);
 
         /// <summary>The party total only adds information when more than one player is in the list.</summary>
-        private bool ShowPartyDps => ViewModel is { Players.Count: > 1 };
+        private bool ShowPartyDps => ViewModel is not null && Rows().Count() > 1;
 
         private static IEnumerable<string> Paragraphs(string text) =>
             text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

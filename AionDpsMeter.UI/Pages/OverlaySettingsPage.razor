@@ -21,6 +21,10 @@
         </div>
 
         <div class="os-item">
+            <label class="os-row"><span>Только моя группа</span><input type="checkbox" checked="@O.OnlyMyParty" @onchange="e => Set(o => o.OnlyMyParty = e.Value is true)" /></label>
+            <div class="os-hint">Показывать только себя и членов своей группы — без случайных игроков рядом. Проценты, DPS группы и сводка считаются по группе.</div>
+        </div>
+        <div class="os-item">
             <label class="os-row"><span>Скрыть общий урон</span><input type="checkbox" checked="@O.HideTotalDamage" @onchange="e => Set(o => o.HideTotalDamage = e.Value is true)" /></label>
             <div class="os-hint">Убирает столбец общего урона из строк игроков.</div>
         </div>

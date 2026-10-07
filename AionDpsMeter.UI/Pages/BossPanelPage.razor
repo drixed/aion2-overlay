@@ -55,7 +55,7 @@
                     <span>До победы <b class="bp-win">@(f.ToKill is { } k ? FeedText.Span(k) : "—")</b></span>
                     @if (ShowPartyDps && Options.ShowPartyDps)
                     {
-                        <span>Группа <b>@ViewModel.TotalRaidDamageFormatted</b></span>
+                        <span>Группа <b>@PartyDpsText</b></span>
                     }
                     @if (f.Enrage is not null && Options.ShowEnrage)
                     {
@@ -74,17 +74,17 @@
             </div>
         }
         <div class="bp-players" style="@(noticeOpen ? "display:none" : "")">
-            @foreach (var player in ViewModel.Players)
+            @foreach (var (player, share, bar) in Rows())
             {
                 <div class="bp-row @ViewModel.GetIsUserClass(player)" @onclick="() => ViewModel.OpenPlayerDetails(player)">
-                    <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(ViewModel.ClampPercent(player.EffectivePercentage).ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                    <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
                     <span class="bp-row-icon" style="background-image:url('/images/classes/@(player.ClassId).png')"></span>
                     <span class="bp-row-name">@player.PlayerNameDisplay</span>
                     <span class="bp-row-cp">@ViewModel.GetCombatScoreDisplay(player)</span>
                     <span class="bp-row-death">@player.DeathsDisplay</span>
                     @if (!Options.HideTotalDamage)
                     {
-                        <span class="bp-row-dmg">@player.TotalDamageFormatted (@player.DamagePercentage.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
+                        <span class="bp-row-dmg">@player.TotalDamageFormatted (@share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
                     }
                     <span class="bp-row-dps">@DpsOf(player)<small>/s</small></span>
                 </div>

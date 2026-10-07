@@ -46,6 +46,7 @@ public class OverlayLogicTests
         var o = new TimersOptions();
         Assert.Equal(DpsMode.Effective, o.DpsMode);
         Assert.False(o.HideTotalDamage);
+        Assert.False(o.OnlyMyParty);
         Assert.True(o.ShowPartyDps);
         Assert.True(o.ShowEnrage);
         Assert.False(o.SummaryMultiline);

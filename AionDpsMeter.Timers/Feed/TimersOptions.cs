@@ -24,6 +24,8 @@ public sealed class TimersOptions
     // Overlay settings (the ✦ window), modelled on the Abyss meter's.
     public DpsMode DpsMode { get; set; } = DpsMode.Effective;
     public bool HideTotalDamage { get; set; }
+    /// <summary>Rows, shares, party DPS and the summary count only me and my party.</summary>
+    public bool OnlyMyParty { get; set; }
     public bool ShowPartyDps { get; set; } = true;
     public bool ShowEnrage { get; set; } = true;
     public bool SummaryMultiline { get; set; }
