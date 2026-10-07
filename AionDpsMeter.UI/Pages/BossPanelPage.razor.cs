@@ -4,7 +4,9 @@ using AionDpsMeter.Timers.Bosses;
 using AionDpsMeter.Timers.Energy;
 using AionDpsMeter.Timers.Feed;
 using AionDpsMeter.Timers.Fight;
+using AionDpsMeter.Timers.Overlay;
 using AionDpsMeter.Timers.Schedule;
+using AionDpsMeter.UI.Services.TimerWindow;
 using AionDpsMeter.UI.ViewModels;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +23,7 @@ namespace AionDpsMeter.UI.Pages
         TimersOptionsStore options,
         TimeProvider time,
         EnergyTracker energy,
+        OverlaySettingsWindow overlaySettings,
         IJSRuntime js,
         IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
@@ -37,6 +40,28 @@ namespace AionDpsMeter.UI.Pages
             schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
         private FeedItem? NextEvent;
         private EnergyState? Energy => energy.Current;
+        private TimersOptions Options => options.Current;
+        private Dictionary<long, double> activeDps = new();
+        private DateTimeOffset activeDpsAt;
+
+        private void OpenOverlaySettings() => overlaySettings.Open();
+
+        /// <summary>eDPS is upstream's number; aDPS is recomputed from first/last hit (at most twice a second: upstream's
+        /// player stats are rebuilt on every read).</summary>
+        private string DpsOf(PlayerRenderState player)
+        {
+            if (Options.DpsMode != DpsMode.Active) return player.DpsFormatted;
+            if (now - activeDpsAt > TimeSpan.FromMilliseconds(500))
+            {
+                activeDpsAt = now;
+                try
+                {
+                    activeDps = sessions.PlayerStats.ToDictionary(p => p.PlayerId, p => DpsMath.Active(p.TotalDamage, p.FirstHit, p.LastHit));
+                }
+                catch (Exception) { }
+            }
+            return activeDps.TryGetValue(player.PlayerId, out var dps) ? DamageFormatter.Format(dps) : player.DpsFormatted;
+        }
         private DateTimeOffset now;
         private CancellationTokenSource? cts;
         private bool loggedFailure;

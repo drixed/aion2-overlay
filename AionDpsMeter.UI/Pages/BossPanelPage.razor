@@ -5,7 +5,7 @@
 
 @if (ViewModel != null)
 {
-    <div class="boss-panel" @ref="panel">
+    <div class="boss-panel @(Options.FocusMode && Fight is not null ? "bp-focus" : "")" @ref="panel" style="zoom:@(Options.UiScale)%">
         <div class="bp-header" @onmousedown="ViewModel.BeginDrag">
             <span class="bp-dot @(Fight is not null ? "bp-dot--fight" : "")"></span>
             <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
@@ -14,7 +14,8 @@
             <div class="bp-controls">
                 <button type="button" @onclick="ViewModel.OpenHistory" @onmousedown:stopPropagation="true" title="История боёв">☰</button>
                 <button type="button" @onclick="ViewModel.OpenStatEffCalc" @onmousedown:stopPropagation="true" title="Калькулятор статов">⚔</button>
-                <button type="button" @onclick="ViewModel.OpenSettings" @onmousedown:stopPropagation="true" title="Настройки">⚙</button>
+                <button type="button" @onclick="OpenOverlaySettings" @onmousedown:stopPropagation="true" title="Настройки оверлея">✦</button>
+                <button type="button" @onclick="ViewModel.OpenSettings" @onmousedown:stopPropagation="true" title="Настройки RATmeter">⚙</button>
                 <button type="button" @onclick="ViewModel.Minimize" @onmousedown:stopPropagation="true" title="Свернуть">_</button>
                 <button type="button" @onclick="ViewModel.Close" @onmousedown:stopPropagation="true" title="Закрыть">✕</button>
             </div>
@@ -52,19 +53,42 @@
                 <div class="bp-track"><div class="bp-fill" style="width:@(f.HpPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></div></div>
                 <div class="bp-card-bottom">
                     <span>До победы <b class="bp-win">@(f.ToKill is { } k ? FeedText.Span(k) : "—")</b></span>
-                    @if (ShowPartyDps)
+                    @if (ShowPartyDps && Options.ShowPartyDps)
                     {
                         <span>Группа <b>@ViewModel.TotalRaidDamageFormatted</b></span>
                     }
-                    @if (f.Enrage is not null)
+                    @if (f.Enrage is not null && Options.ShowEnrage)
                     {
                         <span>До ярости <b class="@(f.Enraged ? "bp-rage" : "bp-enrage")">@(f.Enraged ? "ярость!" : FeedText.Span(f.ToEnrage!.Value))</b></span>
                     }
                 </div>
             </div>
         }
+        @if (ViewModel.UpdateAvailable && !noticeOpen)
+        {
+            <div class="bp-notice">
+                <span class="bp-notice-icon">⬆</span>
+                <span class="bp-notice-title">@ViewModel.UpdateVersionText</span>
+                <button type="button" class="bp-notice-btn" @onclick="ViewModel.OpenWhatsNew">Что нового</button>
+                <button type="button" class="bp-link" @onclick="ViewModel.DismissUpdate">✕</button>
+            </div>
+        }
         <div class="bp-players" style="@(noticeOpen ? "display:none" : "")">
-            <MainDpsMinimal ViewModel="@ViewModel" />
+            @foreach (var player in ViewModel.Players)
+            {
+                <div class="bp-row @ViewModel.GetIsUserClass(player)" @onclick="() => ViewModel.OpenPlayerDetails(player)">
+                    <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(ViewModel.ClampPercent(player.EffectivePercentage).ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                    <span class="bp-row-icon" style="background-image:url('/images/classes/@(player.ClassId).png')"></span>
+                    <span class="bp-row-name">@player.PlayerNameDisplay</span>
+                    <span class="bp-row-cp">@ViewModel.GetCombatScoreDisplay(player)</span>
+                    <span class="bp-row-death">@player.DeathsDisplay</span>
+                    @if (!Options.HideTotalDamage)
+                    {
+                        <span class="bp-row-dmg">@player.TotalDamageFormatted (@player.DamagePercentage.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
+                    }
+                    <span class="bp-row-dps">@DpsOf(player)<small>/s</small></span>
+                </div>
+            }
         </div>
         @if (NextEvent is not null || Energy is not null)
         {

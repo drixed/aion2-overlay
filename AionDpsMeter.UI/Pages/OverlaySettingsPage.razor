@@ -1,0 +1,86 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). *@
+@using AionDpsMeter.Timers.Overlay
+
+<div class="os">
+    <div class="os-header" @onmousedown="Drag">
+        <span class="os-title">✦ Настройки оверлея</span>
+        <button type="button" class="os-close" title="Закрыть" @onclick="Close" @onmousedown:stopPropagation="true">✕</button>
+    </div>
+    <div class="os-body">
+        <div class="os-section">ЧИСЛА</div>
+
+        <div class="os-item">
+            <div class="os-row">
+                <span>Расчёт DPS</span>
+                <span class="os-seg">
+                    <button class="@(O.DpsMode == DpsMode.Effective ? "on" : "")" @onclick="() => Set(o => o.DpsMode = DpsMode.Effective)">eDPS</button>
+                    <button class="@(O.DpsMode == DpsMode.Active ? "on" : "")" @onclick="() => Set(o => o.DpsMode = DpsMode.Active)">aDPS</button>
+                </span>
+            </div>
+            <div class="os-hint">eDPS (DPS за бой) делит урон на всё время боя, поэтому любое время без атак снижает число. aDPS делит только на твоё активное время — от первого удара до последнего.</div>
+        </div>
+
+        <div class="os-item">
+            <label class="os-row"><span>Скрыть общий урон</span><input type="checkbox" checked="@O.HideTotalDamage" @onchange="e => Set(o => o.HideTotalDamage = e.Value is true)" /></label>
+            <div class="os-hint">Убирает столбец общего урона из строк игроков.</div>
+        </div>
+        <div class="os-item">
+            <label class="os-row"><span>Показывать DPS группы</span><input type="checkbox" checked="@O.ShowPartyDps" @onchange="e => Set(o => o.ShowPartyDps = e.Value is true)" /></label>
+            <div class="os-hint">Суммарный DPS группы в карточке боя (когда игроков больше одного).</div>
+        </div>
+        <div class="os-item">
+            <label class="os-row"><span>Показывать таймер ярости</span><input type="checkbox" checked="@O.ShowEnrage" @onchange="e => Set(o => o.ShowEnrage = e.Value is true)" /></label>
+            <div class="os-hint">«До ярости» в карточке боя с боссом.</div>
+        </div>
+        <div class="os-item">
+            <label class="os-row"><span>Карточка для всех целей</span><input type="checkbox" checked="@O.CardForAllTargets" @onchange="e => Set(o => o.CardForAllTargets = e.Value is true)" /></label>
+            <div class="os-hint">Показывать HP и «До победы» и для обычных мобов, не только для боссов.</div>
+        </div>
+        <div class="os-item">
+            <div class="os-row">
+                <span>Формат сводки</span>
+                <span class="os-seg">
+                    <button class="@(!O.SummaryMultiline ? "on" : "")" @onclick="() => Set(o => o.SummaryMultiline = false)">Одна строка</button>
+                    <button class="@(O.SummaryMultiline ? "on" : "")" @onclick="() => Set(o => o.SummaryMultiline = true)">Несколько строк</button>
+                </span>
+            </div>
+            <div class="os-hint">Как копируется итог боя (горячая клавиша ниже): одним сообщением для чата или по игроку в строке.</div>
+        </div>
+
+        <div class="os-section">ОВЕРЛЕЙ</div>
+        <div class="os-item">
+            <label class="os-row"><span>Режим фокуса</span><input type="checkbox" checked="@O.FocusMode" @onchange="e => Set(o => o.FocusMode = e.Value is true)" /></label>
+            <div class="os-hint">В бою скрывает шапку, объявления и разлом. Наведи курсор — они появятся.</div>
+        </div>
+        <div class="os-item">
+            <label class="os-row"><span>Только поверх игры</span><input type="checkbox" checked="@O.OnlyOverGame" @onchange="e => Set(o => o.OnlyOverGame = e.Value is true)" /></label>
+            <div class="os-hint">Оверлей остаётся поверх остальных окон, только пока активна игра.</div>
+        </div>
+        <div class="os-item">
+            <div class="os-row">
+                <span>Масштаб интерфейса</span>
+                <span class="os-scale">
+                    <input type="range" min="80" max="150" step="5" value="@O.UiScale" @onchange="e => SetScale(e.Value)" />
+                    <b>@O.UiScale%</b>
+                </span>
+            </div>
+            <div class="os-hint">Увеличивает главное окно и окно таймеров. Высота подстраивается сама, ширину меняй за уголок.</div>
+        </div>
+
+        <div class="os-section">ГОРЯЧИЕ КЛАВИШИ</div>
+        @foreach (var hotkey in Hotkeys)
+        {
+            <div class="os-hotkey @(capturing == hotkey.Id ? "capturing" : "")" tabindex="0"
+                 @onclick="() => capturing = hotkey.Id" @onkeydown="e => OnKey(hotkey.Id, e)" @onkeydown:preventDefault="true"
+                 @onblur="() => capturing = null">
+                <span>@hotkey.Title</span>
+                <b>@Label(hotkey)</b>
+                @if (HasHotkey(hotkey))
+                {
+                    <button type="button" title="Очистить" @onclick="() => SetHotkey(hotkey.Id, string.Empty)" @onclick:stopPropagation="true">×</button>
+                }
+            </div>
+        }
+        <div class="os-hint">Нажми на строку, затем сочетание. Esc — очистить.</div>
+    </div>
+</div>

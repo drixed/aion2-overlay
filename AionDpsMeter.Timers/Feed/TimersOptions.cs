@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AionDpsMeter.Timers.Overlay;
 
 namespace AionDpsMeter.Timers.Feed;
 
@@ -20,6 +21,21 @@ public sealed class TimersOptions
     public HashSet<string> DismissedNotices { get; set; } = [];
 
     public bool IsDismissed(string noticeId) => DismissedNotices.Contains(noticeId);
+    // Overlay settings (the ✦ window), modelled on the Abyss meter's.
+    public DpsMode DpsMode { get; set; } = DpsMode.Effective;
+    public bool HideTotalDamage { get; set; }
+    public bool ShowPartyDps { get; set; } = true;
+    public bool ShowEnrage { get; set; } = true;
+    public bool SummaryMultiline { get; set; }
+    /// <summary>In a fight, hide the header, notice and footer; they come back under the mouse.</summary>
+    public bool FocusMode { get; set; }
+    /// <summary>Topmost only while AION 2 is the foreground window.</summary>
+    public bool OnlyOverGame { get; set; }
+    /// <summary>Percent, 80–150.</summary>
+    public int UiScale { get; set; } = 100;
+    public string ResetFightHotkey { get; set; } = "";
+    public string CopySummaryHotkey { get; set; } = "";
+
     /// <summary>Show the fight card for ordinary mobs too, not only bosses.</summary>
     public bool CardForAllTargets { get; set; }
 
@@ -73,6 +89,9 @@ public sealed class TimersOptionsStore(string path)
         if (!File.Exists(path)) Save();
     }
 
+    /// <summary>Raised after every save, so hotkeys and windows pick up new settings at once.</summary>
+    public event Action? Changed;
+
     public void Save()
     {
         try
@@ -80,5 +99,6 @@ public sealed class TimersOptionsStore(string path)
             File.WriteAllText(path, JsonSerializer.Serialize(Current, Json));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        Changed?.Invoke();
     }
 }

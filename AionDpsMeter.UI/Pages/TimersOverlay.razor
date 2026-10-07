@@ -2,7 +2,7 @@
 @using AionDpsMeter.Timers.Feed
 @implements IDisposable
 
-<div class="timers">
+<div class="timers" style="zoom:@(Options.UiScale)%">
     <div class="timers__header" @onmousedown="Drag">
         <span class="timers__title">☠ @(Collapsed && toast is not null ? toast : "Таймеры боссов")</span>
         <button type="button" title="Настройки и уведомления" @onclick="ToggleSettings" @onmousedown:stopPropagation="true"

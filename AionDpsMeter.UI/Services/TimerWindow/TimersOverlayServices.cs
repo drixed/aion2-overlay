@@ -11,6 +11,8 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             ForkCulture.Apply(); // runs during host setup, before any window renders a number
             services.AddTimers();
             services.AddSingleton<TimersWindowController>();
+            services.AddSingleton<OverlaySettingsWindow>();
+            services.AddSingleton<OverlayRuntime>();
             return services;
         }
     }

@@ -1,0 +1,33 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). */
+.os { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; color: #e6edf3; font-size: 13px;
+    background: rgba(16, 20, 28, .97); border: 1px solid rgba(255, 255, 255, .08); border-radius: 10px; overflow: hidden; user-select: none; }
+.os-header { display: flex; align-items: center; padding: 10px 12px; cursor: move; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.os-title { flex: 1; font-weight: 700; }
+.os-close { background: none; border: 0; color: #9aa4b2; cursor: pointer; font-size: 14px; }
+.os-close:hover { color: #fff; }
+.os-body { flex: 1; overflow: auto; padding: 4px 14px 14px; }
+.os-body::-webkit-scrollbar { width: 6px; }
+.os-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .18); border-radius: 3px; }
+.os-body::-webkit-scrollbar-button { display: none; }
+.os-section { margin: 16px 0 6px; font-size: 11px; letter-spacing: .08em; color: #7d8590; }
+.os-item { padding: 6px 0; }
+.os-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
+.os-row input[type=checkbox] { width: 34px; height: 18px; appearance: none; border-radius: 9px; background: rgba(255, 255, 255, .15);
+    position: relative; cursor: pointer; transition: background .15s; }
+.os-row input[type=checkbox]::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+    background: #e6edf3; transition: left .15s; }
+.os-row input[type=checkbox]:checked { background: #2ea043; }
+.os-row input[type=checkbox]:checked::after { left: 18px; }
+.os-hint { margin-top: 3px; font-size: 11px; color: #7d8590; line-height: 1.35; }
+.os-seg { display: inline-flex; border: 1px solid rgba(255, 255, 255, .15); border-radius: 6px; overflow: hidden; }
+.os-seg button { background: none; border: 0; color: #9aa4b2; padding: 3px 10px; cursor: pointer; font-size: 12px; }
+.os-seg button.on { background: rgba(46, 160, 67, .25); color: #7ee787; font-weight: 700; }
+.os-scale { display: inline-flex; align-items: center; gap: 8px; }
+.os-scale input { width: 150px; accent-color: #2ea043; }
+.os-scale b { color: #7ee787; min-width: 38px; text-align: right; }
+.os-hotkey { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 6px; border-radius: 6px;
+    background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .08); cursor: pointer; outline: none; }
+.os-hotkey span { flex: 1; }
+.os-hotkey b { color: #7ee787; font-size: 12px; }
+.os-hotkey.capturing { border-color: #2ea043; }
+.os-hotkey button { background: rgba(255, 255, 255, .1); border: 0; color: #e6edf3; border-radius: 4px; padding: 0 6px; cursor: pointer; }
