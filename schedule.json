@@ -33,17 +33,6 @@
       "verified": true
     },
     {
-      "id": "dimensional-invasion",
-      "name": "Вторжение измерения",
-      "category": "event",
-      "kind": "interval",
-      "timeZone": "Europe/Berlin",
-      "anchor": "2026-09-30T22:30:00+00:00",
-      "periodMinutes": 60,
-      "durationMinutes": 15,
-      "verified": false
-    },
-    {
       "id": "artifact-siege",
       "name": "Осада артефактов",
       "category": "event",
