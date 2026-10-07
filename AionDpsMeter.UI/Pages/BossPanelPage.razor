@@ -20,6 +20,10 @@
                 <button type="button" @onclick="ViewModel.Close" @onmousedown:stopPropagation="true" title="Закрыть">✕</button>
             </div>
         </div>
+        @if (AlertText is { } alertText)
+        {
+            <div class="bp-alert">🔔 @alertText</div>
+        }
         @if (ActiveNotice is { } notice && !Compact)
         {
             <div class="bp-notice">

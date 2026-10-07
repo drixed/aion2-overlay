@@ -14,18 +14,16 @@ namespace AionDpsMeter.UI.Pages
         ScheduleSource schedule,
         BossCatalog catalog,
         IServerContext server,
-        AlertService alerts,
+        AlertRunner alertRunner,
         TimersOptionsStore optionsStore,
         TimeProvider time,
         ILogger<TimersOverlay> logger)
     {
-        private static readonly TimeSpan ToastFor = TimeSpan.FromSeconds(15);
 
         private CancellationTokenSource? cts;
         private IReadOnlyList<FeedItem> visible = [];
         private DateTimeOffset now;
         private string? toast;
-        private DateTimeOffset toastUntil;
 
         // The markup (the other half of this partial class) cannot see primary-constructor parameters.
         private TimersOptions Options => optionsStore.Current;
@@ -71,21 +69,8 @@ namespace AionDpsMeter.UI.Pages
         {
             now = time.GetUtcNow();
             var bosses = tracker.TimersFor(server.CurrentServerId);
-            // Alerts cover rifts and events too; the rows here are field bosses only (the rift sits in the main window).
-            var all = TimersFeed.Build(now, schedule.Current, bosses, catalog).Where(Options.Shows).ToList();
-            var items = TimersFeed.BuildBosses(now, schedule.Current, bosses, catalog).Where(Options.Shows).ToList();
-            var due = alerts.Due(all, now, Options.LeadFor);
-            if (due.Count > 0)
-            {
-                toast = string.Join(" · ", due.Select(d => $"{d.Title} {FeedText.Format(d, now, TimeZoneInfo.Local)}"));
-                toastUntil = now + ToastFor;
-                if (Options.Sound) System.Media.SystemSounds.Exclamation.Play();
-            }
-            else if (now > toastUntil)
-            {
-                toast = null;
-            }
-            visible = items;
+            visible = TimersFeed.BuildBosses(now, schedule.Current, bosses, catalog).Where(Options.Shows).ToList();
+            toast = alertRunner.ActiveText; // alerts (with sound) come from AlertRunner, whether this window is open or not
         }
 
         private void OnEditingChanged() => InvokeAsync(StateHasChanged);

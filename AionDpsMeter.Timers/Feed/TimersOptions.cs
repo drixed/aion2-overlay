@@ -70,6 +70,17 @@ public sealed class TimersOptions
     };
 
     public bool Shows(FeedItem item) => !HiddenKinds.Contains(item.Kind) && !HiddenIds.Contains(item.Id);
+
+    /// <summary>The key in <see cref="MutedIds"/> that silences every field boss at once.</summary>
+    public const string AllFieldBosses = "boss";
+
+    /// <summary>Events (schedule ids, or <see cref="AllFieldBosses"/>) the user does not want alerts for; they stay shown.</summary>
+    public HashSet<string> MutedIds { get; set; } = [];
+
+    public bool Notifies(FeedItem item) =>
+        Shows(item)
+        && LeadFor(item.Kind) > 0
+        && !MutedIds.Contains(item.Kind == FeedKind.Boss ? AllFieldBosses : item.Id);
 }
 
 /// <summary>timers-settings.json next to the exe; edit it by hand to change lead times or sound.</summary>

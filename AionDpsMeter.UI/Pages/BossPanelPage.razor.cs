@@ -26,6 +26,7 @@ namespace AionDpsMeter.UI.Pages
         EnergyTracker energy,
         EntityTracker entities,
         CubeMapWindow cubeMap,
+        AlertRunner alertRunner,
         IJSRuntime js,
         IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
@@ -51,6 +52,7 @@ namespace AionDpsMeter.UI.Pages
         /// <summary>Compact bar: header and my own row only.</summary>
         private bool Compact => Options.Compact;
         private void ToggleCubeMap() => cubeMap.Toggle();
+        private string? AlertText => alertRunner.ActiveText;
 
         /// <summary>Upstream's player stats are rebuilt on every read: refreshed at most twice a second, only when
         /// aDPS or the party filter needs them.</summary>

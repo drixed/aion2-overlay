@@ -9,7 +9,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
 {
     /// <summary>The field boss timers window: dragged by its header like upstream's main window, folds down to the
     /// header (▾), and ⚙ opens filters, notification settings and the per-row buttons.</summary>
-    public sealed class TimersWindowController(IWindowManagerService windowManager, TimersOptionsStore options, OverlayRuntime runtime)
+    public sealed class TimersWindowController(IWindowManagerService windowManager, TimersOptionsStore options, OverlayRuntime runtime, AlertRunner alertRunner)
     {
         /// <summary>Deliberately not a member of upstream's WindowKey enum (no edit to their file): the window manager
         /// keys windows by value and saves bounds under key.ToString(), i.e. "1001".</summary>
@@ -36,6 +36,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 options.Changed += () => Application.Current.Dispatcher.BeginInvoke(FollowSetting);
             }
             if (Application.Current.MainWindow is { } main) runtime.Start(main);
+            alertRunner.Start();
             if (options.Current.ShowBossTimers) OpenWindow();
         }
 

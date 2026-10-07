@@ -7,8 +7,27 @@ using Microsoft.AspNetCore.Components.Web;
 namespace AionDpsMeter.UI.Pages
 {
     /// <summary>The fork's settings as blocks of RATmeter's settings window: "appearance", "tracking", "hotkeys", "timers".</summary>
-    public partial class ForkSettings(TimersOptionsStore store) : ComponentBase
+    public partial class ForkSettings(TimersOptionsStore store, AionDpsMeter.Timers.Schedule.ScheduleSource schedule) : ComponentBase
     {
+        private sealed record AlertRow(string MuteKey, string Title, string Description, FeedKind Kind);
+
+        /// <summary>One row per scheduled event (from schedule.json) plus one for all field bosses.</summary>
+        private IReadOnlyList<AlertRow> AlertRows =>
+            schedule.Current.Events
+                .Select(e =>
+                {
+                    var kind = e.Category.Equals("rift", StringComparison.OrdinalIgnoreCase) ? FeedKind.Rift : FeedKind.Event;
+                    return new AlertRow(e.Id, e.Name, "Уведомлять перед началом: звук и жёлтая строка в главном окне", kind);
+                })
+                .Append(new AlertRow(TimersOptions.AllFieldBosses, "Полевые боссы", "Уведомлять перед респауном полевых боссов", FeedKind.Boss))
+                .ToList();
+
+        private void SetMuted(string key, bool muted) => Set(o =>
+        {
+            if (muted) o.MutedIds.Add(key);
+            else o.MutedIds.Remove(key);
+        });
+
         private sealed record HotkeyRow(string Id, string Title, string Description, Func<string> Get, Action<string> Set);
 
         [Parameter] public string Section { get; set; } = "";

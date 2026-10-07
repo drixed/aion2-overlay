@@ -94,19 +94,27 @@
             <ValueSlot><ToggleSwitch Checked="@O.Sound" CheckedChanged="v => Set(o => o.Sound = v)" /></ValueSlot>
         </SettingRow>
 
-        <div class="fs-label fs-label--spaced">ОПОВЕЩЕНИЯ</div>
-        @foreach (var kind in Enum.GetValues<FeedKind>())
+        <div class="fs-label fs-label--spaced">УВЕДОМЛЕНИЯ</div>
+        @foreach (var alert in AlertRows)
         {
-            <SettingRow Title="@KindLabel(kind)" Description="Показывать и предупреждать за столько минут (0 — без оповещения)">
+            <SettingRow Title="@alert.Title" Description="@alert.Description">
                 <ValueSlot>
                     <span class="fs-hotkey">
                         <span class="number-field-wrap">
-                            <input class="number-field" type="number" min="0" max="60" value="@O.LeadFor(kind)" @onchange="e => SetLead(kind, e.Value)" />
+                            <input class="number-field" type="number" min="1" max="60" value="@O.LeadFor(alert.Kind)" @onchange="e => SetLead(alert.Kind, e.Value)" />
                             <span class="number-field__suffix">мин</span>
                         </span>
-                        <ToggleSwitch Checked="@(!O.HiddenKinds.Contains(kind))" CheckedChanged="v => ToggleKind(kind, v)" />
+                        <ToggleSwitch Checked="@(!O.MutedIds.Contains(alert.MuteKey))" CheckedChanged="v => SetMuted(alert.MuteKey, !v)" />
                     </span>
                 </ValueSlot>
+            </SettingRow>
+        }
+
+        <div class="fs-label fs-label--spaced">ПОКАЗЫВАТЬ</div>
+        @foreach (var kind in Enum.GetValues<FeedKind>())
+        {
+            <SettingRow Title="@KindLabel(kind)" Description="Строки этого типа в главном окне и окне таймеров">
+                <ValueSlot><ToggleSwitch Checked="@(!O.HiddenKinds.Contains(kind))" CheckedChanged="v => ToggleKind(kind, v)" /></ValueSlot>
             </SettingRow>
         }
         @if (O.HiddenIds.Count > 0)

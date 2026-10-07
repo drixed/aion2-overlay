@@ -82,6 +82,27 @@ public class TimersOptionsTests
     }
 
     [Fact]
+    public void Each_event_can_be_muted_on_its_own()
+    {
+        var o = new TimersOptions();
+        var rift = new FeedItem("rift", "k", FeedKind.Rift, "Разлом", null, FeedStatus.Upcoming, null, true, null);
+        var shugo = new FeedItem("shugo-festival", "k", FeedKind.Event, "Фестиваль шуго", null, FeedStatus.Upcoming, null, true, null);
+        var boss = new FeedItem("boss:2400800", "k", FeedKind.Boss, "Гартуа", null, FeedStatus.Upcoming, null, true, 2400800);
+        Assert.True(o.Notifies(rift) && o.Notifies(shugo) && o.Notifies(boss));
+
+        o.MutedIds.Add("shugo-festival");
+        Assert.False(o.Notifies(shugo));
+        Assert.True(o.Notifies(rift));
+        Assert.True(o.Shows(shugo)); // muted, still shown
+
+        o.MutedIds.Add(TimersOptions.AllFieldBosses);
+        Assert.False(o.Notifies(boss));
+
+        o.RiftLeadMinutes = 0;
+        Assert.False(o.Notifies(rift)); // 0 minutes = no alert
+    }
+
+    [Fact]
     public void A_corrupt_settings_file_gives_defaults()
     {
         using var dir = new TempDir();
