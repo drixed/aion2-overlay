@@ -38,3 +38,4 @@
 .os-button { width: 100%; margin: 6px 0 2px; padding: 7px 10px; border-radius: 6px; cursor: pointer; text-align: left;
     background: rgba(255, 255, 255, .05); color: #e6edf3; border: 1px solid rgba(255, 255, 255, .1); }
 .os-button:hover { border-color: #2ea043; }
+.os-button--main { margin-top: 10px; font-weight: 700; border-color: rgba(46, 160, 67, .5); }

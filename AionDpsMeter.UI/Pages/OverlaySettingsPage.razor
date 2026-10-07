@@ -8,6 +8,9 @@
         <button type="button" class="os-close" title="Закрыть" @onclick="Close" @onmousedown:stopPropagation="true">✕</button>
     </div>
     <div class="os-body">
+        <button type="button" class="os-button os-button--main" @onclick="OpenMeterSettings">⚙ Настройки метра RATmeter →</button>
+        <div class="os-hint">Прежние настройки: прозрачность, размер строк, цвета классов, история боёв, оверлеи баффов и перезарядок.</div>
+
         <div class="os-section">ЧИСЛА</div>
 
         <div class="os-item">
@@ -115,8 +118,5 @@
         }
         <div class="os-hint">Нажми на строку, затем сочетание. Esc — очистить.</div>
 
-        <div class="os-section">МЕТР</div>
-        <button type="button" class="os-button" @onclick="OpenMeterSettings">Настройки RATmeter →</button>
-        <div class="os-hint">Прозрачность, размер строк, цвета классов, история боёв, оверлеи баффов и перезарядок.</div>
     </div>
 </div>
