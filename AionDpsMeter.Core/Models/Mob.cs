@@ -14,7 +14,7 @@ namespace AionDpsMeter.Core.Models
         //public bool IsBoss => CanBeBoss();
 
         public new string Name => GameDataProvider.Instance.GetMobName(MobCode);
-        public bool IsBoss => GameDataProvider.Instance.IsBoss(MobCode);
+        public bool IsBoss => MobCode == 0 || GameDataProvider.Instance.IsBoss(MobCode); // aion2-overlay fork: spawn unseen (meter started mid-fight) — keep the hits
 
         public bool IsDummy => GameDataProvider.Instance.IsDummy(MobCode);
 
