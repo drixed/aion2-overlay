@@ -24,6 +24,16 @@ public class BossFightTests
     }
 
     [Fact]
+    public void The_first_moments_of_a_fight_give_no_estimate()
+    {
+        // Upstream's party DPS is damage / duration: right after the first hit the duration is 0 and the DPS infinite.
+        Assert.Null(BossFight.Build("B", 650_000, 1_200_000, double.PositiveInfinity, TimeSpan.Zero, null).ToKill);
+        Assert.Null(BossFight.Build("B", 650_000, 1_200_000, double.NaN, TimeSpan.Zero, null).ToKill);
+        Assert.Null(BossFight.Build("B", 650_000, 1_200_000, 500_000, TimeSpan.FromSeconds(1), null).ToKill);
+        Assert.NotNull(BossFight.Build("B", 650_000, 1_200_000, 10_000, BossFight.MinimumSample, null).ToKill);
+    }
+
+    [Fact]
     public void Enrage_counts_down_from_the_fight_start()
     {
         var f = BossFight.Build("B", 1, 2, 1, TimeSpan.FromSeconds(57), BossFight.DefaultEnrage);

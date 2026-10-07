@@ -20,6 +20,9 @@ public static class BossFight
     /// <summary>Most dungeon bosses go berserk after 5:00 of combat (metabot.gg boss pages).</summary>
     public static readonly TimeSpan DefaultEnrage = TimeSpan.FromMinutes(5);
 
+    /// <summary>Upstream's party DPS is damage / fight duration: in the first seconds it is infinite or wildly high.</summary>
+    public static readonly TimeSpan MinimumSample = TimeSpan.FromSeconds(3);
+
     private static readonly double MaxShownSeconds = (TimeSpan.FromMinutes(100) - TimeSpan.FromSeconds(1)).TotalSeconds;
 
     public static TimeSpan? EnrageFor(int mobCode, bool isFieldBoss, IReadOnlyDictionary<int, int> overrides) =>
@@ -31,7 +34,7 @@ public static class BossFight
     {
         var percent = hpTotal > 0 ? Math.Clamp((double)hpCurrent / hpTotal * 100, 0, 100) : 0;
         TimeSpan? toKill = null;
-        if (hpCurrent > 0 && partyDps > 0)
+        if (hpCurrent > 0 && partyDps > 0 && double.IsFinite(partyDps) && elapsed >= MinimumSample)
         {
             var seconds = Math.Ceiling(hpCurrent / partyDps);
             if (seconds <= MaxShownSeconds) toKill = TimeSpan.FromSeconds(seconds);

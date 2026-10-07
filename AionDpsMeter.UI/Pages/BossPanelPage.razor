@@ -10,6 +10,7 @@
             <span class="bp-dot @(Fight is not null ? "bp-dot--fight" : "")"></span>
             <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
             <span class="bp-time">@ViewModel.CombatDuration</span>
+            <span class="bp-total" title="ДПС группы">∑ @ViewModel.TotalRaidDamageFormatted</span>
             <span class="bp-ping" style="color:@ViewModel.PingColor">@ViewModel.PingDisplay</span>
             <div class="bp-controls">
                 <button type="button" @onclick="ViewModel.OpenHistory" @onmousedown:stopPropagation="true" title="История боёв">☰</button>

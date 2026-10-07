@@ -6,6 +6,7 @@
 .bp-dot--fight { background: #f2cc60; box-shadow: 0 0 6px #f2cc60; }
 .bp-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bp-time { color: #7ee787; font-variant-numeric: tabular-nums; }
+.bp-total { color: #c9d1d9; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bp-ping { font-size: 11px; margin-left: auto; }
 .bp-controls { display: flex; gap: 2px; }
 .bp-controls button { background: none; border: 0; color: #9aa4b2; cursor: pointer; padding: 2px 5px; font-size: 13px; }
