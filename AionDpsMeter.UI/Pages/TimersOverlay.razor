@@ -1,0 +1,58 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). *@
+@using AionDpsMeter.Timers.Feed
+@implements IDisposable
+
+<div class="timers @(IsEditing ? "timers--editing" : "")">
+    @if (IsEditing)
+    {
+        <div class="timers__bar" @onmousedown="Drag">Таймеры — тащи за эту полосу · Ctrl+Shift+T закрепить</div>
+        <div class="timers__filters">
+            @foreach (var kind in Enum.GetValues<FeedKind>())
+            {
+                <label>
+                    <input type="checkbox" checked="@(!Options.HiddenKinds.Contains(kind))"
+                           @onchange="e => ToggleKind(kind, e.Value is true)" />
+                    @KindLabel(kind)
+                </label>
+            }
+        </div>
+    }
+    @if (toast is not null)
+    {
+        <div class="timers__toast">@toast</div>
+    }
+    @foreach (var item in visible)
+    {
+        <div class="timers__row timers__row--@item.Status.ToString().ToLowerInvariant()">
+            <span class="timers__icon">@KindIcon(item.Kind)</span>
+            <span class="timers__title">
+                @item.Title
+                @if (!item.Verified)
+                {
+                    <em> (не проверено)</em>
+                }
+                @if (item.Zone is not null)
+                {
+                    <small>@item.Zone</small>
+                }
+            </span>
+            <span class="timers__time">@FeedText.Format(item, now, TimeZoneInfo.Local)</span>
+            @if (IsEditing)
+            {
+                if (item.Kind == FeedKind.Boss)
+                {
+                    <button @onclick="() => MarkKilled(item)">убит</button>
+                }
+                <button title="Скрыть" @onclick="() => Hide(item)">×</button>
+            }
+        </div>
+    }
+    @if (visible.Count == 0)
+    {
+        <div class="timers__empty">Пока пусто. Открой карту в игре — появятся полевые боссы.</div>
+    }
+    @if (IsEditing && Options.HiddenIds.Count > 0)
+    {
+        <button class="timers__showall" @onclick="ShowAll">Показать скрытые (@Options.HiddenIds.Count)</button>
+    }
+</div>

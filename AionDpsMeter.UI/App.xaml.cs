@@ -64,6 +64,7 @@ namespace AionDpsMeter.UI
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<SettingsWindow>();
                     services.AddWpfBlazorWebView();
+                    AionDpsMeter.UI.Services.TimerWindow.TimersOverlayServices.AddTimersOverlay(services); // aion2-overlay fork
 
                 })
                 .Build();
@@ -80,6 +81,7 @@ namespace AionDpsMeter.UI
             var windowHelper = AppHost.Services.GetRequiredService<WindowHelper>();
             windowManager.Open(WindowKey.Main, mainWindow, true);
             windowHelper.OpenRequiredWindows();
+            AppHost.Services.GetRequiredService<AionDpsMeter.UI.Services.TimerWindow.TimersWindowController>().Open(); // aion2-overlay fork
             base.OnStartup(e);
         }
 
