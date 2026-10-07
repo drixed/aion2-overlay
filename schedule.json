@@ -81,25 +81,6 @@
       ],
       "durationMinutes": 30,
       "verified": false
-    },
-    {
-      "id": "kaira",
-      "name": "Наблюдатель Кайра",
-      "category": "event",
-      "kind": "fixed",
-      "timeZone": "Europe/Berlin",
-      "times": [
-        "01:00",
-        "04:00",
-        "07:00",
-        "10:00",
-        "13:00",
-        "16:00",
-        "19:00",
-        "22:00"
-      ],
-      "durationMinutes": 30,
-      "verified": false
     }
   ],
   "fieldBossMaps": {

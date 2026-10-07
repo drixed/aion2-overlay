@@ -11,7 +11,7 @@ public class ScheduleJsonTests
         var rift = Assert.Single(data.Events, e => e.Id == "rift");
         Assert.Equal(8, rift.Times.Count);
         Assert.True(rift.Verified); // confirmed on EU by the user
-        Assert.Equal(6, data.Events.Count); // every shipped event parses: a typo would silently drop one
+        Assert.Equal(5, data.Events.Count); // every shipped event parses: a typo would silently drop one
         Assert.Contains(data.Events, e => e.Id == "shugo-festival" && e.Kind == ScheduleKind.Interval);
         Assert.Equal(2400, data.FieldBossMaps[1110].Block);
     }
