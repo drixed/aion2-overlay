@@ -14,4 +14,8 @@
     <InternalsVisibleTo Include="AionDpsMeter.Timers.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\schedule.json" LogicalName="schedule.json" Link="schedule.json" />
+  </ItemGroup>
+
 </Project>

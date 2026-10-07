@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "_note": "Время — в часовом поясе timeZone. verified=false: не сверено на EU, оверлей пометит событие «(не проверено)». После правки этого файла на GitHub программа подхватит его при следующем запуске.",
+  "events": [
+    {
+      "id": "rift",
+      "name": "Разлом",
+      "category": "rift",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "times": ["02:00", "05:00", "08:00", "11:00", "14:00", "17:00", "20:00", "23:00"],
+      "durationMinutes": 0,
+      "verified": false
+    }
+  ],
+  "fieldBossMaps": {
+    "1110": { "block": 2400, "name": "Альтгард" }
+  },
+  "respawnMinutes": {}
+}
