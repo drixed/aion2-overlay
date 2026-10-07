@@ -126,10 +126,5 @@
     "default": "https://interactivemap.app/aion2/maps/ru/altgard/hidden-cube",
     "1110": "https://interactivemap.app/aion2/maps/ru/altgard/hidden-cube",
     "1010": "https://interactivemap.app/aion2/maps/ru/verteron/hidden-cube"
-  },
-  "notice": {
-    "id": "auto-sync-20261007",
-    "title": "Метр обновляется под новый патч",
-    "text": "Вышел новый патч игры, и метр сейчас обновляется под него. Пока это не завершено, что-то может работать непредсказуемо.\nКогда изменения будут готовы, программа предложит обновиться.\nСпасибо за терпение."
   }
 }
