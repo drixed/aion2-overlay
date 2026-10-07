@@ -27,6 +27,9 @@ public class EnergyTests
         Assert.Equal(new EnergyReading(0, 920), update!.ApplyTo(new EnergyReading(10, 990)));
         Assert.Equal(new EnergyReading(10, 1030), new EnergyUpdate(1030).ApplyTo(new EnergyReading(10, 990))); // a refill keeps the current
         Assert.Null(EnergyParser.ParseUpdate(Convert.FromHexString("000801FFFF03980703"))); // another resource id
+        // 22:00:10, the next entry: "0 (+920)" → "0 (+840)".
+        Assert.Equal(new EnergyReading(0, 840),
+            EnergyParser.ParseUpdate(Convert.FromHexString("000801879303C80603"))!.ApplyTo(new EnergyReading(0, 920)));
     }
 
     [Fact]
