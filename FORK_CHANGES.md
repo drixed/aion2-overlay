@@ -9,6 +9,8 @@
 | `AionDpsMeter.UI/AionDpsMeter.UI.csproj` | +1 `ProjectReference` на `AionDpsMeter.Timers` |
 | `AionDpsMeter.UI/App.xaml.cs` | +2 строки с пометкой `// aion2-overlay fork`: `AddTimersOverlay(services)` и `TimersWindowController.Open()` |
 | `AionDpsMeter.Services/Services/Update/UpdateCheckerService.cs` | `ReleasesApiUrl` → релизы `drixed/aion2-overlay` |
+| `AionDpsMeter.UI/Pages/MainDpsPage.razor` | +3 строки: `@inject TimersOptionsStore`, `@if (UseBossPanel) { <BossPanelPage/> } else { <text>` и закрывающая `</text> }` вокруг блока стилей апстрима (сами строки апстрима не тронуты) |
+| `AionDpsMeter.UI/wwwroot/index.html` | +1 строка: `<script src="js/ru.js">` перед `blazor.webview.js` |
 
 Новые файлы внутри проектов апстрима (с ними конфликтов не бывает, помечены первой строкой `aion2-overlay fork`):
 
@@ -16,6 +18,8 @@
 - `AionDpsMeter.Services/PacketProcessing/Processors/FieldBossListForwarder.cs` — обработчик опкода `0x9101` (байты `01 91`)
 - `AionDpsMeter.UI/Pages/TimersOverlay.razor`, `.razor.cs`, `.razor.css`
 - `AionDpsMeter.UI/Services/TimerWindow/*`
+- `AionDpsMeter.UI/Pages/BossPanelPage.razor`, `.razor.cs`, `.razor.css` — главное окно «Бой с боссом»
+- `AionDpsMeter.UI/wwwroot/js/ru.js` — русский словарь для Blazor-окон апстрима
 
 Всё остальное — свои файлы: `AionDpsMeter.Timers/`, `AionDpsMeter.Timers.Tests/`, `schedule.json`,
 `.github/workflows/sync-upstream.yml`, `docs/`.
