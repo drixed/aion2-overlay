@@ -10,7 +10,7 @@
 | `AionDpsMeter.UI/App.xaml.cs` | +2 строки с пометкой `// aion2-overlay fork`: `AddTimersOverlay(services)` и `TimersWindowController.Open()` |
 | `AionDpsMeter.Services/Services/Update/UpdateCheckerService.cs` | `ReleasesApiUrl` → релизы `drixed/aion2-overlay` |
 | `AionDpsMeter.UI/Pages/MainDpsPage.razor` | +3 строки: `@inject TimersOptionsStore`, `@if (UseBossPanel) { <BossPanelPage/> } else { <text>` и закрывающая `</text> }` вокруг блока стилей апстрима (сами строки апстрима не тронуты) |
-| `AionDpsMeter.Core/Models/Mob.cs` | `IsBoss`: для цели без кода (спаун не увиден — метр запущен посреди боя) спрашивает `Mob.UnknownIsBoss` (по умолчанию `false`, как в оригинале); таймеры ставят правило «боссом считается только цель, которую начали бить в первую минуту после запуска» (`UnknownBossPolicy`) |
+| `AionDpsMeter.Core/Models/Mob.cs` | `IsBoss`: цель без кода (спаун не увиден — метр запущен посреди данжа) считается боссом, если её HP хоть раз был ≥ 1 млн (`HpMaxSeen`, `UnknownBossHp`): у боссов 3,6 млн+, у обычных мобов до ~300 тыс. |
 | `AionDpsMeter.UI/Pages/SettingsPage.razor` | +4 строки с пометкой `aion2-overlay fork`: `<ForkSettings Section="…"/>` в конце вкладок appearance, hotkeys, tracking и новая секция `fork-timers` |
 | `AionDpsMeter.UI/Pages/SettingsPage.razor.cs` | +1 строка в `_groups`: вкладка `fork-timers` ("Timers") |
 | `AionDpsMeter.UI/wwwroot/index.html` | +2 строки: `<script src="js/ru.js">` и `<script src="js/fit.js">` перед `blazor.webview.js` |

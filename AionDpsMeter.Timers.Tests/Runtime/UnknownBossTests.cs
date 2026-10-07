@@ -1,40 +1,31 @@
 using AionDpsMeter.Core.Models;
-using AionDpsMeter.Timers.Overlay;
 
 namespace AionDpsMeter.Timers.Tests.Runtime;
 
 public class UnknownBossTests
 {
-    private static readonly DateTime Started = new(2026, 10, 7, 22, 0, 0);
-
     /// <summary>
-    /// Started mid-fight, the meter never saw the boss spawn: the target has no code, and upstream's boss-only filter
-    /// dropped every hit on it. Only a target first seen right after the start is that boss; mobs that were already
-    /// standing around and are pulled later stay ordinary (seen in a dungeon: the next pack counted as a boss).
+    /// Started mid-dungeon, the meter never saw the spawn of what was already standing there: those targets have no
+    /// code. Their HP still arrives — bosses there have 3.6–6.8M, ordinary mobs at most ~300K (packet logs, Oct 2026).
     /// </summary>
     [Fact]
-    public void An_unidentified_target_is_a_boss_only_right_after_the_meter_started()
+    public void An_unidentified_target_with_boss_sized_hp_is_a_boss()
     {
-        var policy = UnknownBossPolicy.FirstMinuteAfter(Started);
-        Assert.True(policy(new Mob { Id = 1, MobCode = 0, CreatedAt = Started.AddSeconds(5) }));
-        Assert.False(policy(new Mob { Id = 2, MobCode = 0, CreatedAt = Started.AddMinutes(3) }));
+        var boss = new Mob { Id = 1, MobCode = 0, HpCurrent = 3_598_511 };
+        boss.HpCurrent = 400_000; // the fight goes on: it stays a boss
+        Assert.True(boss.IsBoss);
     }
 
     [Fact]
-    public void Mob_IsBoss_asks_the_policy_only_for_unidentified_targets()
+    public void An_unidentified_ordinary_mob_is_not_a_boss()
     {
-        var before = Mob.UnknownIsBoss;
-        try
-        {
-            Mob.UnknownIsBoss = _ => true;
-            Assert.True(new Mob { Id = 1, MobCode = 0 }.IsBoss);
-            Assert.False(new Mob { Id = 2, MobCode = 2090664 }.IsBoss); // Mumu Worker: the table decides
-            Mob.UnknownIsBoss = _ => false;
-            Assert.False(new Mob { Id = 3, MobCode = 0 }.IsBoss);
-        }
-        finally
-        {
-            Mob.UnknownIsBoss = before;
-        }
+        Assert.False(new Mob { Id = 2, MobCode = 0, HpCurrent = 146_900 }.IsBoss);
+        Assert.False(new Mob { Id = 3, MobCode = 0 }.IsBoss); // no HP seen yet
+    }
+
+    [Fact]
+    public void An_identified_mob_is_judged_by_the_game_data_not_by_hp()
+    {
+        Assert.False(new Mob { Id = 4, MobCode = 2090664, HpCurrent = 5_000_000 }.IsBoss); // Mumu Worker
     }
 }
