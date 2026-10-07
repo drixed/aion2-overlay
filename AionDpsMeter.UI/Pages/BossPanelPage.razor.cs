@@ -25,7 +25,6 @@ namespace AionDpsMeter.UI.Pages
         TimeProvider time,
         EnergyTracker energy,
         EntityTracker entities,
-        OverlaySettingsWindow overlaySettings,
         CubeMapWindow cubeMap,
         IJSRuntime js,
         IServiceProvider services,
@@ -48,7 +47,6 @@ namespace AionDpsMeter.UI.Pages
         private Dictionary<long, (double Effective, double Active)> dpsCache = new();
         private DateTimeOffset dpsCacheAt;
 
-        private void OpenOverlaySettings() => overlaySettings.Open();
 
         /// <summary>Compact bar: header and my own row only.</summary>
         private bool Compact => Options.Compact;

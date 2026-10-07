@@ -112,6 +112,7 @@
                 </ValueSlot>
             </SettingRow>
 
+            <ForkSettings Section="appearance" /> @* aion2-overlay fork *@
         </section>
 
         @* ---------------- HOTKEYS ---------------- *@
@@ -129,6 +130,7 @@
                 </ValueSlot>
             </SettingRow>
 
+            <ForkSettings Section="hotkeys" /> @* aion2-overlay fork *@
         </section>
 
         @* ---------------- TRACKING ---------------- *@
@@ -177,6 +179,7 @@
                 }
             </div>
 
+            <ForkSettings Section="tracking" /> @* aion2-overlay fork *@
         </section>
 
         @* ---------------- OVERLAYS ---------------- *@
@@ -419,6 +422,7 @@
             </SettingRow>
 
         </section>
+        <section class="settings-group @(_activeGroup == "fork-timers" ? "" : "is-hidden")"><ForkSettings Section="timers" /></section> @* aion2-overlay fork *@
 
     </main>
 </div>

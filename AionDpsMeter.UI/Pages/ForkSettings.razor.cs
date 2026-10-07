@@ -1,18 +1,17 @@
 // aion2-overlay fork: new file (see FORK_CHANGES.md).
 using AionDpsMeter.Timers.Feed;
 using AionDpsMeter.Timers.Overlay;
-using AionDpsMeter.UI.Services.TimerWindow;
-using AionDpsMeter.UI.Services.Windowing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
 namespace AionDpsMeter.UI.Pages
 {
-    /// <summary>The one settings window behind ⚙: the fork's numbers, overlay, timers, hotkeys — and a way into
-    /// RATmeter's own settings.</summary>
-    public partial class OverlaySettingsPage(TimersOptionsStore store, OverlaySettingsWindow window, WindowHelper windowHelper) : ComponentBase
+    /// <summary>The fork's settings as blocks of RATmeter's settings window: "appearance", "tracking", "hotkeys", "timers".</summary>
+    public partial class ForkSettings(TimersOptionsStore store) : ComponentBase
     {
-        private sealed record HotkeyRow(string Id, string Title, Func<string> Get, Action<string> Set);
+        private sealed record HotkeyRow(string Id, string Title, string Description, Func<string> Get, Action<string> Set);
+
+        [Parameter] public string Section { get; set; } = "";
 
         private string? capturing;
 
@@ -20,22 +19,16 @@ namespace AionDpsMeter.UI.Pages
 
         private IReadOnlyList<HotkeyRow> Hotkeys =>
         [
-            new("hide", "Скрыть оверлей", () => O.HideOverlayHotkey, v => Set(o => o.HideOverlayHotkey = v)),
-            new("reset", "Сбросить бой", () => O.ResetFightHotkey, v => Set(o => o.ResetFightHotkey = v)),
-            new("clear", "Очистить метр", () => O.ClearMeterHotkey, v => Set(o => o.ClearMeterHotkey = v)),
-            new("copy", "Копировать сводку", () => O.CopySummaryHotkey, v => Set(o => o.CopySummaryHotkey = v)),
-            new("compact", "Переключить компактную полосу", () => O.CompactHotkey, v => Set(o => o.CompactHotkey = v)),
-            new("click", "Переключить сквозной клик", () => O.ClickThroughHotkey, v => Set(o => o.ClickThroughHotkey = v)),
+            new("hide", "Скрыть оверлей", "Прячет все окна метра; повторное нажатие возвращает их", () => O.HideOverlayHotkey, v => Set(o => o.HideOverlayHotkey = v)),
+            new("reset", "Сбросить бой", "Завершает текущий бой (он уходит в историю)", () => O.ResetFightHotkey, v => Set(o => o.ResetFightHotkey = v)),
+            new("clear", "Очистить метр", "Полностью обнуляет метр", () => O.ClearMeterHotkey, v => Set(o => o.ClearMeterHotkey = v)),
+            new("copy", "Копировать сводку", "Итог боя в буфер обмена — для чата игры", () => O.CopySummaryHotkey, v => Set(o => o.CopySummaryHotkey = v)),
+            new("compact", "Компактная полоса", "Включает и выключает компактную полосу", () => O.CompactHotkey, v => Set(o => o.CompactHotkey = v)),
+            new("click", "Сквозной клик", "Клики проходят сквозь окна метра в игру", () => O.ClickThroughHotkey, v => Set(o => o.ClickThroughHotkey = v)),
         ];
 
         private string Label(HotkeyRow row) =>
-            capturing == row.Id ? "Нажми сочетание…" : HasHotkey(row) ? row.Get() : "Не задано";
-
-        private static bool HasHotkey(HotkeyRow row) => !string.IsNullOrEmpty(row.Get());
-
-        private void Drag() => window.Drag();
-        private void Close() => window.Close();
-        private void OpenMeterSettings() => windowHelper.OpenSettings();
+            capturing == row.Id ? "Нажми сочетание…" : string.IsNullOrEmpty(row.Get()) ? "Не задано" : row.Get();
 
         private void Set(Action<TimersOptions> change)
         {
@@ -74,7 +67,7 @@ namespace AionDpsMeter.UI.Pages
         private static string KindLabel(FeedKind kind) => kind switch
         {
             FeedKind.Rift => "Разломы",
-            FeedKind.Boss => "Боссы",
+            FeedKind.Boss => "Полевые боссы",
             _ => "Ивенты",
         };
 

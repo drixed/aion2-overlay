@@ -5,7 +5,7 @@
     const ru = {
         "Settings": "Настройки", "Close": "Закрыть", "Close settings": "Закрыть настройки",
         "Appearance": "Вид", "Hotkeys": "Клавиши", "Tracking": "Учёт", "Developer": "Отладка",
-        "[BETA] Overlays": "Оверлеи β",
+        "[BETA] Overlays": "Оверлеи β", "Timers": "Таймеры",
         "Window layout": "Расположение окон", "WINDOW LAYOUT": "РАСПОЛОЖЕНИЕ ОКОН", "WINDOW": "ОКНО",
         "PLAYER LIST": "СПИСОК ИГРОКОВ", "HISTORY": "ИСТОРИЯ", "BUFF OVERLAY": "ОВЕРЛЕЙ БАФФОВ",
         "SKILL COOLDOWNS": "ПЕРЕЗАРЯДКА УМЕНИЙ", "Settings groups": "Разделы настроек",

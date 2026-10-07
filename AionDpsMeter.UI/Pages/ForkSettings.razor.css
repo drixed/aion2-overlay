@@ -1,0 +1,15 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). Copies of the settings page's scoped styles that the fork's
+   blocks need (labels, segmented buttons); everything else comes from RATmeter's shared-controls.css. */
+.fs-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; color: var(--text-dim); padding: 0 2px 8px; }
+.fs-label--spaced { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+.fs-segmented { display: flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
+.fs-segmented__option { padding: 6px 10px; font-size: 11px; font-weight: 500; font-family: var(--font-ui); color: var(--text-dim);
+    background: var(--panel); border: none; border-left: 1px solid var(--line-strong); cursor: pointer; white-space: nowrap;
+    transition: background-color 120ms ease, color 120ms ease; }
+.fs-segmented__option:first-child { border-left: none; }
+.fs-segmented__option:hover { color: var(--text); background: var(--panel-raised); }
+.fs-segmented__option.is-selected { color: var(--text); background: var(--accent-soft); }
+.fs-button { border: 1px solid var(--line-strong); border-radius: 6px; }
+.fs-hotkey { display: inline-flex; align-items: center; gap: 8px; }
+.fs-clear { background: var(--panel); color: var(--text-dim); border: 1px solid var(--line-strong); border-radius: 4px; cursor: pointer; padding: 1px 7px; }
+.fs-clear:hover { color: var(--text); }

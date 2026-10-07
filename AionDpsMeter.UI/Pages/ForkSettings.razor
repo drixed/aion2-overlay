@@ -1,0 +1,121 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The fork's settings, rendered inside RATmeter's own settings
+   window with its components, one block per tab. *@
+@using AionDpsMeter.Timers.Feed
+@using AionDpsMeter.Timers.Overlay
+@using AionDpsMeter.UI.Pages.Components
+
+@switch (Section)
+{
+    case "appearance":
+        <div class="fs-label fs-label--spaced">ОВЕРЛЕЙ AION2</div>
+        <SettingRow Title="Компактная полоса" Description="Главное окно — только шапка и твоя строка">
+            <ValueSlot><ToggleSwitch Checked="@O.Compact" CheckedChanged="v => Set(o => o.Compact = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Режим фокуса" Description="В бою скрывает шапку, объявления и разлом; наведи курсор — появятся">
+            <ValueSlot><ToggleSwitch Checked="@O.FocusMode" CheckedChanged="v => Set(o => o.FocusMode = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Только поверх игры" Description="Оверлей поверх остальных окон, только пока активна игра">
+            <ValueSlot><ToggleSwitch Checked="@O.OnlyOverGame" CheckedChanged="v => Set(o => o.OnlyOverGame = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Масштаб интерфейса" Description="Главное окно и окно таймеров; высота подстраивается сама" IsLast="true">
+            <ValueSlot>
+                <div class="slider-field">
+                    <input type="range" min="80" max="150" step="5" value="@O.UiScale" @onchange="e => SetScale(e.Value)" />
+                    <span class="slider-field__value">@O.UiScale%</span>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        break;
+
+    case "tracking":
+        <div class="fs-label fs-label--spaced">ЧИСЛА</div>
+        <SettingRow Title="Расчёт DPS" Description="eDPS — урон за всё время боя; aDPS — только за твоё активное время, от первого удара до последнего">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    <button type="button" class="fs-segmented__option @(O.DpsMode == DpsMode.Effective ? "is-selected" : "")" @onclick="() => Set(o => o.DpsMode = DpsMode.Effective)">eDPS</button>
+                    <button type="button" class="fs-segmented__option @(O.DpsMode == DpsMode.Active ? "is-selected" : "")" @onclick="() => Set(o => o.DpsMode = DpsMode.Active)">aDPS</button>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Только моя группа" Description="Только ты и члены группы; проценты, DPS группы и сводка — по группе">
+            <ValueSlot><ToggleSwitch Checked="@O.OnlyMyParty" CheckedChanged="v => Set(o => o.OnlyMyParty = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Скрыть общий урон" Description="Убирает столбец общего урона из строк игроков">
+            <ValueSlot><ToggleSwitch Checked="@O.HideTotalDamage" CheckedChanged="v => Set(o => o.HideTotalDamage = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Показывать DPS группы" Description="Суммарный DPS в карточке боя, когда игроков больше одного">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowPartyDps" CheckedChanged="v => Set(o => o.ShowPartyDps = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Показывать таймер ярости" Description="«До ярости» в карточке боя с боссом">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowEnrage" CheckedChanged="v => Set(o => o.ShowEnrage = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Карточка для всех целей" Description="HP и «До победы» и для обычных мобов, не только для боссов">
+            <ValueSlot><ToggleSwitch Checked="@O.CardForAllTargets" CheckedChanged="v => Set(o => o.CardForAllTargets = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Формат сводки" Description="Как копируется итог боя: одним сообщением для чата или по игроку в строке" IsLast="true">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    <button type="button" class="fs-segmented__option @(!O.SummaryMultiline ? "is-selected" : "")" @onclick="() => Set(o => o.SummaryMultiline = false)">Одна строка</button>
+                    <button type="button" class="fs-segmented__option @(O.SummaryMultiline ? "is-selected" : "")" @onclick="() => Set(o => o.SummaryMultiline = true)">Несколько</button>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        break;
+
+    case "hotkeys":
+        <div class="fs-label fs-label--spaced">ГЛОБАЛЬНЫЕ ГОРЯЧИЕ КЛАВИШИ</div>
+        @for (var i = 0; i < Hotkeys.Count; i++)
+        {
+            var hotkey = Hotkeys[i];
+            <SettingRow Title="@hotkey.Title" Description="@hotkey.Description" IsLast="@(i == Hotkeys.Count - 1)">
+                <ValueSlot>
+                    <span class="fs-hotkey">
+                        <input class="hotkey-field @(capturing == hotkey.Id ? "is-active" : "")" readonly
+                               value="@Label(hotkey)"
+                               @onfocus="() => capturing = hotkey.Id"
+                               @onblur="() => capturing = null"
+                               @onkeydown="e => OnKey(hotkey, e)" @onkeydown:preventDefault="true" />
+                        @if (!string.IsNullOrEmpty(hotkey.Get()))
+                        {
+                            <button type="button" class="fs-clear" title="Очистить" @onclick="() => hotkey.Set(string.Empty)">×</button>
+                        }
+                    </span>
+                </ValueSlot>
+            </SettingRow>
+        }
+        break;
+
+    case "timers":
+        <div class="fs-label">ОКНО ТАЙМЕРОВ</div>
+        <SettingRow Title="Окно таймеров боссов" Description="Полевые боссы в отдельном окне; закрыть его можно и крестиком в его шапке">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowBossTimers" CheckedChanged="v => Set(o => o.ShowBossTimers = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Звук оповещений" Description="Сигнал, когда до события остаётся заданное время" IsLast="true">
+            <ValueSlot><ToggleSwitch Checked="@O.Sound" CheckedChanged="v => Set(o => o.Sound = v)" /></ValueSlot>
+        </SettingRow>
+
+        <div class="fs-label fs-label--spaced">ОПОВЕЩЕНИЯ</div>
+        @foreach (var kind in Enum.GetValues<FeedKind>())
+        {
+            <SettingRow Title="@KindLabel(kind)" Description="Показывать и предупреждать за столько минут (0 — без оповещения)">
+                <ValueSlot>
+                    <span class="fs-hotkey">
+                        <span class="number-field-wrap">
+                            <input class="number-field" type="number" min="0" max="60" value="@O.LeadFor(kind)" @onchange="e => SetLead(kind, e.Value)" />
+                            <span class="number-field__suffix">мин</span>
+                        </span>
+                        <ToggleSwitch Checked="@(!O.HiddenKinds.Contains(kind))" CheckedChanged="v => ToggleKind(kind, v)" />
+                    </span>
+                </ValueSlot>
+            </SettingRow>
+        }
+        @if (O.HiddenIds.Count > 0)
+        {
+            <SettingRow Title="Скрытые строки" Description="Строки, скрытые крестиком в окне таймеров" IsLast="true">
+                <ValueSlot>
+                    <button type="button" class="fs-segmented__option fs-button" @onclick="ShowHidden">Вернуть (@O.HiddenIds.Count)</button>
+                </ValueSlot>
+            </SettingRow>
+        }
+        break;
+}
