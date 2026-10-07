@@ -31,7 +31,6 @@ namespace AionDpsMeter.UI.Pages
         private TimersOptions Options => optionsStore.Current;
         private bool IsEditing => controller.IsEditing;
         private string EditHotkey => Options.EditHotkey;
-        private bool ServerUnknown => server.CurrentServerId == 0;
         private void Drag() => controller.Drag();
 
         protected override void OnInitialized()
@@ -66,10 +65,11 @@ namespace AionDpsMeter.UI.Pages
         private void Recompute()
         {
             now = time.GetUtcNow();
-            var items = TimersFeed.Build(now, schedule.Current, tracker.TimersFor(server.CurrentServerId), catalog)
-                .Where(Options.Shows)
-                .ToList();
-            var due = alerts.Due(items, now, Options.LeadFor);
+            var bosses = tracker.TimersFor(server.CurrentServerId);
+            // Alerts cover rifts and events too; the rows here are field bosses only (the rift sits in the main window).
+            var all = TimersFeed.Build(now, schedule.Current, bosses, catalog).Where(Options.Shows).ToList();
+            var items = TimersFeed.BuildBosses(now, schedule.Current, bosses, catalog).Where(Options.Shows).ToList();
+            var due = alerts.Due(all, now, Options.LeadFor);
             if (due.Count > 0)
             {
                 toast = string.Join(" · ", due.Select(d => $"{d.Title} {FeedText.Format(d, now, TimeZoneInfo.Local)}"));

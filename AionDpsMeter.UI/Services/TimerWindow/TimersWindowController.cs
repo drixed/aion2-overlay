@@ -38,12 +38,15 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 Height = 460,
                 ShowInTaskbar = false,
                 Title = "AION2 Timers",
+                ResizeMode = ResizeMode.CanResizeWithGrip, // like upstream's main window; reachable in edit mode
+                MinWidth = 220,
+                MinHeight = 80,
                 // First run only: below the DPS window instead of on top of it. A saved position wins.
                 WindowStartupLocation = WindowStartupLocation.Manual,
                 Left = 20,
                 Top = 420,
             };
-            windowManager.Open(Key, window, isSingleton: true, persistenceMode: WindowPersistenceMode.OnlyPosition);
+            windowManager.Open(Key, window, isSingleton: true, persistenceMode: WindowPersistenceMode.Bounds);
             windowManager.SetClickThrough(Key);
             RegisterEditHotkey(window);
         }

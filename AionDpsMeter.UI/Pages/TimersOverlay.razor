@@ -17,14 +17,11 @@
             }
         </div>
     }
-    @if (ServerUnknown)
-    {
-        <div class="timers__note">Сервер не определён — зайди персонажем в игру</div>
-    }
     @if (toast is not null)
     {
         <div class="timers__toast">@toast</div>
     }
+    <div class="timers__list">
     @foreach (var item in visible)
     {
         <div class="timers__row timers__row--@item.Status.ToString().ToLowerInvariant()">
@@ -51,12 +48,14 @@
             }
         </div>
     }
-    @if (visible.Count == 0)
+    </div>
+    @if (visible.Count == 0 && IsEditing)
     {
-        <div class="timers__empty">Пока пусто. Открой карту в игре — появятся полевые боссы.</div>
+        <div class="timers__empty">Боссов пока нет. Открой карту в игре — появятся полевые боссы.</div>
     }
     @if (IsEditing && Options.HiddenIds.Count > 0)
     {
         <button class="timers__showall" @onclick="ShowAll">Показать скрытые (@Options.HiddenIds.Count)</button>
     }
+    <div class="timers__hint">@EditHotkey — переместить / размер</div>
 </div>

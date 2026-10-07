@@ -1,5 +1,5 @@
 /* aion2-overlay fork: new file (see FORK_CHANGES.md). */
-.timers { font-size: 13px; color: #e6edf3; padding: 6px; user-select: none; box-sizing: border-box; }
+.timers { display: flex; flex-direction: column; height: 100%; font-size: 13px; color: #e6edf3; padding: 6px; user-select: none; box-sizing: border-box; }
 .timers--editing { background: rgba(0, 0, 0, .55); border: 1px dashed rgba(255, 255, 255, .5); border-radius: 6px; }
 .timers__bar { cursor: move; padding: 4px 6px; margin-bottom: 4px; background: rgba(255, 255, 255, .08); border-radius: 4px; font-size: 11px; }
 .timers__filters { display: flex; gap: 10px; margin-bottom: 6px; font-size: 12px; }
@@ -15,4 +15,5 @@
 .timers__row--unknown { opacity: .55; }
 .timers button { background: rgba(255, 255, 255, .12); color: inherit; border: 0; border-radius: 3px; padding: 1px 6px; cursor: pointer; }
 .timers__empty { opacity: .7; padding: 6px; font-size: 12px; }
-.timers__note { opacity: .75; font-size: 11px; padding: 2px 6px; margin-bottom: 4px; background: rgba(0, 0, 0, .45); border-radius: 4px; }
+.timers__list { flex: 1; min-height: 0; overflow: auto; }
+.timers__hint { opacity: .35; font-size: 10px; padding: 2px 6px; text-align: right; }
