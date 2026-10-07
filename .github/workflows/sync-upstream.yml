@@ -54,6 +54,7 @@ jobs:
           "merged=$($after -ne $before)" >> $env:GITHUB_OUTPUT
 
       - name: Build and test
+        id: build
         shell: pwsh
         run: |
           dotnet build AionDpsMeter.slnx -c Release
@@ -133,7 +134,9 @@ jobs:
           if ($open) { gh issue comment $open --body $body }
           else { gh issue create --title "Автообновление сломалось" --label sync-failure --body $body }
 
-          # Tell the players in the app (banner in the main window), once per failure streak.
+          # Tell the players in the app (banner in the main window), once per failure streak — only when upstream
+          # broke the build (a game patch); a GitHub hiccup while publishing is not news for players.
+          if ("${{ steps.merge.outcome }}" -ne "failure" -and "${{ steps.build.outcome }}" -ne "failure") { exit 0 }
           git merge --abort 2>$null
           git reset --hard origin/master | Out-Null
           $json = Get-Content schedule.json -Raw | ConvertFrom-Json -AsHashtable
