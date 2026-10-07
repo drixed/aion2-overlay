@@ -65,6 +65,14 @@ public class ScheduleJsonTests
     }
 
     [Fact]
+    public void Energy_maximum_parses()
+    {
+        Assert.Equal(840, ScheduleJson.Parse("""{ "energyMax": 840 }""").EnergyMax);
+        Assert.Equal(0, ScheduleData.Empty.EnergyMax);
+        Assert.Equal(840, ScheduleJson.Parse(ScheduleSource.ReadEmbedded()).EnergyMax);
+    }
+
+    [Fact]
     public void Invalid_json_throws_FormatException()
     {
         Assert.Throws<FormatException>(() => ScheduleJson.Parse("{ not json"));

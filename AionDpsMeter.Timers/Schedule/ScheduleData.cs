@@ -12,7 +12,8 @@ public sealed record ScheduleData(
     IReadOnlyDictionary<int, FieldBossMapInfo> FieldBossMaps,
     IReadOnlyDictionary<int, int> RespawnMinutes,
     IReadOnlyDictionary<int, int>? EnrageSeconds = null,
-    Notice? Notice = null)
+    Notice? Notice = null,
+    int EnergyMax = 0)
 {
     private static readonly IReadOnlyDictionary<int, int> None = new Dictionary<int, int>();
 

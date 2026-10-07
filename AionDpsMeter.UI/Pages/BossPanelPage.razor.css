@@ -28,7 +28,11 @@
 .bp-players ::deep .header-module { display: none; } /* upstream's own header: ours replaces it */
 .bp-footer { display: flex; justify-content: space-between; gap: 8px; padding: 5px 10px; font-size: 12px;
     border-top: 1px solid rgba(255, 255, 255, .08); color: #c9d1d9; }
-.bp-footer-time { font-variant-numeric: tabular-nums; color: #f2cc60; white-space: nowrap; }
+.bp-footer-event { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-footer-time { font-weight: 400; font-variant-numeric: tabular-nums; color: #f2cc60; white-space: nowrap; }
+.bp-energy { white-space: nowrap; font-variant-numeric: tabular-nums; color: #e6edf3; }
+.bp-energy-extra { color: #58a6ff; margin-left: 1px; }
+.bp-energy--old { opacity: .55; }
 .bp-notice { display: flex; align-items: center; gap: 6px; margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px;
     background: rgba(242, 204, 96, .12); border: 1px solid rgba(242, 204, 96, .35); color: #f2cc60; font-size: 12px; }
 .bp-notice-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

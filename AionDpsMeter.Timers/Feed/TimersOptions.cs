@@ -20,6 +20,9 @@ public sealed class TimersOptions
     public HashSet<string> DismissedNotices { get; set; } = [];
 
     public bool IsDismissed(string noticeId) => DismissedNotices.Contains(noticeId);
+    /// <summary>Show the fight card for ordinary mobs too, not only bosses.</summary>
+    public bool CardForAllTargets { get; set; }
+
     /// <summary>"boss" — the fork's boss panel as the main window; "upstream" — RATmeter's own style.</summary>
     public string MainStyle { get; set; } = "boss";
 

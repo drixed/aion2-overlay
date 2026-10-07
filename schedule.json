@@ -17,5 +17,6 @@
     "1110": { "block": 2400, "name": "Альтгард" }
   },
   "respawnMinutes": {},
-  "enrageSeconds": {}
+  "enrageSeconds": {},
+  "energyMax": 840
 }

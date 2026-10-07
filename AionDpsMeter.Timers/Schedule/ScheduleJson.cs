@@ -45,7 +45,7 @@ public static class ScheduleJson
             ? new Notice(noticeId, noticeTitle, file.Notice.Text ?? "")
             : null;
 
-        return new ScheduleData(events, maps, respawn, enrage, notice);
+        return new ScheduleData(events, maps, respawn, enrage, notice, Math.Max(0, file.EnergyMax));
     }
 
     private static bool TryEvent(EventDto dto, out ScheduledEvent e)
@@ -124,6 +124,7 @@ public static class ScheduleJson
         public Dictionary<string, int>? RespawnMinutes { get; set; }
         public Dictionary<string, int>? EnrageSeconds { get; set; }
         public NoticeDto? Notice { get; set; }
+        public int EnergyMax { get; set; }
     }
 
     internal sealed class NoticeDto

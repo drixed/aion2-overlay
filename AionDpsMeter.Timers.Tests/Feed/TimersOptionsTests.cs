@@ -76,6 +76,12 @@ public class TimersOptionsTests
     }
 
     [Fact]
+    public void The_fight_card_is_for_bosses_unless_asked_otherwise()
+    {
+        Assert.False(new TimersOptions().CardForAllTargets);
+    }
+
+    [Fact]
     public void A_corrupt_settings_file_gives_defaults()
     {
         using var dir = new TempDir();

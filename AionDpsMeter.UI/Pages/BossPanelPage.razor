@@ -66,11 +66,20 @@
         <div class="bp-players" style="@(noticeOpen ? "display:none" : "")">
             <MainDpsMinimal ViewModel="@ViewModel" />
         </div>
-        @if (NextEvent is { } e)
+        @if (NextEvent is not null || Energy is not null)
         {
             <div class="bp-footer">
-                <span>◈ @e.Title@(e.Verified ? "" : " (не проверено)")</span>
-                <span class="bp-footer-time">@FeedText.Format(e, now, TimeZoneInfo.Local)</span>
+                @if (NextEvent is { } e)
+                {
+                    <span class="bp-footer-event">◈ @e.Title@(e.Verified ? "" : " (не проверено)") <b class="bp-footer-time">@FeedText.Format(e, now, TimeZoneInfo.Local)</b></span>
+                }
+                @if (Energy is { } en)
+                {
+                    <span class="bp-energy @(en.FromEarlierSession ? "bp-energy--old" : "")"
+                          title="@(en.FromEarlierSession ? $"Последнее известное значение ({en.At.ToLocalTime():HH:mm}); игра пришлёт новое при пополнении" : "Энергия")">
+                        ⚡ @en.Reading.Current<span class="bp-energy-extra">(+@en.Reading.Extra)</span>
+                    </span>
+                }
             </div>
         }
     </div>

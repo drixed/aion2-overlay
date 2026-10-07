@@ -1,6 +1,7 @@
 // aion2-overlay fork: new file (see FORK_CHANGES.md).
 using AionDpsMeter.Services.Services.Session;
 using AionDpsMeter.Timers.Bosses;
+using AionDpsMeter.Timers.Energy;
 using AionDpsMeter.Timers.Feed;
 using AionDpsMeter.Timers.Fight;
 using AionDpsMeter.Timers.Schedule;
@@ -19,6 +20,7 @@ namespace AionDpsMeter.UI.Pages
         ScheduleSource schedule,
         TimersOptionsStore options,
         TimeProvider time,
+        EnergyTracker energy,
         IJSRuntime js,
         IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
@@ -34,6 +36,7 @@ namespace AionDpsMeter.UI.Pages
         private Notice? ActiveNotice =>
             schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
         private FeedItem? NextEvent;
+        private EnergyState? Energy => energy.Current;
         private DateTimeOffset now;
         private CancellationTokenSource? cts;
         private bool loggedFailure;
@@ -41,6 +44,7 @@ namespace AionDpsMeter.UI.Pages
         private string HeaderTitle =>
             Fight is not null && fightIsBoss ? "Бой с боссом"
             : Fight is not null ? Fight.Name
+            : ViewModel?.HasActiveTarget == true && ViewModel.ActiveTargetName.Length > 0 && !ViewModel.ActiveTargetName.StartsWith("Unknown") ? ViewModel.ActiveTargetName
             : "Ожидание боя";
 
         protected override void OnInitialized()
@@ -99,11 +103,10 @@ namespace AionDpsMeter.UI.Pages
             now = time.GetUtcNow();
             try
             {
-                // Any target with HP gets the card (upstream's mob table does not flag every boss); the "boss fight"
-                // title and the enrage timer are for bosses only.
+                // The card is for bosses (ordinary mobs too when the user asks for it); a dead target drops it.
                 var target = sessions.GetActiveTargetInfo();
                 fightIsBoss = target is { IsBoss: true, IsDummy: false };
-                Fight = target is { HpTotal: > 0 }
+                Fight = target is { HpTotal: > 0, HpCurrent: > 0 } && (fightIsBoss || options.Current.CardForAllTargets)
                     ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),
                         sessions.GetCombatDuration(),
                         BossFight.EnrageFor(target.MobCode, fightIsBoss, tracker.IsFieldBoss(target.MobCode), schedule.Current.Enrage))
