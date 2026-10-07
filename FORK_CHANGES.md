@@ -17,12 +17,14 @@
 - `AionDpsMeter.Services/PacketProcessing/Fork/IFieldBossListListener.cs`
 - `AionDpsMeter.Services/PacketProcessing/Processors/FieldBossListForwarder.cs` — обработчик опкода `0x9101` (байты `01 91`)
 - `AionDpsMeter.Services/PacketProcessing/Fork/IEnergyListener.cs`, `Processors/EnergyForwarder.cs` — опкод `0x610C` (байты `0C 61`, энергия)
+- `AionDpsMeter.Services/PacketProcessing/Fork/IMapLoadListener.cs`, `Processors/MapLoadForwarder.cs` — опкод `0x3621` (байты `21 36`, загрузка карты)
 - `AionDpsMeter.UI/Pages/TimersOverlay.razor`, `.razor.cs`, `.razor.css`
 - `AionDpsMeter.UI/Services/TimerWindow/*`
 - `AionDpsMeter.UI/Pages/BossPanelPage.razor`, `.razor.cs`, `.razor.css` — главное окно «Бой с боссом»
 - `AionDpsMeter.UI/wwwroot/js/ru.js` — русский словарь для Blazor-окон апстрима
 - `AionDpsMeter.UI/wwwroot/js/fit.js` — высота главного окна по содержимому
 - `AionDpsMeter.UI/Pages/OverlaySettingsPage.*` — окно «Настройки оверлея» (✦)
+- `AionDpsMeter.UI/Services/TimerWindow/CubeMapWindow.cs` — окно «Карта кубов» (🗺)
 
 Всё остальное — свои файлы: `AionDpsMeter.Timers/`, `AionDpsMeter.Timers.Tests/`, `schedule.json`,
 `.github/workflows/sync-upstream.yml`, `docs/`.

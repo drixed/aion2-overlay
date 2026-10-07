@@ -45,7 +45,11 @@ public static class ScheduleJson
             ? new Notice(noticeId, noticeTitle, file.Notice.Text ?? "")
             : null;
 
-        return new ScheduleData(events, maps, respawn, enrage, notice, Math.Max(0, file.EnergyMax));
+        var cubeMaps = (file.CubeMaps ?? new())
+            .Where(kv => Uri.TryCreate(kv.Value, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps)
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+        return new ScheduleData(events, maps, respawn, enrage, notice, Math.Max(0, file.EnergyMax), cubeMaps);
     }
 
     private static bool TryEvent(EventDto dto, out ScheduledEvent e)
@@ -125,6 +129,7 @@ public static class ScheduleJson
         public Dictionary<string, int>? EnrageSeconds { get; set; }
         public NoticeDto? Notice { get; set; }
         public int EnergyMax { get; set; }
+        public Dictionary<string, string>? CubeMaps { get; set; }
     }
 
     internal sealed class NoticeDto

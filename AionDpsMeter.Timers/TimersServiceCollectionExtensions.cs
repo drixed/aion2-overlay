@@ -1,6 +1,7 @@
 using AionDpsMeter.Services.PacketProcessing.Fork;
 using AionDpsMeter.Timers.Bosses;
 using AionDpsMeter.Timers.Energy;
+using AionDpsMeter.Timers.Zones;
 using AionDpsMeter.Timers.Feed;
 using AionDpsMeter.Timers.Runtime;
 using AionDpsMeter.Timers.Schedule;
@@ -38,6 +39,8 @@ public static class TimersServiceCollectionExtensions
         services.AddSingleton<IFieldBossListListener, FieldBossListListener>();
         services.AddSingleton(sp => new EnergyTracker(sp.GetRequiredService<TimeProvider>(), TimersPaths.Of("energy-state.json")));
         services.AddSingleton<IEnergyListener, EnergyListener>();
+        services.AddSingleton<ZoneTracker>();
+        services.AddSingleton<IMapLoadListener, MapLoadListener>();
         services.AddHostedService<TimersHostedService>();
         return services;
     }

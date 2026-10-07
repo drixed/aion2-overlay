@@ -26,6 +26,7 @@ namespace AionDpsMeter.UI.Pages
         EnergyTracker energy,
         EntityTracker entities,
         OverlaySettingsWindow overlaySettings,
+        CubeMapWindow cubeMap,
         IJSRuntime js,
         IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
@@ -48,6 +49,7 @@ namespace AionDpsMeter.UI.Pages
         private DateTimeOffset dpsCacheAt;
 
         private void OpenOverlaySettings() => overlaySettings.Open();
+        private void ToggleCubeMap() => cubeMap.Toggle();
 
         /// <summary>Upstream's player stats are rebuilt on every read: refreshed at most twice a second, only when
         /// aDPS or the party filter needs them.</summary>

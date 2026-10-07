@@ -13,7 +13,8 @@ public sealed record ScheduleData(
     IReadOnlyDictionary<int, int> RespawnMinutes,
     IReadOnlyDictionary<int, int>? EnrageSeconds = null,
     Notice? Notice = null,
-    int EnergyMax = 0)
+    int EnergyMax = 0,
+    IReadOnlyDictionary<string, string>? CubeMaps = null)
 {
     private static readonly IReadOnlyDictionary<int, int> None = new Dictionary<int, int>();
 
@@ -22,4 +23,10 @@ public sealed record ScheduleData(
 
     /// <summary>NPC code → enrage timer in seconds; 0 = the boss has none.</summary>
     public IReadOnlyDictionary<int, int> Enrage => EnrageSeconds ?? None;
+
+    /// <summary>The hidden cube map page for a map id ("default" when the map has none of its own).</summary>
+    public string? CubeMapFor(int? mapId) =>
+        CubeMaps is null ? null
+        : mapId is { } id && CubeMaps.TryGetValue(id.ToString(System.Globalization.CultureInfo.InvariantCulture), out var url) ? url
+        : CubeMaps.GetValueOrDefault("default");
 }
