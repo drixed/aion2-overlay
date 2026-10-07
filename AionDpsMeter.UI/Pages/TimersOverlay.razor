@@ -5,7 +5,7 @@
 <div class="timers @(IsEditing ? "timers--editing" : "")">
     @if (IsEditing)
     {
-        <div class="timers__bar" @onmousedown="Drag">Таймеры — тащи за эту полосу · Ctrl+Shift+T закрепить</div>
+        <div class="timers__bar" @onmousedown="Drag">Таймеры — тащи за эту полосу · @EditHotkey закрепить</div>
         <div class="timers__filters">
             @foreach (var kind in Enum.GetValues<FeedKind>())
             {
@@ -16,6 +16,10 @@
                 </label>
             }
         </div>
+    }
+    @if (ServerUnknown)
+    {
+        <div class="timers__note">Сервер не определён — зайди персонажем в игру</div>
     }
     @if (toast is not null)
     {

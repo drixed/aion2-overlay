@@ -25,18 +25,18 @@ public sealed class BossCatalog
         var npcs = new Dictionary<int, Npc>();
         for (var source = 0; source < tables.Length; source++)
         {
-            Dictionary<string, NpcDto>? table;
+            Dictionary<string, NpcDto?>? table;
             try
             {
-                table = JsonSerializer.Deserialize<Dictionary<string, NpcDto>>(tables[source], Options);
+                table = JsonSerializer.Deserialize<Dictionary<string, NpcDto?>>(tables[source], Options);
             }
-            catch (JsonException)
+            catch (Exception)
             {
-                continue;
+                continue; // a broken table must never stop the app: upstream's mobs.json changes often
             }
             foreach (var (key, dto) in table ?? new())
             {
-                if (!int.TryParse(key, out var code) || npcs.ContainsKey(code)) continue;
+                if (dto is null || !int.TryParse(key, out var code) || npcs.ContainsKey(code)) continue;
                 npcs[code] = new Npc(dto.Name ?? "", dto.IsBoss, dto.IsDummy, source);
             }
         }
@@ -52,7 +52,7 @@ public sealed class BossCatalog
         {
             if (File.Exists(upstreamMobs)) tables.Add(File.ReadAllText(upstreamMobs));
         }
-        catch (IOException) { }
+        catch (Exception) { }
         return FromJson(tables.ToArray());
     }
 

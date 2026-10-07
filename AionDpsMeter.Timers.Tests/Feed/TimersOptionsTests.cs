@@ -26,6 +26,36 @@ public class TimersOptionsTests
     }
 
     [Fact]
+    public void Startup_creates_a_missing_file_but_never_overwrites_a_hand_edited_one()
+    {
+        using var dir = new TempDir();
+        var path = dir.File("timers-settings.json");
+
+        new TimersOptionsStore(path).LoadOrCreate();
+        Assert.True(File.Exists(path));
+
+        File.WriteAllText(path, "{ \"BossLeadMinutes\": 7, typo }");
+        var store = new TimersOptionsStore(path);
+        store.LoadOrCreate();
+        Assert.Equal(5, store.Current.BossLeadMinutes); // defaults in memory…
+        Assert.Equal("{ \"BossLeadMinutes\": 7, typo }", File.ReadAllText(path)); // …but the user's file survives
+    }
+
+    [Fact]
+    public void The_edit_hotkey_is_a_setting_with_an_uncontended_default()
+    {
+        using var dir = new TempDir();
+        var store = new TimersOptionsStore(dir.File("timers-settings.json"));
+        store.Load();
+        Assert.Equal("Ctrl+Shift+F9", store.Current.EditHotkey);
+        store.Current.EditHotkey = "Alt+F2";
+        store.Save();
+        var again = new TimersOptionsStore(dir.File("timers-settings.json"));
+        again.Load();
+        Assert.Equal("Alt+F2", again.Current.EditHotkey);
+    }
+
+    [Fact]
     public void A_corrupt_settings_file_gives_defaults()
     {
         using var dir = new TempDir();

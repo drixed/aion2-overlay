@@ -27,8 +27,7 @@ public static class TimersServiceCollectionExtensions
         services.AddSingleton(_ =>
         {
             var store = new TimersOptionsStore(TimersPaths.Of("timers-settings.json"));
-            store.Load();
-            store.Save(); // writes the defaults once so the file is there to edit
+            store.LoadOrCreate();
             return store;
         });
         services.AddSingleton<IServerContext, EntityTrackerServerContext>();

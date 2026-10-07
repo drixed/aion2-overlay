@@ -9,6 +9,9 @@ public sealed class TimersOptions
     public int RiftLeadMinutes { get; set; } = 2;
     public int EventLeadMinutes { get; set; } = 5;
     public bool Sound { get; set; } = true;
+
+    /// <summary>Toggles the overlay's edit mode. Upstream's hotkey syntax ("Ctrl+Shift+F9"); empty turns it off.</summary>
+    public string EditHotkey { get; set; } = "Ctrl+Shift+F9";
     public HashSet<FeedKind> HiddenKinds { get; set; } = [];
     public HashSet<string> HiddenIds { get; set; } = [];
 
@@ -43,6 +46,14 @@ public sealed class TimersOptionsStore(string path)
         {
             Current = new();
         }
+    }
+
+    /// <summary>At startup: load, and write the defaults only when there is no file yet — never over a file the
+    /// user edited by hand, even one that no longer parses.</summary>
+    public void LoadOrCreate()
+    {
+        Load();
+        if (!File.Exists(path)) Save();
     }
 
     public void Save()

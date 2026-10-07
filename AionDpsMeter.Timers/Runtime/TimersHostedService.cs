@@ -35,7 +35,14 @@ public sealed class TimersHostedService(
         {
             logger.LogError(ex, "Built-in schedule could not be read");
         }
-        tracker.Import(store.Load());
+        try
+        {
+            tracker.Import(store.Load());
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Saved boss timers could not be loaded; starting empty");
+        }
         tracker.Changed += () => dirty = true;
         dirty = false;
         _ = RefreshAsync(ct);
@@ -47,18 +54,25 @@ public sealed class TimersHostedService(
         {
             while (await timer.WaitForNextTickAsync(ct))
             {
-                kills.Tick();
-                var now = time.GetUtcNow();
-                if (dirty && now - lastSave >= SaveEvery)
+                try
                 {
-                    dirty = false;
-                    lastSave = now;
-                    store.Save(tracker.Export());
+                    kills.Tick();
+                    var now = time.GetUtcNow();
+                    if (dirty && now - lastSave >= SaveEvery)
+                    {
+                        dirty = false;
+                        lastSave = now;
+                        store.Save(tracker.Export());
+                    }
+                    if (now - lastRefresh >= RefreshEvery)
+                    {
+                        lastRefresh = now;
+                        _ = RefreshAsync(ct);
+                    }
                 }
-                if (now - lastRefresh >= RefreshEvery)
+                catch (Exception ex)
                 {
-                    lastRefresh = now;
-                    _ = RefreshAsync(ct);
+                    logger.LogError(ex, "Timers tick failed; continuing"); // one bad tick must not stop the timers
                 }
             }
         }
@@ -71,7 +85,15 @@ public sealed class TimersHostedService(
 
     private async Task RefreshAsync(CancellationToken ct)
     {
-        var ok = await schedule.RefreshAsync(ct);
+        var ok = false;
+        try
+        {
+            ok = await schedule.RefreshAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Schedule refresh threw");
+        }
         logger.LogInformation("Schedule refresh {Result}; using {Origin}", ok ? "succeeded" : "failed", schedule.Origin);
     }
 }

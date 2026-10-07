@@ -15,3 +15,4 @@
 .timers__row--unknown { opacity: .55; }
 .timers button { background: rgba(255, 255, 255, .12); color: inherit; border: 0; border-radius: 3px; padding: 1px 6px; cursor: pointer; }
 .timers__empty { opacity: .7; padding: 6px; font-size: 12px; }
+.timers__note { opacity: .75; font-size: 11px; padding: 2px 6px; margin-bottom: 4px; background: rgba(0, 0, 0, .45); border-radius: 4px; }

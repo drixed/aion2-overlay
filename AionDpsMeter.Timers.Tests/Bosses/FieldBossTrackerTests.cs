@@ -168,6 +168,20 @@ public class FieldBossTrackerTests
     }
 
     [Fact]
+    public void A_state_file_with_null_entries_imports_the_rest()
+    {
+        using var dir = new TempDir();
+        File.WriteAllText(dir.File("timers-state.json"), """
+            { "Timers": [ null, { "ServerId": 1, "Key": 2400017, "MapId": 1110, "SlotId": 111001, "Alive": true } ],
+              "LearnedBlocks": null, "LearnedRespawnMinutes": { "2400017": 60 } }
+            """);
+        var t = Tracker();
+        t.Import(new TimerStateStore(dir.File("timers-state.json")).Load());
+        Assert.Equal(2400017, Assert.Single(t.TimersFor(1)).Key);
+        Assert.Equal(60, t.RespawnMinutesOf(2400017));
+    }
+
+    [Fact]
     public void A_missing_or_corrupt_state_file_loads_as_nothing()
     {
         using var dir = new TempDir();

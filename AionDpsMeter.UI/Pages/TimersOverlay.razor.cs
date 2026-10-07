@@ -4,6 +4,7 @@ using AionDpsMeter.Timers.Feed;
 using AionDpsMeter.Timers.Runtime;
 using AionDpsMeter.Timers.Schedule;
 using AionDpsMeter.UI.Services.TimerWindow;
+using Microsoft.Extensions.Logging;
 
 namespace AionDpsMeter.UI.Pages
 {
@@ -15,7 +16,8 @@ namespace AionDpsMeter.UI.Pages
         IServerContext server,
         AlertService alerts,
         TimersOptionsStore optionsStore,
-        TimeProvider time)
+        TimeProvider time,
+        ILogger<TimersOverlay> logger)
     {
         private static readonly TimeSpan ToastFor = TimeSpan.FromSeconds(15);
 
@@ -28,6 +30,8 @@ namespace AionDpsMeter.UI.Pages
         // The markup (the other half of this partial class) cannot see primary-constructor parameters.
         private TimersOptions Options => optionsStore.Current;
         private bool IsEditing => controller.IsEditing;
+        private string EditHotkey => Options.EditHotkey;
+        private bool ServerUnknown => server.CurrentServerId == 0;
         private void Drag() => controller.Drag();
 
         protected override void OnInitialized()
@@ -44,8 +48,15 @@ namespace AionDpsMeter.UI.Pages
             {
                 do
                 {
-                    Recompute();
-                    await InvokeAsync(StateHasChanged);
+                    try
+                    {
+                        Recompute();
+                        await InvokeAsync(StateHasChanged);
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        logger.LogError(ex, "Timers overlay refresh failed; continuing"); // keep the overlay alive
+                    }
                 }
                 while (await timer.WaitForNextTickAsync(ct));
             }

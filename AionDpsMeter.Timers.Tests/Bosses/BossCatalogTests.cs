@@ -62,6 +62,14 @@ public class BossCatalogTests
     }
 
     [Fact]
+    public void A_null_entry_in_a_table_is_skipped()
+    {
+        var c = BossCatalog.FromJson("""{ "123": null, "2400017": { "name": "Данар", "isBoss": true } }""");
+        Assert.True(c.IsBoss(2400017));
+        Assert.False(c.IsBoss(123));
+    }
+
+    [Fact]
     public void Shipped_table_resolves_the_Altgard_list()
     {
         var c = BossCatalog.FromJson(EmbeddedResources.Read("npcs.ru.json"));

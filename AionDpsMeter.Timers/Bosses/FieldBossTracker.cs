@@ -95,7 +95,7 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
         if (state is null) return;
         lock (gate)
         {
-            foreach (var t in state.Timers ?? []) timers[(t.ServerId, t.Key)] = t;
+            foreach (var t in state.Timers ?? []) if (t is not null) timers[(t.ServerId, t.Key)] = t; // hand-edited files
             foreach (var (map, block) in state.LearnedBlocks ?? new()) learnedBlocks[map] = block;
             foreach (var (code, minutes) in state.LearnedRespawnMinutes ?? new()) respawnMinutes[code] = minutes;
         }
