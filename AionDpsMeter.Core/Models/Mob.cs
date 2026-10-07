@@ -8,7 +8,11 @@ namespace AionDpsMeter.Core.Models
         private const int BossHpThreshold = 100_000_000;
 
         public int MobCode { get; set; }
-        public long HpTotal { get; set; }
+        public long HpTotal
+        {
+            get => Math.Max(field, HpMaxSeen); // aion2-overlay fork: the mob-info parser sometimes reads junk (67) — never below a seen HP
+            set;
+        }
         public long HpCurrent
         {
             get;
