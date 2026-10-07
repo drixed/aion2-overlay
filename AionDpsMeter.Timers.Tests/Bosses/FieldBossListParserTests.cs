@@ -38,6 +38,19 @@ public class FieldBossListParserTests
     }
 
     [Fact]
+    public void The_last_slot_is_read_when_another_block_follows_the_list()
+    {
+        var list = FieldBossListParser.Parse(Fixtures.Bytes(Fixtures.AltgardLiveWithTrailer))!;
+        Assert.True(list.Complete);
+        Assert.Equal(Enumerable.Range(111001, 24), list.Slots.Select(s => s.SlotId).Order());
+        Assert.Equal(1791387929829, list.Slots.Single(s => s.SlotId == 111024).AtMs);
+
+        var map1010 = FieldBossListParser.Parse(Fixtures.Bytes(Fixtures.Map1010LiveWithTrailer))!;
+        Assert.True(map1010.Complete);
+        Assert.Equal(Enumerable.Range(101001, 24), map1010.Slots.Select(s => s.SlotId).Order());
+    }
+
+    [Fact]
     public void Truncated_list_returns_the_slots_read_so_far()
     {
         var bytes = Fixtures.Bytes(Fixtures.AltgardList);

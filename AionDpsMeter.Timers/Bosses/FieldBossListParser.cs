@@ -51,23 +51,32 @@ public static class FieldBossListParser
             z = BinaryPrimitives.ReadSingleLittleEndian(b.Slice(at + 8, 4));
             at += 12;
         }
-        for (var extra = 0; extra <= 1; extra++)
+        // The last slot is normally followed by zero padding, but the EU client may append another block
+        // (00 03 …): when no reading ends in padding, the first plausible time wins.
+        var passes = last ? 2 : 1;
+        for (var pass = 0; pass < passes; pass++)
         {
-            var t = at + extra;
-            if (t + 8 > b.Length) break;
-            var time = BinaryPrimitives.ReadInt64LittleEndian(b.Slice(t, 8));
-            if (time != 0 && time is < 1_600_000_000_000 or > 2_600_000_000_000) continue;
-            var end = t + 8;
-            var fits = last
-                ? b[end..].IndexOfAnyExcept((byte)0) < 0 && b.Length - end <= 8
-                : SlotHeader(b, end, map, out _, out _, out _);
-            if (!fits) continue;
-            slot = new FieldBossSlot(id, alive, time, x, y, z);
-            o = end;
-            return true;
+            for (var extra = 0; extra <= 1; extra++)
+            {
+                var t = at + extra;
+                if (t + 8 > b.Length) break;
+                var time = BinaryPrimitives.ReadInt64LittleEndian(b.Slice(t, 8));
+                if (!PlausibleTime(time)) continue;
+                var end = t + 8;
+                var fits = pass == 1
+                    || (last
+                        ? b[end..].IndexOfAnyExcept((byte)0) < 0 && b.Length - end <= 8
+                        : SlotHeader(b, end, map, out _, out _, out _));
+                if (!fits) continue;
+                slot = new FieldBossSlot(id, alive, time, x, y, z);
+                o = end;
+                return true;
+            }
         }
         return false;
     }
+
+    private static bool PlausibleTime(long ms) => ms == 0 || ms is >= 1_600_000_000_000 and <= 2_600_000_000_000;
 
     /// <summary><c>alive u8 (0 / 1), slot varint</c> with the slot inside this map's range.</summary>
     private static bool SlotHeader(ReadOnlySpan<byte> b, int o, int map, out bool alive, out int slot, out int next)
