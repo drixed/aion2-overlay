@@ -9,7 +9,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
 {
     /// <summary>The field boss timers window: dragged by its header like upstream's main window, folds down to the
     /// header (▾), and ⚙ opens filters, notification settings and the per-row buttons.</summary>
-    public sealed class TimersWindowController(IWindowManagerService windowManager, TimersOptionsStore options, OverlayRuntime runtime, AlertRunner alertRunner)
+    public sealed class TimersWindowController(IWindowManagerService windowManager, TimersOptionsStore options, OverlayRuntime runtime, AlertRunner alertRunner, WindowBoundsKeeper bounds)
     {
         /// <summary>Deliberately not a member of upstream's WindowKey enum (no edit to their file): the window manager
         /// keys windows by value and saves bounds under key.ToString(), i.e. "1001".</summary>
@@ -25,6 +25,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         public event Action? EditingChanged;
 
         private bool watching;
+        private bool watchingMain;
 
         /// <summary>At startup: the window opens if the user wants it; the runtime (hotkeys, "only over the game")
         /// starts either way.</summary>
@@ -35,7 +36,12 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 watching = true;
                 options.Changed += () => Application.Current.Dispatcher.BeginInvoke(FollowSetting);
             }
-            if (Application.Current.MainWindow is { } main) runtime.Start(main);
+            if (Application.Current.MainWindow is { } main && !watchingMain)
+            {
+                watchingMain = true;
+                runtime.Start(main);
+                bounds.KeepMain(main);
+            }
             alertRunner.Start();
             if (options.Current.ShowBossTimers) OpenWindow();
         }
@@ -64,6 +70,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 Top = 420,
             };
             windowManager.Open(Key, window, isSingleton: true, persistenceMode: WindowPersistenceMode.Bounds);
+            bounds.Keep(Key, window);
             ApplyCollapsed();
         }
 

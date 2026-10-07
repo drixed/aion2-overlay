@@ -15,7 +15,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
     /// following it to the next zone. The site is shown as a browser would show it — its data is not copied into the app
     /// (none of the cube sites licenses it for reuse); found cubes ticked on the site stay saved in this window's storage.
     /// </summary>
-    public sealed class CubeMapWindow(IWindowManagerService windowManager, ZoneTracker zones, ScheduleSource schedule, ILogger<CubeMapWindow> logger)
+    public sealed class CubeMapWindow(IWindowManagerService windowManager, ZoneTracker zones, ScheduleSource schedule, WindowBoundsKeeper bounds, ILogger<CubeMapWindow> logger)
     {
         /// <summary>Not in upstream's WindowKey enum on purpose, like the timers window (1001).</summary>
         public static readonly WindowKey Key = (WindowKey)1003;
@@ -61,6 +61,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 shownUrl = null;
             };
             windowManager.Open(Key, window, isSingleton: true, persistenceMode: WindowPersistenceMode.Bounds);
+            bounds.Keep(Key, window);
             Navigate();
         }
 

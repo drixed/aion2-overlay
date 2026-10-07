@@ -28,6 +28,7 @@
 - `AionDpsMeter.UI/wwwroot/js/fit.js` — высота главного окна по содержимому
 - `AionDpsMeter.UI/Pages/ForkSettings.*` — настройки форка внутри окна настроек RATmeter
 - `AionDpsMeter.UI/Services/TimerWindow/CubeMapWindow.cs` — окно «Карта кубов» (🗺)
+- `AionDpsMeter.UI/Services/TimerWindow/WindowBoundsKeeper.cs` — сохраняет место и размер главного окна, таймеров и карты кубов через секунду после перемещения или изменения размера (upstream сохранял главное окно только при закрытии, остальные — только при перетаскивании)
 
 Всё остальное — свои файлы: `.github/README.md` (GitHub показывает его вместо корневого README апстрима),
 `AionDpsMeter.Timers/`, `AionDpsMeter.Timers.Tests/`, `schedule.json`,
