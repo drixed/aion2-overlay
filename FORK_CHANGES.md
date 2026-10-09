@@ -17,6 +17,7 @@
 | `AionDpsMeter.Services/PacketProcessing/Processors/PartyProcessor.cs` | +1 строка: `GearScore` из списка группы (апстрим его читал, но выбрасывал) |
 | `AionDpsMeter.Services/Services/Entity/EntityTracker.cs` | +3 строки: `GearScore` переносится вместе с `CombatPower` |
 | `AionDpsMeter.UI/Pages/SettingsPage.razor.cs` | +1 строка в `_groups`: вкладка `fork-timers` ("Timers") |
+| `AionDpsMeter.UI/Converters/SafeImageSourceConverter.cs` | иконка умения, которой ещё нет в кэше, грузится прямо по ссылке (`LoadRemote`): обновление после скачивания у апстрима не срабатывало, и иконки появлялись только при повторном открытии окна |
 | `AionDpsMeter.UI/wwwroot/index.html` | +2 строки: `<script src="js/ru.js">` и `<script src="js/fit.js">` перед `blazor.webview.js` |
 
 Новые файлы внутри проектов апстрима (с ними конфликтов не бывает, помечены первой строкой `aion2-overlay fork`):

@@ -1,4 +1,4 @@
-
+﻿
 using AionDpsMeter.Core.Data;
 using System;
 using System.Collections.Concurrent;
@@ -53,8 +53,22 @@ namespace AionDpsMeter.UI.Converters
                 });
             });
 
-            if (localPath is null) return null;
+            if (localPath is null) return LoadRemote(url); // aion2-overlay fork: the refresh above needs a ConverterParameter no binding passes; WPF shows a web image once it arrives
             return LoadBitmapFromFile(localPath);
+        }
+
+        // aion2-overlay fork: not cached yet — let WPF download it straight into the Image (the cache fills in the background)
+        private static BitmapImage? LoadRemote(string url)
+        {
+            try
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(url, UriKind.Absolute);
+                bitmap.EndInit();
+                return bitmap;
+            }
+            catch { return null; }
         }
 
         private static BitmapImage? LoadBitmapFromFile(string filePath)
