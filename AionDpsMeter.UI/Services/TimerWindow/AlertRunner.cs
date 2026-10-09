@@ -19,6 +19,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         BossCatalog catalog,
         IServerContext server,
         AlertService alerts,
+        AlertSoundPlayer sounds,
         TimeProvider time,
         ILogger<AlertRunner> logger)
     {
@@ -51,7 +52,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 if (due.Count == 0) return;
                 text = string.Join(" · ", due.Select(d => $"{d.Title} {FeedText.Format(d, now, TimeZoneInfo.Local)}"));
                 until = now + ShowFor;
-                if (o.Sound) System.Media.SystemSounds.Exclamation.Play();
+                if (o.Sound) sounds.Play(o.SoundFor(due[0])); // each event (or all field bosses) can have its own sound
             }
             catch (Exception ex)
             {

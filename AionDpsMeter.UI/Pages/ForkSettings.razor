@@ -114,6 +114,18 @@
                             <input class="number-field" type="number" min="1" max="60" value="@O.LeadFor(alert.Kind)" @onchange="e => SetLead(alert.Kind, e.Value)" />
                             <span class="number-field__suffix">мин</span>
                         </span>
+                        <select class="fs-select" value="@(O.SoundFor(alert.MuteKey).ToString())" @onchange="e => OnSoundPicked(alert.MuteKey, e.Value)" title="Звук">
+                            @foreach (var (value, label) in WindowsSounds)
+                            {
+                                <option value="@value">@label</option>
+                            }
+                            @if (O.SoundFor(alert.MuteKey) is { File: not null } own)
+                            {
+                                <option value="@own.ToString()">@FileLabel(own)</option>
+                            }
+                            <option value="@PickFile">Свой файл…</option>
+                        </select>
+                        <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(alert.MuteKey)">▶</button>
                         <ToggleSwitch Checked="@(!O.MutedIds.Contains(alert.MuteKey))" CheckedChanged="v => SetMuted(alert.MuteKey, !v)" />
                     </span>
                 </ValueSlot>

@@ -83,7 +83,23 @@ public sealed class TimersOptions
     public bool Notifies(FeedItem item) =>
         Shows(item)
         && LeadFor(item.Kind) > 0
-        && !MutedIds.Contains(item.Kind == FeedKind.Boss ? AllFieldBosses : item.Id);
+        && !MutedIds.Contains(AlertKey(item));
+
+    /// <summary>The key alerts are muted and given a sound by: the schedule event id, or one key for all field bosses.</summary>
+    public static string AlertKey(FeedItem item) => item.Kind == FeedKind.Boss ? AllFieldBosses : item.Id;
+
+    /// <summary>Alert keys (see <see cref="AlertKey"/>) to the sound they play, as <see cref="AlertSound"/> text.</summary>
+    public Dictionary<string, string> Sounds { get; set; } = [];
+
+    public AlertSound SoundFor(FeedItem item) => SoundFor(AlertKey(item));
+
+    public AlertSound SoundFor(string key) => AlertSound.Parse(Sounds.GetValueOrDefault(key));
+
+    public void SetSound(string key, AlertSound sound)
+    {
+        if (sound.IsDefault) Sounds.Remove(key);
+        else Sounds[key] = sound.ToString();
+    }
 }
 
 /// <summary>timers-settings.json next to the exe; edit it by hand to change lead times or sound.</summary>

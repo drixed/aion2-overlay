@@ -13,3 +13,4 @@
 .fs-hotkey { display: inline-flex; align-items: center; gap: 8px; }
 .fs-clear { background: var(--panel); color: var(--text-dim); border: 1px solid var(--line-strong); border-radius: 4px; cursor: pointer; padding: 1px 7px; }
 .fs-clear:hover { color: var(--text); }
+.fs-select { max-width: 130px; background: var(--panel-raised, #1b1d22); color: inherit; border: 1px solid var(--line, #2a2d33); border-radius: 6px; padding: 3px 6px; font: inherit; font-size: 12px; }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Components.Web;
 namespace AionDpsMeter.UI.Pages
 {
     /// <summary>The fork's settings as blocks of RATmeter's settings window: "appearance", "tracking", "hotkeys", "timers".</summary>
-    public partial class ForkSettings(TimersOptionsStore store, AionDpsMeter.Timers.Schedule.ScheduleSource schedule) : ComponentBase
+    public partial class ForkSettings(TimersOptionsStore store, AionDpsMeter.Timers.Schedule.ScheduleSource schedule, AionDpsMeter.UI.Services.TimerWindow.AlertSoundPlayer soundPlayer) : ComponentBase
     {
         private static readonly (PowerColumn Mode, string Label)[] PowerModes =
             [(PowerColumn.CombatPower, "БМ"), (PowerColumn.GearScore, "ГС"), (PowerColumn.Both, "Оба"), (PowerColumn.None, "Нет")];
@@ -24,6 +24,47 @@ namespace AionDpsMeter.UI.Pages
                 })
                 .Append(new AlertRow(TimersOptions.AllFieldBosses, "Полевые боссы", "Уведомлять перед респауном полевых боссов", FeedKind.Boss))
                 .ToList();
+
+        private const string PickFile = "pick-file";
+
+        private static readonly (string Value, string Label)[] WindowsSounds =
+        [
+            ("", "Стандартный"),
+            (AlertSound.System(WindowsSound.Asterisk).ToString(), "Звёздочка"),
+            (AlertSound.System(WindowsSound.Beep).ToString(), "Сигнал"),
+            (AlertSound.System(WindowsSound.Question).ToString(), "Вопрос"),
+            (AlertSound.System(WindowsSound.Hand).ToString(), "Ошибка"),
+        ];
+
+        private static string FileLabel(AlertSound sound) => "♪ " + System.IO.Path.GetFileName(sound.File);
+
+        private void OnSoundPicked(string key, object? value)
+        {
+            var text = value?.ToString() ?? "";
+            if (text != PickFile)
+            {
+                Set(o => o.SetSound(key, AlertSound.Parse(text)));
+                soundPlayer.Play(AlertSound.Parse(text));
+                return;
+            }
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Звук уведомления",
+                Filter = "Звук (*.wav;*.mp3)|*.wav;*.mp3|Все файлы (*.*)|*.*",
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                var sound = AlertSound.FromFile(dialog.FileName);
+                Set(o => o.SetSound(key, sound));
+                soundPlayer.Play(sound);
+            }
+            else
+            {
+                StateHasChanged(); // the select goes back to the saved sound
+            }
+        }
+
+        private void PlaySound(string key) => soundPlayer.Play(O.SoundFor(key));
 
         private void SetMuted(string key, bool muted) => Set(o =>
         {
