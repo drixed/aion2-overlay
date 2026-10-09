@@ -26,6 +26,20 @@ public class HotkeyOptionsTests
     }
 
     [Fact]
+    public void The_boss_timers_window_has_its_own_show_hide_hotkey()
+    {
+        Assert.Equal("", new TimersOptions().ToggleBossTimersHotkey);
+        using var dir = new TempDir();
+        var store = new TimersOptionsStore(dir.File("s.json"));
+        store.Load();
+        store.Current.ToggleBossTimersHotkey = "Alt+B";
+        store.Save();
+        var again = new TimersOptionsStore(dir.File("s.json"));
+        again.Load();
+        Assert.Equal("Alt+B", again.Current.ToggleBossTimersHotkey);
+    }
+
+    [Fact]
     public void The_boss_timers_window_can_be_turned_off_and_compact_mode_is_off_by_default()
     {
         var o = new TimersOptions();

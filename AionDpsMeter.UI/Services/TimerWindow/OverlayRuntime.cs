@@ -27,7 +27,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         private const int WmHotkey = 0x0312;
         private const uint ModNoRepeat = 0x4000;
 
-        private enum HotkeyId { HideOverlay = 9201, ResetFight, ClearMeter, CopySummary, Compact, ClickThrough }
+        private enum HotkeyId { HideOverlay = 9201, ResetFight, ClearMeter, CopySummary, Compact, ClickThrough, ToggleBossTimers }
 
         [DllImport("user32.dll")] private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
         [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
@@ -67,6 +67,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             Register(HotkeyId.CopySummary, o.CopySummaryHotkey);
             Register(HotkeyId.Compact, o.CompactHotkey);
             Register(HotkeyId.ClickThrough, o.ClickThroughHotkey);
+            Register(HotkeyId.ToggleBossTimers, o.ToggleBossTimersHotkey);
         }
 
         private void Register(HotkeyId id, string text)
@@ -94,6 +95,10 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                         options.Save();
                         break;
                     case HotkeyId.ClickThrough: ToggleClickThrough(); break;
+                    case HotkeyId.ToggleBossTimers: // the timers window controller follows this setting
+                        options.Current.ShowBossTimers = !options.Current.ShowBossTimers;
+                        options.Save();
+                        break;
                     default: return IntPtr.Zero;
                 }
                 handled = true;

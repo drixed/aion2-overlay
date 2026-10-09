@@ -88,6 +88,7 @@ namespace AionDpsMeter.UI.Pages
             new("copy", "Копировать сводку", "Итог боя в буфер обмена — для чата игры", () => O.CopySummaryHotkey, v => Set(o => o.CopySummaryHotkey = v)),
             new("compact", "Компактная полоса", "Включает и выключает компактную полосу", () => O.CompactHotkey, v => Set(o => o.CompactHotkey = v)),
             new("click", "Сквозной клик", "Клики проходят сквозь окна метра в игру", () => O.ClickThroughHotkey, v => Set(o => o.ClickThroughHotkey = v)),
+            new("timers", "Таймеры боссов", "Показывает и прячет окно таймеров полевых боссов", () => O.ToggleBossTimersHotkey, v => Set(o => o.ToggleBossTimersHotkey = v)),
         ];
 
         private string Label(HotkeyRow row) =>

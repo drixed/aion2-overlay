@@ -44,6 +44,8 @@ public sealed class TimersOptions
     public string CopySummaryHotkey { get; set; } = "";
     public string CompactHotkey { get; set; } = "";
     public string ClickThroughHotkey { get; set; } = "";
+    /// <summary>Shows or hides the boss timers window (the same as its switch in settings).</summary>
+    public string ToggleBossTimersHotkey { get; set; } = "";
 
     /// <summary>The main window shows only its header and my own row.</summary>
     public bool Compact { get; set; }
