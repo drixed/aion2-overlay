@@ -12,7 +12,7 @@
 | `AionDpsMeter.UI/Pages/MainDpsPage.razor` | +2 строки: `<ForkMainSwitch>` и `</ForkMainSwitch>` вокруг блока стилей апстрима (сами строки апстрима не тронуты) — панель боя или стили апстрима, переключается сразу |
 | `AionDpsMeter.Core/Models/Mob.cs` | `IsBoss`: цель без кода (спаун не увиден — метр запущен посреди данжа) считается боссом, если её HP хоть раз был ≥ 1 млн (`HpMaxSeen`, `UnknownBossHp`): у боссов 3,6 млн+, у обычных мобов до ~300 тыс.; `HpTotal` не бывает меньше `HpMaxSeen` — разбор пакета моба иногда даёт мусор (67), и полоса HP босса стояла на 100% |
 | `AionDpsMeter.UI/Pages/SettingsPage.razor` | +4 строки с пометкой `aion2-overlay fork`: `<ForkSettings Section="…"/>` в конце вкладок appearance, hotkeys, tracking и новые секции `fork-timers` и `fork-records` (`<ForkRecords/>`); `@inject TimersOptionsStore`; в «Window layout» третий вариант «Панель боя», выбор стиля апстрима переключает на него (`ForkUpstreamStyle`, блок `@code` в конце) |
-| `AionDpsMeter.UI/Pages/SettingsPage.razor.css` | в конце: превью «Панели боя» и три колонки в `.style-picker` |
+| `AionDpsMeter.UI/Pages/SettingsPage.razor.css` | в конце: превью «Панели боя», три колонки в `.style-picker`, вкладки переносятся на вторую строку (их больше, чем влезает в окно, а прокрутка у апстрима скрыта) |
 | `AionDpsMeter.Core/Models/Player.cs` | +`GearScore` (ГС) |
 | `AionDpsMeter.Services/PacketProcessing/Processors/PartyProcessor.cs` | +1 строка: `GearScore` из списка группы (апстрим его читал, но выбрасывал) |
 | `AionDpsMeter.Services/Services/Entity/EntityTracker.cs` | +3 строки: `GearScore` переносится вместе с `CombatPower` |

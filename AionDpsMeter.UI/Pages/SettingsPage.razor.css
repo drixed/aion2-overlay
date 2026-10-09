@@ -640,3 +640,6 @@
     opacity: 0.35;
 }
 .style-picker { grid-template-columns: repeat(3, 1fr); } /* aion2-overlay fork: three layouts */
+/* aion2-overlay fork: more tabs than fit in the window (Timers, Records) — wrap to a second row instead of a hidden scroll */
+.settings-tabs { flex-wrap: wrap; overflow-x: visible; }
+.settings-tab { padding: 9px 10px; }
