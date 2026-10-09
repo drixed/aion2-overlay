@@ -45,6 +45,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             }
             alertRunner.Start();
             DisposedWebViewGuard.Install(logger);
+            UpdaterSelfUpdate.Apply(logger);
             if (options.Current.ShowBossTimers) OpenWindow();
         }
 
