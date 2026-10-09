@@ -16,12 +16,19 @@ namespace AionDpsMeter.Core.Models
         public long HpCurrent
         {
             get;
-            set { field = value; HpMaxSeen = Math.Max(HpMaxSeen, value); } // aion2-overlay fork
+            set
+            {
+                if (value > MaxPlausibleHp) return; // aion2-overlay fork: a player's HP packet read as junk (4.5e18 after PvP)
+                field = value;
+                HpMaxSeen = Math.Max(HpMaxSeen, value); // aion2-overlay fork
+            }
         }
         /// <summary>aion2-overlay fork: the highest HP seen, so a target whose spawn the meter missed can be sized.</summary>
         public long HpMaxSeen { get; private set; }
         /// <summary>aion2-overlay fork: bosses in dungeons have 3.6M+ HP, ordinary mobs at most ~300K.</summary>
         public const long UnknownBossHp = 1_000_000;
+        /// <summary>aion2-overlay fork: real HP fits in 32 bits (bosses 1M–100M in packet logs); beyond it is junk.</summary>
+        public const long MaxPlausibleHp = uint.MaxValue;
         //public new string Name => GetMobName();
         //public bool IsBoss => CanBeBoss();
 
