@@ -1,7 +1,8 @@
 namespace AionDpsMeter.Timers.Records;
 
 /// <param name="MyDamage">The user's own damage in the fight (0 when the user did not hit).</param>
-public sealed record FightResult(string Boss, long HpTotal, long TotalDamage, TimeSpan Duration, long MyDamage, DateTime EndedAt);
+/// <param name="SessionId">The fight in upstream's history, so a record can open its details.</param>
+public sealed record FightResult(string Boss, long HpTotal, long TotalDamage, TimeSpan Duration, long MyDamage, DateTime EndedAt, Guid? SessionId = null);
 
 public enum RecordNews { None, FirstKill, FasterKill, BetterMyDps }
 
@@ -17,6 +18,9 @@ public sealed class BossRecord
     public TimeSpan? PreviousBestKill { get; set; }
     public double BestPartyDps { get; set; }
     public double BestMyDps { get; set; }
+    /// <summary>The fights the records were set in (upstream's history keeps them 30 days).</summary>
+    public Guid? BestKillSession { get; set; }
+    public Guid? BestMyDpsSession { get; set; }
     public TimeSpan LastKill { get; set; }
     public DateTime LastKillAt { get; set; }
 }
@@ -60,6 +64,7 @@ public sealed class BossRecordBook
             {
                 Boss = f.Boss, HpTotal = f.HpTotal, Kills = 1,
                 BestKill = f.Duration, BestKillAt = f.EndedAt, BestPartyDps = partyDps, BestMyDps = myDps,
+                BestKillSession = f.SessionId, BestMyDpsSession = f.SessionId,
                 LastKill = f.Duration, LastKillAt = f.EndedAt,
             };
             return RecordNews.FirstKill;
@@ -73,6 +78,7 @@ public sealed class BossRecordBook
         if (myDps > r.BestMyDps)
         {
             r.BestMyDps = myDps;
+            r.BestMyDpsSession = f.SessionId;
             news = RecordNews.BetterMyDps;
         }
         if (f.Duration < r.BestKill)
@@ -80,6 +86,7 @@ public sealed class BossRecordBook
             r.PreviousBestKill = r.BestKill;
             r.BestKill = f.Duration;
             r.BestKillAt = f.EndedAt;
+            r.BestKillSession = f.SessionId;
             news = RecordNews.FasterKill; // the bigger news wins
         }
         return news;
@@ -92,6 +99,9 @@ public sealed class BossRecordBook
     }
 
     public void Clear() => records.Clear();
+
+    /// <summary>Adds a saved record unless the boss already has one.</summary>
+    public void Keep(BossRecord record) => records.TryAdd(Key(record.Boss, record.HpTotal), record);
 
     private static string Key(string boss, long hpTotal) => $"{boss}|{hpTotal}";
 }

@@ -43,6 +43,20 @@ public class BossRecordBookTests
         Assert.Equal(TimeSpan.FromSeconds(70), book.For("Red Spark Ignus", 8_208_000)!.BestKill);
     }
 
+    /// <summary>A click on a record opens that fight's details from the history.</summary>
+    [Fact]
+    public void Records_remember_the_fight_they_were_set_in()
+    {
+        var book = new BossRecordBook();
+        Guid first = Guid.NewGuid(), faster = Guid.NewGuid(), stronger = Guid.NewGuid();
+        book.Add(Kill("Red Spark Ignus", 80, myDamage: 1_000_000) with { SessionId = first });
+        book.Add(Kill("Red Spark Ignus", 68, myDamage: 900_000) with { SessionId = faster });
+        book.Add(Kill("Red Spark Ignus", 75, myDamage: 1_600_000) with { SessionId = stronger });
+        var r = book.For("Red Spark Ignus", 8_208_000)!;
+        Assert.Equal(faster, r.BestKillSession);
+        Assert.Equal(stronger, r.BestMyDpsSession);
+    }
+
     [Fact]
     public void A_slower_and_weaker_kill_only_counts()
     {

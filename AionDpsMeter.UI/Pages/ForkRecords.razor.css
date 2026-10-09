@@ -12,3 +12,8 @@
     transition: background-color 120ms ease, color 120ms ease; }
 .fs-segmented__option:hover { color: var(--text); background: var(--panel-raised); }
 .fs-button { border: 1px solid var(--line-strong); border-radius: 6px; }
+.fr-hint { font-size: 11px; opacity: .6; margin: -4px 2px 6px; }
+.fr-message { font-size: 12px; color: #e8c547; margin: 4px 2px; }
+.fr-click { cursor: pointer; }
+.fr-click:hover { background: rgba(255,255,255,.08); }
+.fr-link { text-decoration: underline dotted; cursor: pointer; }

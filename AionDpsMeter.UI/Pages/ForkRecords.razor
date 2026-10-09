@@ -4,8 +4,15 @@
 @using System.Globalization
 @implements IDisposable
 @inject BossRecords Records
+@inject AionDpsMeter.Services.Services.Session.CombatSessionManager Sessions
+@inject AionDpsMeter.Services.Services.Settings.IAppSettingsService Settings
 
 <div class="fs-label">РЕКОРДЫ ПО БОССАМ</div>
+<p class="fr-hint">Нажми на строку — откроется лучший бой с этим боссом (урон по умениям, баффы, график); на «Твой DPS» — бой с твоим лучшим DPS.</p>
+@if (message is not null)
+{
+    <p class="fr-message">@message</p>
+}
 @if (rows.Count == 0)
 {
     <p class="fr-empty">Пока пусто. Рекорд появится после первого убийства босса.</p>
@@ -18,11 +25,11 @@ else
         </div>
         @foreach (var r in rows)
         {
-            <div class="fr-row" title="@($"HP {Hp(r.HpTotal)} · рекорд {r.BestKillAt:dd.MM HH:mm} · последний бой {RecordText.Time(r.LastKill)}")">
+            <div class="fr-row fr-click" @onclick="() => Open(r.BestKillSession)" title="@($"HP {Hp(r.HpTotal)} · рекорд {r.BestKillAt:dd.MM HH:mm} · последний бой {RecordText.Time(r.LastKill)}")">
                 <span class="fr-boss">@r.Boss <small>@Hp(r.HpTotal)</small></span>
                 <span class="fr-best">@RecordText.Time(r.BestKill)</span>
                 <span>@DamageFormatter.Format(r.BestPartyDps)/s</span>
-                <span>@(r.BestMyDps > 0 ? DamageFormatter.Format(r.BestMyDps) + "/s" : "—")</span>
+                <span class="fr-link" @onclick="() => Open(r.BestMyDpsSession)" @onclick:stopPropagation="true">@(r.BestMyDps > 0 ? DamageFormatter.Format(r.BestMyDps) + "/s" : "—")</span>
                 <span>@r.Kills</span>
             </div>
         }
@@ -44,6 +51,23 @@ else
 @code {
     private IReadOnlyList<BossRecord> rows = [];
     private bool confirmClear;
+    private string? message;
+
+    /// <summary>Opens the fight in upstream's history window, the same one the history list opens.</summary>
+    private void Open(Guid? sessionId)
+    {
+        message = null;
+        var fight = sessionId is { } id ? Sessions.GetHistorySession(id) : null;
+        if (fight is null)
+        {
+            message = "Подробностей этого боя уже нет: история боёв хранится 30 дней. Следующий рекорд откроется.";
+            return;
+        }
+        new AionDpsMeter.UI.HistorySessionWindow(Settings)
+        {
+            DataContext = new AionDpsMeter.UI.ViewModels.History.HistorySessionViewModel(fight, Settings),
+        }.Show();
+    }
 
     protected override void OnInitialized()
     {

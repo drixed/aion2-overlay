@@ -21,6 +21,11 @@ public sealed class BossRecords(string path, TimeProvider time, ILogger<BossReco
     private readonly HashSet<Guid> seen = [];
     private bool loaded;
     private bool needsBackfill;
+    /// <summary>Records from before they knew their fights: rebuilt from history once, the rest kept.</summary>
+    private List<BossRecord>? legacy;
+
+    private sealed record FileV2(int Version, List<BossRecord> Records);
+    private const int Version = 2;
 
     public event Action? Changed;
 
@@ -41,7 +46,7 @@ public sealed class BossRecords(string path, TimeProvider time, ILogger<BossReco
     {
         RecordNews news;
         BossRecord? record;
-        var result = ResultOf(fight, fight.PlayerStats.FirstOrDefault(p => p.IsUser)?.TotalDamage ?? 0);
+        var result = ResultOf(fight, fight.PlayerStats.FirstOrDefault(p => p.IsUser)?.TotalDamage ?? 0) with { SessionId = fight.SessionId };
         lock (gate)
         {
             EnsureLoaded();
@@ -73,12 +78,15 @@ public sealed class BossRecords(string path, TimeProvider time, ILogger<BossReco
                 .ToList();
             lock (gate)
             {
+                if (legacy is not null) book.Clear(); // rebuilt with the fights, the old ones come back below if missing
                 foreach (var item in kills)
                 {
                     if (!seen.Add(item.SessionId)) continue;
                     var my = history.GetSession(item.SessionId)?.PlayerStats.FirstOrDefault(p => p.IsUser)?.TotalDamage ?? 0;
-                    book.Add(new FightResult(item.TargetName, item.TargetHpTotal, item.TotalDamage, item.Duration, my, item.SessionEnd));
+                    book.Add(new FightResult(item.TargetName, item.TargetHpTotal, item.TotalDamage, item.Duration, my, item.SessionEnd, item.SessionId));
                 }
+                foreach (var old in legacy ?? []) book.Keep(old); // bosses no longer in history keep their records
+                legacy = null;
                 Save(); // also when empty: the file marks the backfill as done
             }
             logger.LogInformation("Boss records filled from history: {Kills} kills", kills.Count);
@@ -112,8 +120,18 @@ public sealed class BossRecords(string path, TimeProvider time, ILogger<BossReco
         needsBackfill = !File.Exists(path);
         try
         {
-            if (File.Exists(path))
-                book.Import(JsonSerializer.Deserialize<List<BossRecord>>(File.ReadAllText(path), Json) ?? []);
+            if (!File.Exists(path)) return;
+            var text = File.ReadAllText(path);
+            if (text.TrimStart().StartsWith('['))
+            {
+                legacy = JsonSerializer.Deserialize<List<BossRecord>>(text, Json) ?? [];
+                book.Import(legacy);
+                needsBackfill = true;
+            }
+            else
+            {
+                book.Import(JsonSerializer.Deserialize<FileV2>(text, Json)?.Records ?? []);
+            }
         }
         catch (Exception ex)
         {
@@ -126,7 +144,7 @@ public sealed class BossRecords(string path, TimeProvider time, ILogger<BossReco
         try
         {
             var tmp = path + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(book.All.ToList(), Json));
+            File.WriteAllText(tmp, JsonSerializer.Serialize(new FileV2(Version, book.All.ToList()), Json));
             File.Move(tmp, path, overwrite: true);
         }
         catch (Exception ex)

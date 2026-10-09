@@ -74,6 +74,25 @@ public sealed class BossRecordsTests : IDisposable
         Assert.Equal(2, again.For("Red Spark Ignus", 8_208_000)!.Kills);
     }
 
+    /// <summary>Records saved before they knew their fights (a plain list) are rebuilt from history once; a boss no
+    /// longer in history keeps its old record.</summary>
+    [Fact]
+    public void Old_records_are_rebuilt_from_history_once()
+    {
+        File.WriteAllText(path, """[{"Boss":"Red Spark Ignus","HpTotal":8208000,"Kills":1,"BestKill":"00:01:30"},{"Boss":"Old Boss","HpTotal":5000000,"Kills":4,"BestKill":"00:02:00"}]""");
+        var kill = Fight(80);
+        NewRecords().BackfillIfNew(new FakeHistory([kill]));
+
+        var records = NewRecords();
+        var ignus = records.For("Red Spark Ignus", 8_208_000)!;
+        Assert.Equal(kill.SessionId, ignus.BestKillSession);
+        Assert.Equal(TimeSpan.FromSeconds(80), ignus.BestKill);
+        Assert.Equal(4, records.For("Old Boss", 5_000_000)!.Kills);
+
+        records.BackfillIfNew(new FakeHistory([kill, Fight(60)])); // already rebuilt: nothing happens
+        Assert.Equal(1, records.For("Red Spark Ignus", 8_208_000)!.Kills);
+    }
+
     private sealed class FakeHistory(List<HistorySessionSnapshot> sessions) : ICombatHistoryStore
     {
         public List<HistorySessionSnapshot> Sessions { get; } = sessions;
