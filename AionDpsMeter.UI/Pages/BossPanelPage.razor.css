@@ -54,7 +54,7 @@
 .bp-row > span { position: relative; z-index: 1; }
 .bp-row-icon { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, .25); background-size: cover; }
 .bp-row-name { font-weight: 700; min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
-.bp-row-cp { font-size: 11px; opacity: .75; }
+.bp-row-cp { font-size: 11px; opacity: .75; white-space: nowrap; }
 .bp-row-death { font-size: 11px; color: #ff8f8f; }
 .bp-row-dmg { font-size: 12px; opacity: .85; font-variant-numeric: tabular-nums; }
 .bp-row-dps { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 58px; text-align: right; }

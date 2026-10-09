@@ -1,4 +1,5 @@
-@page "/settings"
+﻿@page "/settings"
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore ForkOptions
 
 
 <div class="settings-shell">
@@ -40,13 +41,19 @@
             <div class="settings-section-label">WINDOW LAYOUT</div>
 
             <div class="style-picker" role="radiogroup" aria-label="Window layout">
+                @* aion2-overlay fork: the boss panel is a third main-window layout *@
+                <button type="button" class="style-option @(ForkOptions.Current.UseBossPanel ? "is-selected" : "")" role="radio"
+                        aria-checked="@(ForkOptions.Current.UseBossPanel ? "true" : "false")" @onclick="ForkBossPanel">
+                    <span class="style-option__preview style-option__preview--boss"></span>
+                    <span class="style-option__label">Панель боя</span>
+                </button>
                 @foreach (var style in _uiStyles)
                 {
                     <button type="button"
-                            class="style-option @(settings.UiStyle == style.Value ? "is-selected" : "")"
+                            class="style-option @(!ForkOptions.Current.UseBossPanel && settings.UiStyle == style.Value ? "is-selected" : "")"
                             role="radio"
-                            aria-checked="@(settings.UiStyle == style.Value ? "true" : "false")"
-                            @onclick="() => SetUiStyle(style.Value)">
+                            aria-checked="@(!ForkOptions.Current.UseBossPanel && settings.UiStyle == style.Value ? "true" : "false")"
+                            @onclick="() => ForkUpstreamStyle(style.Value)">
                         <span class="style-option__preview style-option__preview--@style.PreviewClass"></span>
                         <span class="style-option__label">@style.Label</span>
                     </button>
@@ -427,3 +434,19 @@
     </main>
 </div>
 
+@code {
+    // aion2-overlay fork: which main window to show (see the layout picker above)
+    private void ForkBossPanel() => ForkMainStyle("boss");
+
+    private void ForkUpstreamStyle(int value)
+    {
+        SetUiStyle(value);
+        ForkMainStyle("upstream");
+    }
+
+    private void ForkMainStyle(string style)
+    {
+        ForkOptions.Current.MainStyle = style;
+        ForkOptions.Save();
+    }
+}

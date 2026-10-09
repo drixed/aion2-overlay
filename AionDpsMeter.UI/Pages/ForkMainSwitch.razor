@@ -1,0 +1,24 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The main window shows the boss panel or upstream's layouts
+   (ChildContent); it switches as soon as the layout is picked in settings. *@
+@implements IDisposable
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore Options
+
+@if (Options.Current.UseBossPanel)
+{
+    <BossPanelPage ViewModel="@ViewModel" />
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public AionDpsMeter.UI.ViewModels.MainDpsViewModel? ViewModel { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized() => Options.Changed += OnChanged;
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Options.Changed -= OnChanged;
+}

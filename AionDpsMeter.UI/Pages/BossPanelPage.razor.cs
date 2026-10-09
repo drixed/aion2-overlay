@@ -76,6 +76,15 @@ namespace AionDpsMeter.UI.Pages
                 ? DamageFormatter.Format(dps.Active)
                 : player.DpsFormatted;
 
+        /// <summary>БМ, ГС, both or nothing next to the name, as picked in settings.</summary>
+        private string PowerOf(PlayerRenderState player)
+        {
+            int gearScore;
+            try { gearScore = entities.GetPlayerEntity((int)player.PlayerId)?.GearScore ?? 0; }
+            catch (Exception) { gearScore = 0; }
+            return PowerText.Format(Options.PowerColumn, player.CombatPower, gearScore);
+        }
+
         private int LevelOf(long playerId)
         {
             try { return entities.GetPlayerEntity((int)playerId)?.CharacterLevel ?? 0; }

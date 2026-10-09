@@ -9,6 +9,9 @@ namespace AionDpsMeter.UI.Pages
     /// <summary>The fork's settings as blocks of RATmeter's settings window: "appearance", "tracking", "hotkeys", "timers".</summary>
     public partial class ForkSettings(TimersOptionsStore store, AionDpsMeter.Timers.Schedule.ScheduleSource schedule) : ComponentBase
     {
+        private static readonly (PowerColumn Mode, string Label)[] PowerModes =
+            [(PowerColumn.CombatPower, "БМ"), (PowerColumn.GearScore, "ГС"), (PowerColumn.Both, "Оба"), (PowerColumn.None, "Нет")];
+
         private sealed record AlertRow(string MuteKey, string Title, string Description, FeedKind Kind);
 
         /// <summary>One row per scheduled event (from schedule.json) plus one for all field bosses.</summary>

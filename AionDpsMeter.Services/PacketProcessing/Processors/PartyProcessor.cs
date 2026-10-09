@@ -47,7 +47,8 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                         ServerName = partyMember.ServerName,
                         Name = partyMember.Name,
                         CharacterLevel = (int)partyMember.CharactedLevel,
-                        CombatPower = (int)(partyMember.CombatPower ?? 0)
+                        CombatPower = (int)(partyMember.CombatPower ?? 0),
+                        GearScore = (int)(partyMember.GearScore ?? 0), // aion2-overlay fork
                     });
                 }
             }

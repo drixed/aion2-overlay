@@ -621,3 +621,22 @@
         transition: none !important;
     }
 }
+
+/* aion2-overlay fork: boss panel — a card with an HP bar over the player rows */
+.style-option__preview--boss::before {
+    content: "";
+    position: absolute;
+    top: 5px; left: 8px; right: 8px; height: 12px;
+    border: 1px solid var(--text-dim);
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--text-dim) 0 65%, transparent 65%) center / 100% 3px no-repeat;
+    opacity: 0.6;
+}
+.style-option__preview--boss::after {
+    content: "";
+    position: absolute;
+    top: 22px; left: 8px; right: 8px; bottom: 6px;
+    background: repeating-linear-gradient( to bottom, var(--text-dim) 0px, var(--text-dim) 3px, transparent 3px, transparent 8px );
+    opacity: 0.35;
+}
+.style-picker { grid-template-columns: repeat(3, 1fr); } /* aion2-overlay fork: three layouts */

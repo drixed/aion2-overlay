@@ -84,7 +84,7 @@
                     <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
                     <span class="bp-row-icon" style="background-image:url('/images/classes/@(player.ClassId).png')"></span>
                     <span class="bp-row-name">@player.PlayerNameDisplay</span>
-                    <span class="bp-row-cp">@ViewModel.GetCombatScoreDisplay(player)</span>
+                    <span class="bp-row-cp">@PowerOf(player)</span>
                     <span class="bp-row-death">@player.DeathsDisplay</span>
                     @if (!Options.HideTotalDamage)
                     {

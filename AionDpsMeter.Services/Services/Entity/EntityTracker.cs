@@ -1,4 +1,4 @@
-using AionDpsMeter.Core.Models;
+﻿using AionDpsMeter.Core.Models;
 using System.Diagnostics;
 
 namespace AionDpsMeter.Services.Services.Entity
@@ -152,6 +152,7 @@ namespace AionDpsMeter.Services.Services.Entity
             identity.Name = data.Name;
             identity.CharacterLevel = data.CharacterLevel;
             identity.CombatPower = data.CombatPower;
+            if (data.GearScore > 0) identity.GearScore = data.GearScore; // aion2-overlay fork
             identity.ServerId = data.ServerId;
             identity.ServerName = data.ServerName;
             if (data.CharacterClass != null) identity.CharacterClass = data.CharacterClass;
@@ -178,6 +179,7 @@ namespace AionDpsMeter.Services.Services.Entity
                     Name = session.Name,
                     CharacterLevel = session.CharacterLevel,
                     CombatPower = session.CombatPower,
+                    GearScore = session.GearScore, // aion2-overlay fork
                     ServerId = session.ServerId,
                     ServerName = session.ServerName,
                     CharacterClass = session.CharacterClass,
@@ -211,6 +213,7 @@ namespace AionDpsMeter.Services.Services.Entity
 
             session.CharacterLevel = identity.CharacterLevel;
             session.CombatPower = identity.CombatPower;
+            if (identity.GearScore > 0) session.GearScore = identity.GearScore; // aion2-overlay fork
             session.ServerId = identity.ServerId;
             if (!string.IsNullOrEmpty(identity.ServerName)) session.ServerName = identity.ServerName;
             session.CharacterClass ??= identity.CharacterClass;
