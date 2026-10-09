@@ -44,11 +44,17 @@ jobs:
           git remote add upstream https://github.com/Kuroukihime/AIon2-Dps-Meter.git
           git fetch upstream master
           $before = git rev-parse HEAD
-          git merge --no-edit upstream/master
+          git merge --no-ff --no-commit upstream/master
           if ($LASTEXITCODE -ne 0) {
             git diff --name-only --diff-filter=U | Out-File conflicts.txt
             git merge --abort
             exit 1
+          }
+          if (Test-Path .git/MERGE_HEAD) {
+            # Upstream's own GitHub workflows (e.g. guard-master.yml) stay out of the fork: ours run here.
+            git diff --cached --name-only --diff-filter=A -- .github/workflows | ForEach-Object { git rm -q -f -- $_ }
+            git checkout HEAD -- .github/workflows
+            git commit --no-edit -q
           }
           $after = git rev-parse HEAD
           "merged=$($after -ne $before)" >> $env:GITHUB_OUTPUT
@@ -65,7 +71,15 @@ jobs:
       - name: Push merge
         if: steps.merge.outputs.merged == 'True'
         shell: pwsh
-        run: git push origin HEAD:master
+        run: |
+          git push origin HEAD:master
+          if ($LASTEXITCODE -ne 0) {
+            # Usually upstream committed a workflow file, which the default token may not push even when the merge
+            # drops it. Release our own code anyway; the owner merges once by hand (or adds SYNC_TOKEN).
+            Write-Output "::warning::Upstream merge could not be pushed (workflow files?); releasing without it"
+            git reset --hard origin/master
+          }
+          exit 0
 
       - name: Decide release
         id: decide
