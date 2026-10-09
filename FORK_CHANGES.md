@@ -11,12 +11,12 @@
 | `AionDpsMeter.Services/Services/Update/UpdateCheckerService.cs` | `ReleasesApiUrl` → релизы `drixed/aion2-overlay` |
 | `AionDpsMeter.UI/Pages/MainDpsPage.razor` | +2 строки: `<ForkMainSwitch>` и `</ForkMainSwitch>` вокруг блока стилей апстрима (сами строки апстрима не тронуты) — панель боя или стили апстрима, переключается сразу |
 | `AionDpsMeter.Core/Models/Mob.cs` | `IsBoss`: цель без кода (спаун не увиден — метр запущен посреди данжа) считается боссом, если её HP хоть раз был ≥ 1 млн (`HpMaxSeen`, `UnknownBossHp`): у боссов 3,6 млн+, у обычных мобов до ~300 тыс.; `HpTotal` не бывает меньше `HpMaxSeen` — разбор пакета моба иногда даёт мусор (67), и полоса HP босса стояла на 100% |
-| `AionDpsMeter.UI/Pages/SettingsPage.razor` | +4 строки с пометкой `aion2-overlay fork`: `<ForkSettings Section="…"/>` в конце вкладок appearance, hotkeys, tracking и новая секция `fork-timers`; `@inject TimersOptionsStore`; в «Window layout» третий вариант «Панель боя», выбор стиля апстрима переключает на него (`ForkUpstreamStyle`, блок `@code` в конце) |
+| `AionDpsMeter.UI/Pages/SettingsPage.razor` | +4 строки с пометкой `aion2-overlay fork`: `<ForkSettings Section="…"/>` в конце вкладок appearance, hotkeys, tracking и новые секции `fork-timers` и `fork-records` (`<ForkRecords/>`); `@inject TimersOptionsStore`; в «Window layout» третий вариант «Панель боя», выбор стиля апстрима переключает на него (`ForkUpstreamStyle`, блок `@code` в конце) |
 | `AionDpsMeter.UI/Pages/SettingsPage.razor.css` | в конце: превью «Панели боя» и три колонки в `.style-picker` |
 | `AionDpsMeter.Core/Models/Player.cs` | +`GearScore` (ГС) |
 | `AionDpsMeter.Services/PacketProcessing/Processors/PartyProcessor.cs` | +1 строка: `GearScore` из списка группы (апстрим его читал, но выбрасывал) |
 | `AionDpsMeter.Services/Services/Entity/EntityTracker.cs` | +3 строки: `GearScore` переносится вместе с `CombatPower` |
-| `AionDpsMeter.UI/Pages/SettingsPage.razor.cs` | +1 строка в `_groups`: вкладка `fork-timers` ("Timers") |
+| `AionDpsMeter.UI/Pages/SettingsPage.razor.cs` | +2 строки в `_groups`: вкладки `fork-timers` ("Timers") и `fork-records` ("Records") |
 | `AionDpsMeter.UI/Converters/SafeImageSourceConverter.cs` | иконка умения, которой ещё нет в кэше, грузится прямо по ссылке (`LoadRemote`): обновление после скачивания у апстрима не срабатывало, и иконки появлялись только при повторном открытии окна |
 | `AionDpsMeter.UI/wwwroot/index.html` | +2 строки: `<script src="js/ru.js">` и `<script src="js/fit.js">` перед `blazor.webview.js` |
 
@@ -33,6 +33,7 @@
 - `AionDpsMeter.UI/wwwroot/js/fit.js` — высота главного окна по содержимому
 - `AionDpsMeter.UI/Pages/ForkSettings.*` — настройки форка внутри окна настроек RATmeter
 - `AionDpsMeter.UI/Pages/ForkMainSwitch.razor` — панель боя или стили апстрима в главном окне
+- `AionDpsMeter.UI/Pages/ForkRecords.*` — вкладка «Рекорды» (рекорды по боссам; сами рекорды — `AionDpsMeter.Timers/Records`, файл `boss-records.json`; хранилище истории апстрима обёрнуто `RecordingHistoryStore`)
 - `AionDpsMeter.UI/Services/TimerWindow/CubeMapWindow.cs` — окно «Карта кубов» (🗺)
 - `AionDpsMeter.UI/Services/TimerWindow/WindowBoundsKeeper.cs` — сохраняет место и размер главного окна, таймеров и карты кубов через секунду после перемещения или изменения размера (upstream сохранял главное окно только при закрытии, остальные — только при перетаскивании)
 

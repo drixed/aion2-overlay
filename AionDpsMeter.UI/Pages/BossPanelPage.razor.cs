@@ -27,6 +27,7 @@ namespace AionDpsMeter.UI.Pages
         EntityTracker entities,
         CubeMapWindow cubeMap,
         AlertRunner alertRunner,
+        AionDpsMeter.Timers.Records.BossRecords records,
         IJSRuntime js,
         IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
@@ -35,6 +36,28 @@ namespace AionDpsMeter.UI.Pages
         public MainDpsViewModel? ViewModel { get; set; }
 
         private BossFightView? Fight;
+        private AionDpsMeter.Timers.Records.BossRecord? FightRecord;
+        private static readonly TimeSpan RecordNewsFor = TimeSpan.FromSeconds(30);
+
+        /// <summary>The record line under the boss card: best kill, own best DPS, and the pace once it can be estimated.</summary>
+        private (string Text, string? Pace, bool Faster)? RecordLine(BossFightView f)
+        {
+            if (FightRecord is not { } r) return null;
+            var text = $"Рекорд {AionDpsMeter.Timers.Records.RecordText.Time(r.BestKill)}" + (r.BestMyDps > 0 ? $" · твой {DamageFormatter.Format(r.BestMyDps)}/s" : "");
+            var delta = AionDpsMeter.Timers.Records.BossPace.Delta(r, f.Elapsed, f.ToKill);
+            return (text, delta is { } d ? AionDpsMeter.Timers.Records.RecordText.Pace(d) : null, delta is { } d2 && d2 < TimeSpan.Zero);
+        }
+
+        /// <summary>"New record" for half a minute after the kill.</summary>
+        private string? RecordNews()
+        {
+            if (!Options.ShowRecords || records.Latest is not { } n || now - n.At > RecordNewsFor) return null;
+            var boss = n.Record.Boss;
+            return n.News == AionDpsMeter.Timers.Records.RecordNews.FasterKill
+                ? $"Новый рекорд: {boss} за {AionDpsMeter.Timers.Records.RecordText.Time(n.Record.BestKill)}"
+                  + (n.Record.PreviousBestKill is { } p ? $" (−{AionDpsMeter.Timers.Records.RecordText.Time(p - n.Record.BestKill)})" : "")
+                : $"Твой лучший DPS на {boss}: {DamageFormatter.Format(n.MyDps)}/s";
+        }
         private bool fightIsBoss;
         private bool noticeOpen;
         private string? snoozedNotice; // «Напомнить позже»: hidden until the app restarts
@@ -193,6 +216,7 @@ namespace AionDpsMeter.UI.Pages
                         sessions.GetCombatDuration(),
                         BossFight.EnrageFor(target.MobCode, fightIsBoss, tracker.IsFieldBoss(target.MobCode), schedule.Current.Enrage))
                     : null;
+                FightRecord = Fight is not null && fightIsBoss && Options.ShowRecords ? records.For(target!.Name, target.HpTotal) : null;
                 // The rift and the next other event each get a line, so hourly events never push the rift out.
                 var upcoming = TimersFeed.BuildSchedule(now, schedule.Current).Where(options.Current.Shows).ToList();
                 NextRift = upcoming.FirstOrDefault(i => i.Kind == FeedKind.Rift);

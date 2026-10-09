@@ -48,6 +48,9 @@ public sealed class TimersOptions
     /// <summary>The main window shows only its header and my own row.</summary>
     public bool Compact { get; set; }
 
+    /// <summary>The boss card shows the boss's records and the pace against them; a new record gets a banner.</summary>
+    public bool ShowRecords { get; set; } = true;
+
     /// <summary>Next to a player's name in the main window: БМ, ГС, both or nothing.</summary>
     public AionDpsMeter.Timers.Overlay.PowerColumn PowerColumn { get; set; } = AionDpsMeter.Timers.Overlay.PowerColumn.CombatPower;
     /// <summary>The field boss timers window is shown.</summary>

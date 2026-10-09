@@ -1,5 +1,8 @@
 using AionDpsMeter.Services.PacketProcessing.Fork;
+using AionDpsMeter.Services.Services.Session.Persistence;
 using AionDpsMeter.Timers.Bosses;
+using AionDpsMeter.Timers.Records;
+using Microsoft.Extensions.Logging;
 using AionDpsMeter.Timers.Energy;
 using AionDpsMeter.Timers.Zones;
 using AionDpsMeter.Timers.Feed;
@@ -41,6 +44,15 @@ public static class TimersServiceCollectionExtensions
         services.AddSingleton<IEnergyListener, EnergyListener>();
         services.AddSingleton<ZoneTracker>();
         services.AddSingleton<IMapLoadListener, MapLoadListener>();
+        services.AddSingleton(sp => new BossRecords(TimersPaths.Of("boss-records.json"),
+            sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<BossRecords>>()));
+        // Upstream's history store (AddCombatHistoryPersistence, registered before us), wrapped so every saved fight
+        // reaches the records. Without upstream's store (tests) there is nothing to wrap.
+        if (services.Any(d => d.ServiceType == typeof(ICombatHistoryStore)))
+        {
+            services.TryAddSingleton<CombatHistoryStore>();
+            services.AddSingleton<ICombatHistoryStore, RecordingHistoryStore>();
+        }
         services.AddHostedService<TimersHostedService>();
         return services;
     }

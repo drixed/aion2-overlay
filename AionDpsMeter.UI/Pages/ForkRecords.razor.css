@@ -1,0 +1,14 @@
+.fr-empty { opacity: .7; font-size: 12px; margin: 6px 0; }
+.fr-table { display: flex; flex-direction: column; gap: 2px; margin: 6px 0 10px; }
+.fr-row { display: grid; grid-template-columns: minmax(0, 2.2fr) 1fr 1fr 1fr .6fr; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; background: rgba(255,255,255,.03); font-size: 12px; font-variant-numeric: tabular-nums; }
+.fr-head { background: none; opacity: .6; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.fr-boss { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.fr-boss small { opacity: .55; font-weight: 400; margin-left: 4px; }
+.fr-best { color: #e8c547; font-weight: 700; }
+.fr-actions { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.fs-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; color: var(--text-dim); padding: 0 2px 8px; }
+.fs-segmented__option { padding: 6px 10px; font-size: 11px; font-weight: 500; font-family: var(--font-ui); color: var(--text-dim);
+    background: var(--panel); border: none; border-left: 1px solid var(--line-strong); cursor: pointer; white-space: nowrap;
+    transition: background-color 120ms ease, color 120ms ease; }
+.fs-segmented__option:hover { color: var(--text); background: var(--panel-raised); }
+.fs-button { border: 1px solid var(--line-strong); border-radius: 6px; }

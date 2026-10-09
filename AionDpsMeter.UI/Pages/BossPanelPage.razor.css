@@ -61,3 +61,5 @@
 .bp-row-dps small { font-weight: 400; opacity: .7; }
 .bp-focus:not(:hover) .bp-header, .bp-focus:not(:hover) .bp-notice, .bp-focus:not(:hover) .bp-footer { display: none; }
 .bp-alert { margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px; background: rgba(255, 170, 0, .9); color: #111; font-weight: 700; font-size: 12px; }
+.bp-record { margin-top: 4px; font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-record-news { margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px; background: linear-gradient(90deg, #8a6a12, #c9a227); color: #111; font-weight: 700; font-size: 12px; }

@@ -1,0 +1,66 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Рекорды" tab of the settings window. *@
+@using AionDpsMeter.Timers.Records
+@using AionDpsMeter.UI.ViewModels
+@using System.Globalization
+@implements IDisposable
+@inject BossRecords Records
+
+<div class="fs-label">РЕКОРДЫ ПО БОССАМ</div>
+@if (rows.Count == 0)
+{
+    <p class="fr-empty">Пока пусто. Рекорд появится после первого убийства босса.</p>
+}
+else
+{
+    <div class="fr-table">
+        <div class="fr-row fr-head">
+            <span>Босс</span><span>Лучшее время</span><span>DPS группы</span><span>Твой DPS</span><span>Убийств</span>
+        </div>
+        @foreach (var r in rows)
+        {
+            <div class="fr-row" title="@($"HP {Hp(r.HpTotal)} · рекорд {r.BestKillAt:dd.MM HH:mm} · последний бой {RecordText.Time(r.LastKill)}")">
+                <span class="fr-boss">@r.Boss <small>@Hp(r.HpTotal)</small></span>
+                <span class="fr-best">@RecordText.Time(r.BestKill)</span>
+                <span>@DamageFormatter.Format(r.BestPartyDps)/s</span>
+                <span>@(r.BestMyDps > 0 ? DamageFormatter.Format(r.BestMyDps) + "/s" : "—")</span>
+                <span>@r.Kills</span>
+            </div>
+        }
+    </div>
+    <div class="fr-actions">
+        @if (confirmClear)
+        {
+            <span>Удалить все рекорды?</span>
+            <button type="button" class="fs-segmented__option fs-button" @onclick="Clear">Да, удалить</button>
+            <button type="button" class="fs-segmented__option fs-button" @onclick="() => confirmClear = false">Нет</button>
+        }
+        else
+        {
+            <button type="button" class="fs-segmented__option fs-button" @onclick="() => confirmClear = true">Сбросить рекорды</button>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<BossRecord> rows = [];
+    private bool confirmClear;
+
+    protected override void OnInitialized()
+    {
+        rows = Records.All();
+        Records.Changed += OnChanged;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(() => { rows = Records.All(); StateHasChanged(); });
+
+    private void Clear()
+    {
+        confirmClear = false;
+        Records.Clear();
+    }
+
+    /// <summary>Difficulty tells apart the same boss with other HP: "8.2M".</summary>
+    private static string Hp(long hp) => (hp / 1_000_000.0).ToString("0.#", CultureInfo.InvariantCulture) + "M";
+
+    public void Dispose() => Records.Changed -= OnChanged;
+}

@@ -47,6 +47,9 @@
                 </div>
             </ValueSlot>
         </SettingRow>
+        <SettingRow Title="Рекорды по боссам" Description="В карточке босса — рекорд и темп относительно него; после боя — плашка «Новый рекорд». Список — во вкладке «Рекорды»">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowRecords" CheckedChanged="v => Set(o => o.ShowRecords = v)" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Только моя группа" Description="Только ты и члены группы; проценты, DPS группы и сводка — по группе">
             <ValueSlot><ToggleSwitch Checked="@O.OnlyMyParty" CheckedChanged="v => Set(o => o.OnlyMyParty = v)" /></ValueSlot>
         </SettingRow>

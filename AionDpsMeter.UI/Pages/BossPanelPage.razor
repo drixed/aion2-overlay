@@ -20,6 +20,10 @@
                 <button type="button" @onclick="ViewModel.Close" @onmousedown:stopPropagation="true" title="Закрыть">✕</button>
             </div>
         </div>
+        @if (RecordNews() is { } recordNews)
+        {
+            <div class="bp-record-news">🏆 @recordNews</div>
+        }
         @if (AlertText is { } alertText)
         {
             <div class="bp-alert">🔔 @alertText</div>
@@ -55,6 +59,10 @@
                     <span class="bp-hp">@Hp(f.HpCurrent) / @Hp(f.HpTotal) · <b>@f.HpPercent.ToString("0", CultureInfo.InvariantCulture)%</b></span>
                 </div>
                 <div class="bp-track"><div class="bp-fill" style="width:@(f.HpPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></div></div>
+                @if (RecordLine(f) is { } rec)
+                {
+                    <div class="bp-record">🏆 @rec.Text @if (rec.Pace is not null) { <b class="@(rec.Faster ? "bp-win" : "bp-rage")">· @rec.Pace</b> }</div>
+                }
                 <div class="bp-card-bottom">
                     <span>До победы <b class="bp-win">@(f.ToKill is { } k ? FeedText.Span(k) : "—")</b></span>
                     @if (ShowPartyDps && Options.ShowPartyDps)
