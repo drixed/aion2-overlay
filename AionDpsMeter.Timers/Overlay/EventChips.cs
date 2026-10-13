@@ -49,7 +49,7 @@ public static class EventChips
         return chips.Select(c => c.Chip).ToList();
     }
 
-    private static readonly TimeSpan NextWithin = TimeSpan.FromHours(6);
+    private static readonly TimeSpan NextWithin = TimeSpan.FromMinutes(10);
 
     private static string Minutes(TimeSpan t)
     {

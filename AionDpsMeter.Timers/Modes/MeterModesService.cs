@@ -34,10 +34,13 @@ public sealed class MeterModesService : IDisposable
     private void OnHit(RawHit h)
     {
         if (h.Damage <= 0 || entities.GetPlayerEntity(h.TargetId) is null) return;
+        var data = AionDpsMeter.Core.GameData.Services.GameDataProvider.Instance;
+        if (data.IsHealingSkill(h.SkillCode)) return; // heals come in the same packet as hits
         var source = entities.GetPlayerEntity(h.ActorId)?.Name is { Length: > 0 } player ? player
             : entities.GetTargetMob(h.ActorId) is { MobCode: > 0 } mob ? mob.Name
             : "Неизвестно";
-        var skill = AionDpsMeter.Core.GameData.Services.GameDataProvider.Instance.GetSkillOrDefault(h.SkillCode)?.Name ?? "";
+        var skill = data.GetSkillOrDefault(h.SkillCode)?.Name ?? "";
+        if (skill.StartsWith("Unknown", StringComparison.OrdinalIgnoreCase)) skill = ""; // monster skills have no names in the data
         Deaths.Add(new IncomingHit(h.TargetId, source, skill, h.Damage, h.Critical, h.At));
     }
 

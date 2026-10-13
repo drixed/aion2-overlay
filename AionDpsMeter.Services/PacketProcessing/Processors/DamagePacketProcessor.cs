@@ -110,12 +110,21 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             if (actorId == targetId) return Fail(PacketProcessResult.ACTORID_EQUALS_TARGETID);
 
             var skillCode = reader.ReadU32();
-            if (!DataValidationHelper.IsReasonableSkillCode((int)skillCode)) return Fail(PacketProcessResult.SKILLCODE_ERROR);
+            // aion2-overlay fork: a monster's skill (1 000 000–9 999 999) is still read to its damage for the death recap
+            var monsterSkill = skillCode is >= 1_000_000 and <= 9_999_999;
+            if (!monsterSkill && !DataValidationHelper.IsReasonableSkillCode((int)skillCode)) return Fail(PacketProcessResult.SKILLCODE_ERROR);
             reader.ReadU8(); // unknown
             var damageType = reader.ReadVarInt();
-            var specialFlags = ReadSpecialBytesBlock(reader, switchValue);
+            SpecialFlags specialFlags;
+            try { specialFlags = ReadSpecialBytesBlock(reader, switchValue); }
+            catch (PacketProcessException) when (monsterSkill) { return Fail(PacketProcessResult.SKILLCODE_ERROR); } // aion2-overlay fork: not worth an error log
             var unknownVarInt = reader.ReadVarInt(); // unknown
             var damage = reader.ReadVarInt();
+            if (monsterSkill) // aion2-overlay fork: to the death recap only; the meter itself ignores these as before
+            {
+                Fork.CombatFeed.PublishHit(new Fork.RawHit((int)actorId, (int)targetId, damage, (int)skillCode, damageType == CriticalDamageType, DateTime.Now));
+                return Fail(PacketProcessResult.SKILLCODE_ERROR);
+            }
 
             var data = new DamagePacketData
             {
