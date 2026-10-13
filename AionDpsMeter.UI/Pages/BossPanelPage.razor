@@ -11,15 +11,6 @@
             <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
             <div class="bp-mode-wrap" @onmousedown:stopPropagation="true">
                 <button type="button" class="bp-mode" @onclick="ToggleModeMenu" title="@ModeHint(Mode)">@ModeLabel(Mode) ▾</button>
-                @if (modeMenuOpen)
-                {
-                    <div class="bp-mode-menu">
-                        @foreach (var m in AllModes)
-                        {
-                            <button type="button" class="@(m == Options.Mode ? "is-on" : "")" title="@ModeHint(m)" @onclick="() => PickMode(m)">@ModeLabel(m)</button>
-                        }
-                    </div>
-                }
             </div>
             <span class="bp-time">@ViewModel.CombatDuration</span>
             <span class="bp-ping" style="color:@ViewModel.PingColor">@ViewModel.PingDisplay</span>
@@ -32,6 +23,16 @@
                 <button type="button" @onclick="ViewModel.Close" @onmousedown:stopPropagation="true" title="Закрыть">✕</button>
             </div>
         </div>
+        @if (modeMenuOpen)
+        {
+            @* a row under the header, not a dropdown: the window fits its content, a dropdown was cut off *@
+            <div class="bp-mode-menu">
+                @foreach (var m in AllModes)
+                {
+                    <button type="button" class="@(m == Options.Mode ? "is-on" : "")" title="@ModeHint(m)" @onclick="() => PickMode(m)">@ModeLabel(m)</button>
+                }
+            </div>
+        }
         @if (RecordNews() is { } recordNews)
         {
             <div class="bp-record-news">🏆 @recordNews</div>
