@@ -81,14 +81,19 @@ public static class ScheduleJson
                         days.Add(day);
                     }
                 }
-                e = new ScheduledEvent(dto.Id, dto.Name, category, ScheduleKind.Fixed, zone, times, days, null, null, duration, dto.Verified);
+                var durations = dto.DurationsMinutes is { } dm && dm.Count == times.Count
+                    ? dm.Select(m => TimeSpan.FromMinutes(Math.Max(0, m))).ToList()
+                    : null;
+                e = new ScheduledEvent(dto.Id, dto.Name, category, ScheduleKind.Fixed, zone, times, days, null, null, duration, dto.Verified,
+                    durations, dto.Icon, dto.Alert, Math.Max(0, dto.SoonMinutes ?? 2));
                 return true;
 
             case "interval":
                 if (dto.PeriodMinutes is not > 0) return false;
                 if (!DateTimeOffset.TryParse(dto.Anchor, CultureInfo.InvariantCulture, DateTimeStyles.None, out var anchor)) return false;
                 e = new ScheduledEvent(dto.Id, dto.Name, category, ScheduleKind.Interval, zone, [], null,
-                    anchor, TimeSpan.FromMinutes(dto.PeriodMinutes.Value), duration, dto.Verified);
+                    anchor, TimeSpan.FromMinutes(dto.PeriodMinutes.Value), duration, dto.Verified,
+                    null, dto.Icon, dto.Alert, Math.Max(0, dto.SoonMinutes ?? 2));
                 return true;
 
             default:
@@ -152,6 +157,11 @@ public static class ScheduleJson
         public int? PeriodMinutes { get; set; }
         public int DurationMinutes { get; set; }
         public bool Verified { get; set; } = true;
+        // Newer fields; older versions of the app ignore them.
+        public List<int>? DurationsMinutes { get; set; }
+        public string? Icon { get; set; }
+        public bool Alert { get; set; } = true;
+        public int? SoonMinutes { get; set; }
     }
 
     internal sealed class MapDto

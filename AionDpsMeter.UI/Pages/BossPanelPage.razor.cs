@@ -64,8 +64,7 @@ namespace AionDpsMeter.UI.Pages
 
         private Notice? ActiveNotice =>
             schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
-        private FeedItem? NextRift;
-        private FeedItem? NextEvent;
+        private IReadOnlyList<EventChip> Chips = [];
         private EnergyState? Energy => energy.Current;
         private TimersOptions Options => options.Current;
         private Dictionary<long, (double Effective, double Active)> dpsCache = new();
@@ -217,10 +216,9 @@ namespace AionDpsMeter.UI.Pages
                         BossFight.EnrageFor(target.MobCode, fightIsBoss, tracker.IsFieldBoss(target.MobCode), schedule.Current.Enrage))
                     : null;
                 FightRecord = Fight is not null && fightIsBoss && Options.ShowRecords ? records.For(target!.Name, target.HpTotal) : null;
-                // The rift and the next other event each get a line, so hourly events never push the rift out.
-                var upcoming = TimersFeed.BuildSchedule(now, schedule.Current).Where(options.Current.Shows).ToList();
-                NextRift = upcoming.FirstOrDefault(i => i.Kind == FeedKind.Rift);
-                NextEvent = upcoming.FirstOrDefault(i => i.Kind != FeedKind.Rift);
+                // One icon per event (rift, shugo, air raid, arena, reset), minus the ones hidden in settings.
+                var shown = TimersFeed.BuildSchedule(now, schedule.Current).Where(options.Current.Shows).Select(i => i.Id).ToHashSet();
+                Chips = EventChips.Build(now, schedule.Current).Where(c => shown.Contains(c.Id)).ToList();
             }
             catch (Exception ex)
             {

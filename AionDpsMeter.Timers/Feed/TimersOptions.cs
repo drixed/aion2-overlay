@@ -88,7 +88,17 @@ public sealed class TimersOptions
     public bool Notifies(FeedItem item) =>
         Shows(item)
         && LeadFor(item.Kind) > 0
-        && !MutedIds.Contains(AlertKey(item));
+        && !MutedIds.Contains(AlertKey(item))
+        && (item.AlertByDefault || EnabledIds.Contains(AlertKey(item)));
+
+    /// <summary>Events that are quiet by default (schedule "alert": false) and the user switched on.</summary>
+    public HashSet<string> EnabledIds { get; set; } = [];
+
+    public void SetAlert(string key, bool on)
+    {
+        if (on) { MutedIds.Remove(key); EnabledIds.Add(key); }
+        else { MutedIds.Add(key); EnabledIds.Remove(key); }
+    }
 
     /// <summary>The key alerts are muted and given a sound by: the schedule event id, or one key for all field bosses.</summary>
     public static string AlertKey(FeedItem item) => item.Kind == FeedKind.Boss ? AllFieldBosses : item.Id;

@@ -11,8 +11,13 @@ public class ScheduleJsonTests
         var rift = Assert.Single(data.Events, e => e.Id == "rift");
         Assert.Equal(8, rift.Times.Count);
         Assert.True(rift.Verified); // confirmed on EU by the user
-        Assert.Equal(2, data.Events.Count); // every shipped event parses: a typo would silently drop one
+        Assert.Equal(5, data.Events.Count); // every shipped event parses: a typo would silently drop one
         Assert.Contains(data.Events, e => e.Id == "shugo-festival" && e.Kind == ScheduleKind.Interval);
+        var arena = Assert.Single(data.Events, e => e.Id == "arena-of-tactics");
+        Assert.Equal([TimeSpan.FromHours(3), TimeSpan.FromHours(2)], arena.Durations!);
+        Assert.All(data.Events.Where(e => e.Id is "beritra-air-raid" or "arena-of-tactics" or "daily-reset"),
+            e => Assert.False(e.AlertByDefault)); // quiet until switched on: shugo already alerts every hour
+        Assert.Equal(60, Assert.Single(data.Events, e => e.Id == "daily-reset").SoonMinutes);
         Assert.Equal(2400, data.FieldBossMaps[1110].Block);
     }
 

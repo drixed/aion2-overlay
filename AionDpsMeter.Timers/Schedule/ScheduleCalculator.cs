@@ -18,12 +18,12 @@ public static class ScheduleCalculator
         {
             var date = today.AddDays(d);
             if (e.Days is { } days && !days.Contains(date.DayOfWeek)) continue;
-            foreach (var time in e.Times)
+            for (var i = 0; i < e.Times.Count; i++)
             {
-                var local = date.ToDateTime(time);
+                var local = date.ToDateTime(e.Times[i]);
                 if (e.TimeZone.IsInvalidTime(local)) local = local.AddHours(1); // skipped by the spring DST jump
                 var start = new DateTimeOffset(local, e.TimeZone.GetUtcOffset(local));
-                var end = start + e.Duration;
+                var end = start + e.DurationAt(i);
                 if (end <= now) continue; // over (with no duration: started already)
                 if (best is null || start < best.Value.Start) best = new Occurrence(start, end);
             }

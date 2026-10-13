@@ -12,7 +12,7 @@ namespace AionDpsMeter.UI.Pages
         private static readonly (PowerColumn Mode, string Label)[] PowerModes =
             [(PowerColumn.CombatPower, "БМ"), (PowerColumn.GearScore, "ГС"), (PowerColumn.Both, "Оба"), (PowerColumn.None, "Нет")];
 
-        private sealed record AlertRow(string MuteKey, string Title, string Description, FeedKind Kind);
+        private sealed record AlertRow(string MuteKey, string Title, string Description, FeedKind Kind, bool OnByDefault = true);
 
         /// <summary>One row per scheduled event (from schedule.json) plus one for all field bosses.</summary>
         private IReadOnlyList<AlertRow> AlertRows =>
@@ -20,7 +20,7 @@ namespace AionDpsMeter.UI.Pages
                 .Select(e =>
                 {
                     var kind = e.Category.Equals("rift", StringComparison.OrdinalIgnoreCase) ? FeedKind.Rift : FeedKind.Event;
-                    return new AlertRow(e.Id, e.Name, "Уведомлять перед началом: звук и жёлтая строка в главном окне", kind);
+                    return new AlertRow(e.Id, e.Name, "Уведомлять перед началом: звук и жёлтая строка в главном окне", kind, e.AlertByDefault);
                 })
                 .Append(new AlertRow(TimersOptions.AllFieldBosses, "Полевые боссы", "Уведомлять перед респауном полевых боссов", FeedKind.Boss))
                 .ToList();
@@ -66,11 +66,11 @@ namespace AionDpsMeter.UI.Pages
 
         private void PlaySound(string key) => soundPlayer.Play(O.SoundFor(key));
 
-        private void SetMuted(string key, bool muted) => Set(o =>
-        {
-            if (muted) o.MutedIds.Add(key);
-            else o.MutedIds.Remove(key);
-        });
+        /// <summary>On unless muted; events quiet by default (air raid, arena, reset) only once switched on.</summary>
+        private bool AlertOn(AlertRow row) =>
+            !O.MutedIds.Contains(row.MuteKey) && (row.OnByDefault || O.EnabledIds.Contains(row.MuteKey));
+
+        private void SetAlert(string key, bool on) => Set(o => o.SetAlert(key, on));
 
         private sealed record HotkeyRow(string Id, string Title, string Description, Func<string> Get, Action<string> Set);
 

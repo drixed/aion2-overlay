@@ -17,4 +17,5 @@ public sealed record FeedItem(
     FeedStatus Status,
     DateTimeOffset? At,
     bool Verified,
-    int? BossKey);
+    int? BossKey,
+    bool AlertByDefault = true);

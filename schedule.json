@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Время — в часовом поясе timeZone (сервер EU). verified=false: не сверено на EU, оверлей пометит «(не проверено)». После правки этого файла на GitHub программа подхватит его при следующем запуске. enrageSeconds: код босса → секунды до ярости (0 — нет ярости); по умолчанию 300 у боссов данжей, у полевых — нет. cubeMaps: номер карты → страница с картой скрытых кубов (interactivemap.app), default — для остальных.",
+  "_note": "Время — в часовом поясе timeZone (сервер EU). verified=false: не сверено на EU, оверлей пометит «(не проверено)». После правки этого файла на GitHub программа подхватит его при следующем запуске. enrageSeconds: код босса → секунды до ярости (0 — нет ярости); по умолчанию 300 у боссов данжей, у полевых — нет. cubeMaps: номер карты → страница с картой скрытых кубов (interactivemap.app), default — для остальных. icon: rift/shugo/raid/arena/reset — иконка в главном окне; alert:false — без уведомления, пока его не включат в настройках; soonMinutes — за сколько минут иконка начинает светиться; durationsMinutes — длительность каждого окна из times.",
   "events": [
     {
       "id": "rift",
@@ -19,7 +19,8 @@
         "23:00"
       ],
       "durationMinutes": 0,
-      "verified": true
+      "verified": true,
+      "icon": "rift"
     },
     {
       "id": "shugo-festival",
@@ -30,7 +31,55 @@
       "anchor": "2026-09-30T22:00:00+00:00",
       "periodMinutes": 60,
       "durationMinutes": 10,
-      "verified": true
+      "verified": true,
+      "icon": "shugo"
+    },
+    {
+      "id": "beritra-air-raid",
+      "name": "Рейд Беритры",
+      "category": "event",
+      "kind": "interval",
+      "timeZone": "Europe/Berlin",
+      "anchor": "2026-10-01T00:30:00+00:00",
+      "periodMinutes": 60,
+      "durationMinutes": 3,
+      "icon": "raid",
+      "alert": false,
+      "verified": false
+    },
+    {
+      "id": "arena-of-tactics",
+      "name": "Арена тактики 10×10",
+      "category": "event",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "times": [
+        "11:00",
+        "19:00"
+      ],
+      "durationsMinutes": [
+        180,
+        120
+      ],
+      "durationMinutes": 120,
+      "icon": "arena",
+      "alert": false,
+      "verified": false
+    },
+    {
+      "id": "daily-reset",
+      "name": "Ежедневный сброс",
+      "category": "event",
+      "kind": "fixed",
+      "timeZone": "UTC",
+      "times": [
+        "07:00"
+      ],
+      "durationMinutes": 0,
+      "soonMinutes": 60,
+      "icon": "reset",
+      "alert": false,
+      "verified": false
     }
   ],
   "fieldBossMaps": {

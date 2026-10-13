@@ -129,7 +129,7 @@
                             <option value="@PickFile">Свой файл…</option>
                         </select>
                         <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(alert.MuteKey)">▶</button>
-                        <ToggleSwitch Checked="@(!O.MutedIds.Contains(alert.MuteKey))" CheckedChanged="v => SetMuted(alert.MuteKey, !v)" />
+                        <ToggleSwitch Checked="@AlertOn(alert)" CheckedChanged="v => SetAlert(alert.MuteKey, v)" />
                     </span>
                 </ValueSlot>
             </SettingRow>

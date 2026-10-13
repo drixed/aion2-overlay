@@ -102,14 +102,22 @@
                 </div>
             }
         </div>
-        @if (!Compact && (NextRift is not null || NextEvent is not null || Energy is not null))
+        @if (!Compact && (Chips.Count > 0 || Energy is not null))
         {
             <div class="bp-footer">
                 <div class="bp-footer-line">
-                    @if (NextRift is { } r)
-                    {
-                        <span class="bp-footer-event">◈ @r.Title@(r.Verified ? "" : " (не проверено)") <b class="bp-footer-time">@FeedText.Format(r, now, TimeZoneInfo.Local)</b></span>
-                    }
+                    <span class="bp-events">
+                        @foreach (var chip in Chips)
+                        {
+                            <span class="bp-ev bp-ev--@chip.State.ToString().ToLowerInvariant()" style="--ev:@EventIcons.Color(chip.Icon)" title="@chip.Tooltip">
+                                @((MarkupString)EventIcons.Svg(chip.Icon))
+                                @if (chip.Text.Length > 0)
+                                {
+                                    <b>@chip.Text</b>
+                                }
+                            </span>
+                        }
+                    </span>
                     @if (Energy is { } en)
                     {
                         <span class="bp-energy @(en.FromEarlierSession ? "bp-energy--old" : "")"
@@ -118,12 +126,6 @@
                         </span>
                     }
                 </div>
-                @if (NextEvent is { } e)
-                {
-                    <div class="bp-footer-line">
-                        <span class="bp-footer-event">★ @e.Title@(e.Verified ? "" : " (не проверено)") <b class="bp-footer-time">@FeedText.Format(e, now, TimeZoneInfo.Local)</b></span>
-                    </div>
-                }
             </div>
         }
     </div>
