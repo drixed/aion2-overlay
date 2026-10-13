@@ -19,6 +19,7 @@
 | `AionDpsMeter.UI/Pages/SettingsPage.razor.cs` | +2 строки в `_groups`: вкладки `fork-timers` ("Timers") и `fork-records` ("Records") |
 | `AionDpsMeter.UI/Converters/SafeImageSourceConverter.cs` | иконка умения, которой ещё нет в кэше, грузится прямо по ссылке (`LoadRemote`): обновление после скачивания у апстрима не срабатывало, и иконки появлялись только при повторном открытии окна |
 | `AionDpsMeter.Updater/Program.cs` | переписан: пишет, что делает (окно и `update.log`), повторяет занятые файлы, при ошибке не закрывается молча и всё равно запускает метр; свою новую копию кладёт как `AionDpsMeter.Updater.exe.new` (её подменяет `UpdaterSelfUpdate` при старте метра) |
+| `AionDpsMeter.Services/PacketCapture/CaptureDevice.cs` | TCP-сегменты идут через `TcpSegmentOrderer` (`PacketCapture/Fork`): опоздавшие ждут своего места, повторы отбрасываются, частичные обрезаются. Апстрим перепрыгивал разрыв и потом выбрасывал опоздавший сегмент как старый, теряя удары; +2 строки `segmentOrderer.Clear()` |
 | `AionDpsMeter.UI/wwwroot/index.html` | +2 строки: `<script src="js/ru.js">` и `<script src="js/fit.js">` перед `blazor.webview.js` |
 
 Новые файлы внутри проектов апстрима (с ними конфликтов не бывает, помечены первой строкой `aion2-overlay fork`):

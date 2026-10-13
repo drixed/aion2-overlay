@@ -59,6 +59,7 @@ namespace AionDpsMeter.Services.PacketCapture
         private Timer? statsTimer;
 
         private readonly Dictionary<string, uint> expectedSeqNumbers = new();
+        private readonly AionDpsMeter.Services.PacketCapture.Fork.TcpSegmentOrderer segmentOrderer = new(); // aion2-overlay fork
         private readonly ILogger<CaptureDevice> logger;
         private readonly TcpStreamBuffer tcpStreamBuffer;
 
@@ -285,39 +286,10 @@ namespace AionDpsMeter.Services.PacketCapture
 
             lock (expectedSeqNumbers)
             {
-                if (!expectedSeqNumbers.TryGetValue(streamKey, out uint expectedSeq))
-                {
-                    expectedSeqNumbers[streamKey] = nextSeq;
-                    if (tcp.PayloadData.Length < 1) return;
-                    tcpStreamBuffer.AddData(streamKey, tcp.PayloadData, arrivedAt);
-                    return;
-                }
-
-                if (currentSeq < expectedSeq)
-                {
-                    if (nextSeq <= expectedSeq)
-                    {
-                        logger.LogTrace(
-                            $"[TCP] Duplicate/Old ignored. Seq:{currentSeq} Exp:{expectedSeq}");
-                        return;
-                    }
-                }
-
-                if (currentSeq > expectedSeq)
-                {
-                    logger.LogWarning(
-                        $"[TCP GAP] Expected:{expectedSeq} Got:{currentSeq} " +
-                        $"Diff:{currentSeq - expectedSeq}");
-
-                    expectedSeqNumbers[streamKey] = nextSeq;
-                    tcpStreamBuffer.AddData(streamKey, tcp.PayloadData, arrivedAt);
-                    return;
-                }
-
-                // currentSeq == expectedSeq — normal in-order delivery
-                expectedSeqNumbers[streamKey] = nextSeq;
-                if (tcp.PayloadData.Length < 1) return;
-                tcpStreamBuffer.AddData(streamKey, tcp.PayloadData, arrivedAt);
+                // aion2-overlay fork: segments are put back in order (late ones wait, resends dropped) instead of
+                // jumping over a gap and then dropping the late segment as old.
+                foreach (var chunk in segmentOrderer.Accept(streamKey, currentSeq, tcp.PayloadData, arrivedAt, tcp.Synchronize, tcp.Finished))
+                    tcpStreamBuffer.AddData(streamKey, chunk, arrivedAt);
             }
         }
 
@@ -522,6 +494,7 @@ namespace AionDpsMeter.Services.PacketCapture
             lock (expectedSeqNumbers)
             {
                 expectedSeqNumbers.Clear();
+                segmentOrderer.Clear(); // aion2-overlay fork
             }
 
             tcpStreamBuffer.Clear(); 
@@ -556,6 +529,7 @@ namespace AionDpsMeter.Services.PacketCapture
             lock (expectedSeqNumbers)
             {
                 expectedSeqNumbers.Clear();
+                segmentOrderer.Clear(); // aion2-overlay fork
             }
 
             appDroppedPackets = 0;
