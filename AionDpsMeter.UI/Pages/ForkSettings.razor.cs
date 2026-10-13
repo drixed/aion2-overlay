@@ -34,9 +34,9 @@ namespace AionDpsMeter.UI.Pages
                 .Select(e =>
                 {
                     var kind = e.Category.Equals("rift", StringComparison.OrdinalIgnoreCase) ? FeedKind.Rift : FeedKind.Event;
-                    return new AlertRow(e.Id, e.Name, "Уведомлять перед началом: звук и жёлтая строка в главном окне", kind, e.AlertByDefault);
+                    return new AlertRow(e.Id, e.Name, "Звук и жёлтая строка заранее", kind, e.AlertByDefault);
                 })
-                .Append(new AlertRow(TimersOptions.AllFieldBosses, "Полевые боссы", "Уведомлять перед респауном полевых боссов", FeedKind.Boss))
+                .Append(new AlertRow(TimersOptions.AllFieldBosses, "Полевые боссы", "Перед респауном", FeedKind.Boss))
                 .ToList();
 
         private const string PickFile = "pick-file";
@@ -117,6 +117,12 @@ namespace AionDpsMeter.UI.Pages
         private void SetScale(object? value)
         {
             if (int.TryParse(value?.ToString(), out var percent)) Set(o => o.UiScale = Math.Clamp(percent, 80, 150));
+        }
+
+        /// <summary>Minutes ahead for this one event (the others keep theirs).</summary>
+        private void SetLeadFor(string key, object? value)
+        {
+            if (int.TryParse(value?.ToString(), out var minutes)) Set(o => o.SetLead(key, minutes));
         }
 
         private void SetLead(FeedKind kind, object? value)

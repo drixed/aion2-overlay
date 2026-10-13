@@ -9,7 +9,7 @@ public class AlertServiceTests
     private static FeedItem Item(string id, FeedKind kind, DateTimeOffset at, FeedStatus status = FeedStatus.Upcoming) =>
         new(id, $"{id}@{at:O}", kind, id, null, status, at, true, null);
 
-    private static int Lead(FeedKind kind) => kind == FeedKind.Boss ? 5 : 2;
+    private static int Lead(FeedItem item) => item.Kind == FeedKind.Boss ? 5 : 2;
 
     [Fact]
     public void Alerts_once_inside_the_lead_time()

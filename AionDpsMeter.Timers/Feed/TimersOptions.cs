@@ -104,6 +104,15 @@ public sealed class TimersOptions
     public HashSet<FeedKind> HiddenKinds { get; set; } = [];
     public HashSet<string> HiddenIds { get; set; } = [];
 
+    /// <summary>Minutes ahead per event (alert key); events without their own value use their kind's.</summary>
+    public Dictionary<string, int> LeadById { get; set; } = [];
+
+    public int LeadFor(FeedItem item) => LeadById.TryGetValue(AlertKey(item), out var minutes) ? minutes : LeadFor(item.Kind);
+
+    public int LeadFor(string key, FeedKind kind) => LeadById.TryGetValue(key, out var minutes) ? minutes : LeadFor(kind);
+
+    public void SetLead(string key, int minutes) => LeadById[key] = Math.Clamp(minutes, 1, 60);
+
     public int LeadFor(FeedKind kind) => kind switch
     {
         FeedKind.Boss => BossLeadMinutes,
@@ -121,7 +130,7 @@ public sealed class TimersOptions
 
     public bool Notifies(FeedItem item) =>
         Shows(item)
-        && LeadFor(item.Kind) > 0
+        && LeadFor(item) > 0
         && !MutedIds.Contains(AlertKey(item))
         && (item.AlertByDefault || EnabledIds.Contains(AlertKey(item)));
 

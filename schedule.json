@@ -35,19 +35,6 @@
       "icon": "shugo"
     },
     {
-      "id": "beritra-air-raid",
-      "name": "Рейд Беритры",
-      "category": "event",
-      "kind": "interval",
-      "timeZone": "Europe/Berlin",
-      "anchor": "2026-10-01T00:30:00+00:00",
-      "periodMinutes": 60,
-      "durationMinutes": 3,
-      "icon": "raid",
-      "alert": false,
-      "verified": false
-    },
-    {
       "id": "arena-of-tactics",
       "name": "Арена тактики 10×10",
       "category": "event",

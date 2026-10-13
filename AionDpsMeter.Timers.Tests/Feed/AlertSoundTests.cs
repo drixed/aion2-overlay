@@ -48,3 +48,28 @@ public class AlertSoundTests
     public void Unreadable_text_is_the_standard_sound(string text) =>
         Assert.Equal(AlertSound.Default, AlertSound.Parse(text));
 }
+
+/// <summary>Seen in settings: setting one event's minutes changed every event's (the value was per kind).</summary>
+public class LeadMinutesTests
+{
+    private static FeedItem Event(string id, DateTimeOffset at) => new(id, id + "@" + at.ToString("O"), FeedKind.Event, id, null, FeedStatus.Upcoming, at, true, null);
+
+    [Fact]
+    public void Each_event_keeps_its_own_minutes_and_the_rest_keep_the_default()
+    {
+        var o = new TimersOptions();
+        o.SetLead("shugo-festival", 10);
+        Assert.Equal(10, o.LeadFor(Event("shugo-festival", DateTimeOffset.UtcNow)));
+        Assert.Equal(5, o.LeadFor(Event("arena-of-tactics", DateTimeOffset.UtcNow)));
+    }
+
+    [Fact]
+    public void Alerts_fire_by_each_event_s_own_minutes()
+    {
+        var now = new DateTimeOffset(2026, 10, 13, 12, 0, 0, TimeSpan.Zero);
+        var o = new TimersOptions();
+        o.SetLead("shugo-festival", 10);
+        var due = new AlertService().Due([Event("shugo-festival", now.AddMinutes(8)), Event("arena-of-tactics", now.AddMinutes(8))], now, o.LeadFor);
+        Assert.Equal(["shugo-festival"], due.Select(d => d.Id));
+    }
+}

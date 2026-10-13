@@ -11,7 +11,8 @@ public class ScheduleJsonTests
         var rift = Assert.Single(data.Events, e => e.Id == "rift");
         Assert.Equal(8, rift.Times.Count);
         Assert.True(rift.Verified); // confirmed on EU by the user
-        Assert.Equal(5, data.Events.Count); // every shipped event parses: a typo would silently drop one
+        Assert.Equal(4, data.Events.Count); // every shipped event parses: a typo would silently drop one
+        Assert.DoesNotContain(data.Events, e => e.Id == "beritra-air-raid"); // "on the half hour" per LOXIN/aion2hub, but not seen on EU (2026-10-13)
         Assert.Contains(data.Events, e => e.Id == "shugo-festival" && e.Kind == ScheduleKind.Interval);
         var arena = Assert.Single(data.Events, e => e.Id == "arena-of-tactics");
         Assert.Equal([TimeSpan.FromHours(3), TimeSpan.FromHours(2)], arena.Durations!);

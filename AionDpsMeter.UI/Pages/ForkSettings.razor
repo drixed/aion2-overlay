@@ -220,7 +220,7 @@
                 <ValueSlot>
                     <span class="fs-hotkey">
                         <span class="number-field-wrap">
-                            <input class="number-field" type="number" min="1" max="60" value="@O.LeadFor(alert.Kind)" @onchange="e => SetLead(alert.Kind, e.Value)" />
+                            <input class="number-field" type="number" min="1" max="60" value="@O.LeadFor(alert.MuteKey, alert.Kind)" @onchange="e => SetLeadFor(alert.MuteKey, e.Value)" />
                             <span class="number-field__suffix">мин</span>
                         </span>
                         <select class="fs-select" value="@(O.SoundFor(alert.MuteKey).ToString())" @onchange="e => OnSoundPicked(alert.MuteKey, e.Value)" title="Звук">
