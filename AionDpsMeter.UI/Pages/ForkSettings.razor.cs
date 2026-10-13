@@ -142,6 +142,23 @@ namespace AionDpsMeter.UI.Pages
 
         private void ShowHidden() => Set(o => o.HiddenIds.Clear());
 
+        /// <summary>Per event: shown unless hidden by id; field bosses all at once by their kind.</summary>
+        private bool Shown(AlertRow row) => row.Kind == FeedKind.Boss
+            ? !O.HiddenKinds.Contains(FeedKind.Boss)
+            : !O.HiddenKinds.Contains(row.Kind) && !O.HiddenIds.Contains(row.MuteKey);
+
+        private void SetShown(AlertRow row, bool show) => Set(o =>
+        {
+            if (row.Kind == FeedKind.Boss)
+            {
+                if (show) o.HiddenKinds.Remove(FeedKind.Boss); else o.HiddenKinds.Add(FeedKind.Boss);
+                return;
+            }
+            if (o.HiddenKinds.Remove(row.Kind)) // the whole kind was hidden (older setting): keep its other events hidden
+                foreach (var other in AlertRows.Where(r => r.Kind == row.Kind && r.MuteKey != row.MuteKey)) o.HiddenIds.Add(other.MuteKey);
+            if (show) o.HiddenIds.Remove(row.MuteKey); else o.HiddenIds.Add(row.MuteKey);
+        });
+
         private static string KindLabel(FeedKind kind) => kind switch
         {
             FeedKind.Rift => "Разломы",

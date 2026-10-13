@@ -43,7 +43,7 @@ public static class EventChips
     private static string Minutes(TimeSpan t)
     {
         var minutes = Math.Max(1, (int)Math.Ceiling(t.TotalMinutes));
-        return minutes < 60 ? $"{minutes}м" : $"{minutes / 60}ч {minutes % 60}м";
+        return minutes < 60 ? $"{minutes}м" : $"{minutes / 60}ч{minutes % 60:00}м";
     }
 
     private static string DefaultIcon(ScheduledEvent e) =>

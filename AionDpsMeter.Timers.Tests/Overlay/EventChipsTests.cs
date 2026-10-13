@@ -60,7 +60,7 @@ public class EventChipsTests
     {
         var at = new DateTimeOffset(2026, 10, 13, 9, 10, 0, TimeSpan.Zero);
         Assert.Equal("20м", EventChips.Build(at, Data, Berlin, alwaysTime: true).Single(c => c.Id == "beritra-air-raid").Text);
-        Assert.Equal("2ч 50м", EventChips.Build(at, Data, Berlin, alwaysTime: true).Single(c => c.Id == "arena-of-tactics").Text);
+        Assert.Equal("2ч50м", EventChips.Build(at, Data, Berlin, alwaysTime: true).Single(c => c.Id == "arena-of-tactics").Text);
     }
 
     [Fact]

@@ -1,7 +1,8 @@
 // aion2-overlay fork: new file (see FORK_CHANGES.md).
 namespace AionDpsMeter.UI.Pages
 {
-    /// <summary>Icons and colours of the event row in the main window (our own drawings, 24×24, currentColor).</summary>
+    /// <summary>Icons and colours of the event row in the main window (our own drawings, 24×24, currentColor). The size is
+    /// in the SVG itself: markup inserted as a string gets none of the component's scoped CSS.</summary>
     public static class EventIcons
     {
         public static string Color(string icon) => icon switch
@@ -30,9 +31,9 @@ namespace AionDpsMeter.UI.Pages
         };
 
         private static string Fill(string d) =>
-            $"<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" fill-rule=\"evenodd\" aria-hidden=\"true\"><path d=\"{d}\"/></svg>";
+            $"<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" fill-rule=\"evenodd\" aria-hidden=\"true\"><path d=\"{d}\"/></svg>";
 
         private static string Stroke(string d, double width) =>
-            $"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"{width.ToString(System.Globalization.CultureInfo.InvariantCulture)}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"{d}\"/></svg>";
+            $"<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"{width.ToString(System.Globalization.CultureInfo.InvariantCulture)}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"{d}\"/></svg>";
     }
 }

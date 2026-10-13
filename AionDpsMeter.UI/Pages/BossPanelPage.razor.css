@@ -64,14 +64,14 @@
 .bp-record { margin-top: 4px; font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bp-record-news { margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px; background: linear-gradient(90deg, #8a6a12, #c9a227); color: #111; font-weight: 700; font-size: 12px; }
 /* event icons (rift, shugo, air raid, arena, reset): dim while waiting, glowing just before, lit while open */
-.bp-events { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
-.bp-ev { display: inline-flex; align-items: center; gap: 2px; color: var(--ev); opacity: .5; cursor: default; transition: opacity 200ms ease; }
+.bp-events { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; min-width: 0; }
+.bp-ev { flex: 0 0 auto; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; color: var(--ev); opacity: .5; cursor: default; transition: opacity 200ms ease; }
 .bp-ev svg { width: 15px; height: 15px; display: block; }
-.bp-ev b { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bp-ev b { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bp-ev:hover { opacity: .9; }
 .bp-ev--soon { opacity: 1; animation: bp-ev-glow 1.1s ease-in-out infinite alternate; }
 .bp-ev--open { opacity: 1; filter: drop-shadow(0 0 3px var(--ev)); }
-.bp-ev--open svg { animation: bp-ev-spin 6s linear infinite; }
+.bp-ev--open ::deep svg { animation: bp-ev-spin 6s linear infinite; }
 @keyframes bp-ev-glow { from { filter: drop-shadow(0 0 0 var(--ev)); } to { filter: drop-shadow(0 0 5px var(--ev)); } }
 @keyframes bp-ev-spin { to { transform: rotate(360deg); } }
 .bp-row-vs { font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; opacity: .9; }
