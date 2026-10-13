@@ -22,14 +22,32 @@ public class EnergyTests
     {
         // 21:46:45, after entering a dungeon: "00 08 01, id 51591, extra 920" — the extra pool paid the entry.
         var update = EnergyParser.ParseUpdate(Convert.FromHexString("000801879303980703"));
-        Assert.Equal(new EnergyUpdate(Extra: 920), update);
+        Assert.Equal(new EnergyUpdate(Current: null, Extra: 920), update);
         // In game: "10 (+990)" → "0 (+920)": the entry cost 80, the current is spent first, the rest from the extra.
         Assert.Equal(new EnergyReading(0, 920), update!.ApplyTo(new EnergyReading(10, 990)));
-        Assert.Equal(new EnergyReading(10, 1030), new EnergyUpdate(1030).ApplyTo(new EnergyReading(10, 990))); // a refill keeps the current
+        Assert.Equal(new EnergyReading(10, 1030), new EnergyUpdate(null, 1030).ApplyTo(new EnergyReading(10, 990))); // a refill keeps the current
         Assert.Null(EnergyParser.ParseUpdate(Convert.FromHexString("000801FFFF03980703"))); // another resource id
         // 22:00:10, the next entry: "0 (+920)" → "0 (+840)".
         Assert.Equal(new EnergyReading(0, 840),
             EnergyParser.ParseUpdate(Convert.FromHexString("000801879303C80603"))!.ApplyTo(new EnergyReading(0, 920)));
+    }
+
+    /// <summary>
+    /// EU capture 2026-10-13 18:42: an entry paid from the current pool, in game "120 (+265)" → "40 (+265)". The game
+    /// sent <c>00 0C 01, id, 40, 265, 03</c>: an update with both fields — the second byte is a field mask (04 current,
+    /// 08 extra). The meter knew only 01 0C (full) and 00 08 (extra only), so energy stood still since Oct 12.
+    /// </summary>
+    [Fact]
+    public void An_update_with_both_fields_reads_current_and_extra()
+    {
+        Assert.Equal(new EnergyReading(40, 265), EnergyParser.Parse(Convert.FromHexString("000C0187930328890203")));
+    }
+
+    [Fact]
+    public void A_current_only_update_changes_the_current_and_keeps_the_extra()
+    {
+        var update = EnergyParser.ParseUpdate(Convert.FromHexString("00040187930328 03".Replace(" ", "")));
+        Assert.Equal(new EnergyReading(40, 265), update!.ApplyTo(new EnergyReading(120, 265)));
     }
 
     [Fact]
