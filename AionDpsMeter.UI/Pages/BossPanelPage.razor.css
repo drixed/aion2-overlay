@@ -134,3 +134,12 @@
 .bp-recap-src { flex: 0 1 40%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bp-recap-sk { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .75; }
 .bp-recap-dmg { flex: 0 0 auto; font-weight: 700; }
+/* the nearest event is a pill with its name; about to start it pulses; on now it is filled with its colour */
+.bp-ev--next, .bp-ev--soon, .bp-ev--open { opacity: 1; gap: 4px; padding: 2px 8px 2px 6px; border-radius: 11px;
+    background: color-mix(in srgb, var(--ev) 16%, transparent); border: 1px solid color-mix(in srgb, var(--ev) 45%, transparent); }
+.bp-ev--next ::deep svg, .bp-ev--soon ::deep svg, .bp-ev--open ::deep svg { width: 18px; height: 18px; }
+.bp-ev-name { font-size: 12px; font-weight: 700; white-space: nowrap; }
+.bp-ev--next b, .bp-ev--soon b, .bp-ev--open b { font-size: 12px; }
+.bp-ev--soon { background: color-mix(in srgb, var(--ev) 30%, transparent); filter: none; animation: bp-ev-pulse 0.9s ease-in-out infinite alternate; }
+.bp-ev--open { background: var(--ev); border-color: var(--ev); color: #14161c; filter: drop-shadow(0 0 4px var(--ev)); }
+@keyframes bp-ev-pulse { from { box-shadow: 0 0 0 0 var(--ev); } to { box-shadow: 0 0 9px 1px var(--ev); } }

@@ -45,7 +45,7 @@ public class EventChipsTests
     {
         Assert.Equal((ChipState.Soon, "1м"), Pair(Chip("beritra-air-raid", new DateTimeOffset(2026, 10, 13, 9, 29, 0, TimeSpan.Zero))));
         Assert.Equal((ChipState.Open, "2м"), Pair(Chip("beritra-air-raid", new DateTimeOffset(2026, 10, 13, 9, 31, 0, TimeSpan.Zero))));
-        Assert.Equal((ChipState.Idle, ""), Pair(Chip("beritra-air-raid", new DateTimeOffset(2026, 10, 13, 9, 10, 0, TimeSpan.Zero))));
+        Assert.Equal((ChipState.Next, "20м"), Pair(Chip("beritra-air-raid", new DateTimeOffset(2026, 10, 13, 9, 10, 0, TimeSpan.Zero)))); // the nearest one stands out
     }
 
     [Fact]
@@ -61,6 +61,26 @@ public class EventChipsTests
         var at = new DateTimeOffset(2026, 10, 13, 9, 10, 0, TimeSpan.Zero);
         Assert.Equal("20м", EventChips.Build(at, Data, Berlin, alwaysTime: true).Single(c => c.Id == "beritra-air-raid").Text);
         Assert.Equal("2ч50м", EventChips.Build(at, Data, Berlin, alwaysTime: true).Single(c => c.Id == "arena-of-tactics").Text);
+    }
+
+    /// <summary>The nearest upcoming event stands out (a pill with its name), the rest stay small.</summary>
+    [Fact]
+    public void The_nearest_upcoming_event_is_marked_as_next()
+    {
+        var at = new DateTimeOffset(2026, 10, 13, 9, 10, 0, TimeSpan.Zero); // air raid in 20 min, arena open, reset in ~21 h
+        var chips = EventChips.Build(at, Data, Berlin);
+        Assert.Equal(ChipState.Next, chips.Single(c => c.Id == "beritra-air-raid").State);
+        Assert.Equal(ChipState.Open, chips.Single(c => c.Id == "arena-of-tactics").State);
+        Assert.Equal(ChipState.Idle, chips.Single(c => c.Id == "daily-reset").State);
+        Assert.Equal("20м", chips.Single(c => c.Id == "beritra-air-raid").Text); // its countdown shows without the setting
+    }
+
+    [Fact]
+    public void An_event_about_to_start_is_soon_not_next()
+    {
+        var chips = EventChips.Build(new DateTimeOffset(2026, 10, 13, 9, 29, 0, TimeSpan.Zero), Data, Berlin);
+        Assert.Equal(ChipState.Soon, chips.Single(c => c.Id == "beritra-air-raid").State);
+        Assert.DoesNotContain(chips, c => c.State == ChipState.Next && c.Id == "beritra-air-raid");
     }
 
     [Fact]

@@ -15,6 +15,17 @@ namespace AionDpsMeter.UI.Pages
             _ => "#c9d1d9",
         };
 
+        /// <summary>A short name for the pill of the nearest event.</summary>
+        public static string ShortName(string icon, string name) => icon switch
+        {
+            "rift" => "Разлом",
+            "shugo" => "Шуго",
+            "raid" => "Рейд",
+            "arena" => "Арена",
+            "reset" => "Сброс",
+            _ => name,
+        };
+
         public static string Svg(string icon) => icon switch
         {
             // a spiral of growing half-circles

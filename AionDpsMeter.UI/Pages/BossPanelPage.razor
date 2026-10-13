@@ -214,6 +214,10 @@
                         {
                             <span class="bp-ev bp-ev--@chip.State.ToString().ToLowerInvariant()" style="--ev:@EventIcons.Color(chip.Icon)" title="@chip.Tooltip">
                                 @((MarkupString)EventIcons.Svg(chip.Icon))
+                                @if (chip.State != AionDpsMeter.Timers.Overlay.ChipState.Idle)
+                                {
+                                    <span class="bp-ev-name">@EventIcons.ShortName(chip.Icon, chip.Name)</span>
+                                }
                                 @if (chip.Text.Length > 0)
                                 {
                                     <b>@chip.Text</b>
