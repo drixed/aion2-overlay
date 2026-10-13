@@ -60,6 +60,8 @@ namespace AionDpsMeter.UI.ViewModels
 
         // Active target
         [ObservableProperty] private string _activeTargetName = string.Empty;
+        [ObservableProperty] private IReadOnlyList<DpsDataPoint>? _ghostPoints; // aion2-overlay fork: best fight line
+        private bool _ghostForUser; // aion2-overlay fork
         [ObservableProperty] private long _activeTargetHpTotal;
         [ObservableProperty] private string _activeTargetHpTotalDisplay = string.Empty;
         [ObservableProperty] private bool _hasActiveTarget;
@@ -279,6 +281,7 @@ namespace AionDpsMeter.UI.ViewModels
             GraphPoints           = pts;
             GraphBuffTimeline     = buffTimeline;
             GraphTotalDurationSec = totalSec;
+            GhostPoints = AionDpsMeter.UI.Services.TimerWindow.BestFightGhost.For(ActiveTargetName, ActiveTargetHpTotal, _ghostForUser); // aion2-overlay fork
         }
 
         private void RefreshPlayerSummary()
@@ -286,6 +289,7 @@ namespace AionDpsMeter.UI.ViewModels
             if (_sessionManager is null) return;
 
             var playerStats = _sessionManager.PlayerStats.FirstOrDefault(p => p.PlayerId == _playerId);
+            _ghostForUser = playerStats?.IsUser == true; // aion2-overlay fork
             if (playerStats is not null)
             {
                 TotalDamageDisplay        = DamageFormatter.FormatFull(playerStats.TotalDamage);

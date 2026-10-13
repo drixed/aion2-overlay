@@ -38,6 +38,8 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                 return;
             }
 
+            var d = parsed.Data!; // aion2-overlay fork: every hit, also a mob's on a player (death recap)
+            Fork.CombatFeed.PublishHit(new Fork.RawHit(d.ActorId, d.TargetId, d.Damage, d.SkillCode, d.IsCritical, d.Timestamp));
             var playerDamage = BuildPlayerDamage(parsed.Data!);
             if (playerDamage != null)
             {

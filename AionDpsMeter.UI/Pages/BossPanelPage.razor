@@ -110,6 +110,36 @@
                 }
             </div>
         }
+        @if (!noticeOpen && recapPlayer is { } recapId)
+        {
+            var recap = modes.Deaths.LastFor(recapId);
+            <div class="bp-recap">
+                <div class="bp-recap-head">
+                    <b>💀 @RecapName(recapId)</b>
+                    @if (recap is not null)
+                    {
+                        <span>@recap.At.ToString("HH:mm:ss") · получено @AionDpsMeter.UI.ViewModels.DamageFormatter.Format(recap.Total) за 6 с</span>
+                    }
+                    <button type="button" class="bp-link" @onclick="() => recapPlayer = null">✕</button>
+                </div>
+                @if (recap is null || recap.Hits.Count == 0)
+                {
+                    <div class="bp-recap-empty">Ударов перед смертью не видно: урон от окружения, или смерть была до запуска метра</div>
+                }
+                else
+                {
+                    @foreach (var hit in recap.Hits)
+                    {
+                        <div class="bp-recap-row @(ReferenceEquals(hit, recap.KillingBlow) ? "is-kill" : "")">
+                            <span class="bp-recap-t">@((hit.At - recap.At).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)) с</span>
+                            <span class="bp-recap-src">@hit.Source</span>
+                            <span class="bp-recap-sk">@hit.Skill</span>
+                            <span class="bp-recap-dmg">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(hit.Damage)@(hit.Critical ? " ✦" : "")</span>
+                        </div>
+                    }
+                }
+            </div>
+        }
         <div class="bp-players" style="@(noticeOpen ? "display:none" : "")">
             @if (AltMode)
             {
@@ -148,7 +178,15 @@
                               title="@($"Твой DPS против твоего лучшего на этом боссе ({AionDpsMeter.UI.ViewModels.DamageFormatter.Format(FightRecord!.BestMyDps)}/s)")">@vs</span>
                     }
                     <span class="bp-row-cp">@PowerOf(player)</span>
-                    <span class="bp-row-death">@player.DeathsDisplay</span>
+                    @if (string.IsNullOrWhiteSpace(player.DeathsDisplay))
+                    {
+                        <span class="bp-row-death"></span>
+                    }
+                    else
+                    {
+                        <span class="bp-row-death bp-row-death--click" title="Разбор смерти: что прилетело за 6 секунд до неё"
+                              @onclick="() => ToggleRecap(player.PlayerId)" @onclick:stopPropagation="true">@player.DeathsDisplay</span>
+                    }
                     @if (Mode == AionDpsMeter.Timers.Modes.MeterMode.Damage)
                     {
                         <span class="bp-row-dmg">@share.ToString("0.0", CultureInfo.InvariantCulture)%</span>

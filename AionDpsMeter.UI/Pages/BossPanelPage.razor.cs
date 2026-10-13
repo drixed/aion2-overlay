@@ -75,6 +75,15 @@ namespace AionDpsMeter.UI.Pages
             schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
         private IReadOnlyList<EventChip> Chips = [];
         private bool modeMenuOpen;
+        private long? recapPlayer;
+
+        /// <summary>The skull on a row opens (or closes) that player's last death recap.</summary>
+        private void ToggleRecap(long playerId) => recapPlayer = recapPlayer == playerId ? null : playerId;
+
+        private string RecapName(long playerId) =>
+            ViewModel?.Players.FirstOrDefault(p => p.PlayerId == playerId)?.PlayerNameDisplay
+            ?? entities.GetPlayerEntity((int)playerId)?.Name
+            ?? $"Игрок {playerId}";
         private bool targetIsDummy;
 
         private static readonly AionDpsMeter.Timers.Modes.MeterMode[] AllModes = Enum.GetValues<AionDpsMeter.Timers.Modes.MeterMode>();

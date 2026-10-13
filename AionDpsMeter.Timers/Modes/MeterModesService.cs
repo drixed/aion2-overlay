@@ -13,16 +13,35 @@ public sealed class MeterModesService : IDisposable
     public DummyRun Dummy { get; private set; }
     public GrindSession Grind { get; } = new();
     public HealTally Heals { get; } = new();
+    public DeathRecaps Deaths { get; } = new();
 
-    public MeterModesService(TimersOptionsStore options)
+    private readonly AionDpsMeter.Services.Services.Entity.EntityTracker entities;
+
+    public MeterModesService(TimersOptionsStore options, AionDpsMeter.Services.Services.Entity.EntityTracker entities)
     {
         this.options = options;
+        this.entities = entities;
         dummySeconds = options.Current.DummyRunSeconds;
         Dummy = new DummyRun(TimeSpan.FromSeconds(dummySeconds));
         options.Changed += OnOptionsChanged;
         CombatFeed.Damage += OnDamage;
         CombatFeed.Heal += OnHeal;
+        CombatFeed.Hit += OnHit;
+        CombatFeed.Death += OnDeath;
     }
+
+    /// <summary>Hits on the meter's players, named now (the attacker may be gone by the time someone looks).</summary>
+    private void OnHit(RawHit h)
+    {
+        if (h.Damage <= 0 || entities.GetPlayerEntity(h.TargetId) is null) return;
+        var source = entities.GetPlayerEntity(h.ActorId)?.Name is { Length: > 0 } player ? player
+            : entities.GetTargetMob(h.ActorId) is { MobCode: > 0 } mob ? mob.Name
+            : "Неизвестно";
+        var skill = AionDpsMeter.Core.GameData.Services.GameDataProvider.Instance.GetSkillOrDefault(h.SkillCode)?.Name ?? "";
+        Deaths.Add(new IncomingHit(h.TargetId, source, skill, h.Damage, h.Critical, h.At));
+    }
+
+    private void OnDeath(int entityId, DateTime at) => Deaths.Died(entityId, at);
 
     private void OnOptionsChanged()
     {
@@ -45,6 +64,8 @@ public sealed class MeterModesService : IDisposable
     {
         CombatFeed.Damage -= OnDamage;
         CombatFeed.Heal -= OnHeal;
+        CombatFeed.Hit -= OnHit;
+        CombatFeed.Death -= OnDeath;
         options.Changed -= OnOptionsChanged;
     }
 }

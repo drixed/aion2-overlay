@@ -50,6 +50,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             var damage = reader.ReadVarInt();
 
             if (targetId == actorId) return;
+            Fork.CombatFeed.PublishHit(new Fork.RawHit((int)actorId, (int)targetId, damage, skillCode, false, DateTime.Now)); // aion2-overlay fork
 
             CharacterClass? characterClass;
             if (!gameData.IsTheostone(skillCode))

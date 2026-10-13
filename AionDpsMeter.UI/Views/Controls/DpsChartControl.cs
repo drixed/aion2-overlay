@@ -26,6 +26,23 @@ namespace AionDpsMeter.UI.Views.Controls
                 typeof(DpsChartControl), new FrameworkPropertyMetadata(0.0,
                     FrameworkPropertyMetadataOptions.AffectsRender));
 
+        // aion2-overlay fork: my best fight with this boss, drawn as a dashed cumulative-DPS line behind the live one
+        public static readonly DependencyProperty GhostPointsProperty =
+            DependencyProperty.Register(nameof(GhostPoints), typeof(IReadOnlyList<DpsDataPoint>),
+                typeof(DpsChartControl), new FrameworkPropertyMetadata(null,
+                    FrameworkPropertyMetadataOptions.AffectsRender));
+
+        public IReadOnlyList<DpsDataPoint>? GhostPoints { get => (IReadOnlyList<DpsDataPoint>?)GetValue(GhostPointsProperty); set => SetValue(GhostPointsProperty, value); }
+
+        private static readonly Pen GhostPen = MakeGhostPen(); // aion2-overlay fork
+
+        private static Pen MakeGhostPen()
+        {
+            var pen = new Pen(new SolidColorBrush(Color.FromArgb(0xC0, 0xFF, 0xFF, 0xFF)), 1.5) { DashStyle = DashStyles.Dash };
+            pen.Freeze();
+            return pen;
+        }
+
         public IReadOnlyList<DpsDataPoint>?     DataPoints   { get => (IReadOnlyList<DpsDataPoint>?)GetValue(DataPointsProperty);     set => SetValue(DataPointsProperty, value); }
         public IReadOnlyList<BuffTimelineEntry>? BuffTimeline { get => (IReadOnlyList<BuffTimelineEntry>?)GetValue(BuffTimelineProperty); set => SetValue(BuffTimelineProperty, value); }
         public double TotalDurationSec                        { get => (double)GetValue(TotalDurationSecProperty);                       set => SetValue(TotalDurationSecProperty, value); }
@@ -145,6 +162,11 @@ namespace AionDpsMeter.UI.Views.Controls
                 }
             }
 
+            // aion2-overlay fork: the best fight up to the same second, on the same scale
+            var ghost = hasData ? GhostPoints?.Where(p => p.SecondOffset <= dur).ToList() : null;
+            if (ghost is { Count: >= 2 })
+                foreach (var p in ghost) if (p.CumulativeDps > yMax) yMax = p.CumulativeDps;
+
             // Grid + Y labels
             DrawGrid(dc, x0, y0, chartW, chartH, yMax);
 
@@ -161,6 +183,11 @@ namespace AionDpsMeter.UI.Views.Controls
                 // Lines
                 DrawLine(dc, points!, dur, x0, y0, chartW, chartH, yMax, CumulativePen, cumulative: true);
                 DrawLine(dc, points!, dur, x0, y0, chartW, chartH, yMax, PerSecPen,     cumulative: false);
+                if (ghost is { Count: >= 2 }) // aion2-overlay fork
+                {
+                    DrawLine(dc, ghost, dur, x0, y0, chartW, chartH, yMax, GhostPen, cumulative: true);
+                    DrawLegendItem(dc, totalW - ChartPaddingRight - 285, y0 + 1, GhostPen, "Лучший бой");
+                }
 
                 // Hover crosshair + tooltip
                 if (_mouse.X >= x0 && _mouse.X <= x0 + chartW && _mouse.Y >= y0 && _mouse.Y <= chartBottom)

@@ -122,3 +122,15 @@
 .bp-style-gauge .bp-row-dmg { display: none; }
 .bp-style-gauge .bp-row-gauge { display: block; position: relative; z-index: 1; flex: 0 0 30%; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; }
 .bp-style-gauge .bp-row-gauge i { display: block; height: 100%; border-radius: 3px; }
+/* death recap (skull on a row) */
+.bp-row-death--click { cursor: pointer; text-decoration: underline dotted; }
+.bp-recap { margin: 0 8px 6px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 90, 90, .08); border: 1px solid rgba(255, 90, 90, .3); font-size: 11px; }
+.bp-recap-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; color: #ffb3b3; }
+.bp-recap-head span { flex: 1; min-width: 0; color: #c9d1d9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-recap-empty { color: #9aa4b2; }
+.bp-recap-row { display: flex; gap: 6px; padding: 1px 0; font-variant-numeric: tabular-nums; }
+.bp-recap-row.is-kill { color: #ff8f8f; font-weight: 700; }
+.bp-recap-t { width: 38px; flex: 0 0 38px; text-align: right; color: #9aa4b2; }
+.bp-recap-src { flex: 0 1 40%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-recap-sk { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .75; }
+.bp-recap-dmg { flex: 0 0 auto; font-weight: 700; }

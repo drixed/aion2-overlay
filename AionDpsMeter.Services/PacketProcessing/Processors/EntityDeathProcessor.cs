@@ -18,7 +18,11 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             reader.ReadU16();         // opcode
             var entityId = (int)reader.ReadVarInt();
 
-            if (entityTracker.IsIdentifiedPlayer(entityId)) sessionManager.RegisterPlayerDeath(entityId);
+            if (entityTracker.IsIdentifiedPlayer(entityId))
+            {
+                sessionManager.RegisterPlayerDeath(entityId);
+                Fork.CombatFeed.PublishDeath(entityId, DateTime.Now); // aion2-overlay fork: death recap
+            }
         }
     }
 }

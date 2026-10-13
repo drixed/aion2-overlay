@@ -357,6 +357,7 @@
                         DataPoints="{Binding GraphPoints}"
                         BuffTimeline="{Binding GraphBuffTimeline}"
                         TotalDurationSec="{Binding GraphTotalDurationSec}"
+                        GhostPoints="{Binding GhostPoints}"
                         Margin="4"/>
                 </Grid>
             </Grid>

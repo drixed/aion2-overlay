@@ -5,6 +5,9 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
 {
     public readonly record struct HealEvent(int CasterId, int TargetId, long Amount, int SkillCode, DateTime At);
 
+    /// <summary>Any hit as parsed, also a mob's hit on a player (upstream drops those as "unknown class").</summary>
+    public readonly record struct RawHit(int ActorId, int TargetId, long Damage, int SkillCode, bool Critical, DateTime At);
+
     /// <summary>
     /// Every hit before upstream's filters (boss-only mode drops mob hits) and every heal, which upstream parses and
     /// throws away: the meter's Damage/Heal/Dummy/Grind modes listen here. A listener that throws never breaks parsing.
@@ -13,6 +16,9 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
     {
         public static event Action<PlayerDamage>? Damage;
         public static event Action<HealEvent>? Heal;
+        public static event Action<RawHit>? Hit;
+        /// <summary>A player of the meter died (entity id, time).</summary>
+        public static event Action<int, DateTime>? Death;
 
         public static void PublishDamage(PlayerDamage hit)
         {
@@ -22,6 +28,16 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
         public static void PublishHeal(HealEvent heal)
         {
             try { Heal?.Invoke(heal); } catch { }
+        }
+
+        public static void PublishHit(RawHit hit)
+        {
+            try { Hit?.Invoke(hit); } catch { }
+        }
+
+        public static void PublishDeath(int entityId, DateTime at)
+        {
+            try { Death?.Invoke(entityId, at); } catch { }
         }
     }
 }
