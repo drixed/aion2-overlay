@@ -176,7 +176,41 @@ namespace AionDpsMeter.UI.Pages
 
 
         /// <summary>Compact bar: header and my own row only.</summary>
-        private bool Compact => Options.Compact;
+        private bool Compact => Options.Compact || (Options.AutoCompact && Fight is null && ViewModel?.HasActiveTarget != true);
+
+        /// <summary>Theme and bar style as classes on the panel; the CSS does the rest.</summary>
+        private string PanelClasses =>
+            $"bp-theme-{Options.Theme.ToString().ToLowerInvariant()} bp-style-{Options.BarStyle.ToString().ToLowerInvariant()}";
+
+        /// <summary>Font, size, bar height, accent and background as CSS variables.</summary>
+        private string PanelStyle
+        {
+            get
+            {
+                var font = Options.Font switch
+                {
+                    AionDpsMeter.Timers.Overlay.PanelFont.Narrow => "'Bahnschrift SemiCondensed', Bahnschrift, 'Segoe UI', sans-serif",
+                    AionDpsMeter.Timers.Overlay.PanelFont.Mono => "Consolas, 'Cascadia Mono', monospace",
+                    AionDpsMeter.Timers.Overlay.PanelFont.Wide => "Verdana, 'Segoe UI', sans-serif",
+                    _ => "'Segoe UI', sans-serif",
+                };
+                var style = $"--bp-font:{font};--bp-fs:{Math.Clamp(Options.FontSize, 10, 16)}px;" +
+                            $"--bp-rh:{(Math.Clamp(Options.BarHeight, 60, 160) / 100.0).ToString(System.Globalization.CultureInfo.InvariantCulture)};";
+                if (IsColor(Options.AccentColor)) style += $"--bp-accent:{Options.AccentColor};";
+                if (IsColor(Options.BackgroundColor)) style += $"--bp-bg:{Options.BackgroundColor}d9;"; // 85% so the game shows through
+                return style;
+            }
+        }
+
+        private static bool IsColor(string? value) => value is { Length: 7 } && value[0] == '#' && value[1..].All(Uri.IsHexDigit);
+
+        /// <summary>Rows in display order (my row on top, first place at the bottom — as set) with their rank by damage.</summary>
+        private IReadOnlyList<(PlayerRenderState Player, double Share, double Bar, int Rank)> OrderedRows() =>
+            AionDpsMeter.Timers.Overlay.RowOrder.Apply(Rows().ToList(), r => r.Player.IsUser, Options.KeepMeOnTop, Options.FirstPlaceAtBottom)
+                .Select(x => (x.Row.Player, x.Row.Share, x.Row.Bar, x.Rank)).ToList();
+
+        private IReadOnlyList<(AltRow Row, int Rank)> OrderedAltRows() =>
+            AionDpsMeter.Timers.Overlay.RowOrder.Apply(AltRows(), r => r.IsUser, Options.KeepMeOnTop, Options.FirstPlaceAtBottom);
         private void ToggleCubeMap() => cubeMap.Toggle();
         private string? AlertText => alertRunner.ActiveText;
 
@@ -289,7 +323,9 @@ namespace AionDpsMeter.UI.Pages
             var window = services.GetService<Views.MainWindow>();
             if (window is null || height <= 0) return;
             var target = Math.Clamp(height + BottomSlack, window.MinHeight, MaxWindowHeight);
-            if (Math.Abs(window.Height - target) >= 1) window.Height = target;
+            if (Math.Abs(window.Height - target) < 1) return;
+            if (Options.GrowUpward) window.Top -= target - window.Height; // the bottom edge stays where it is
+            window.Height = target;
         }
 
         private async Task TickAsync(CancellationToken ct)
@@ -323,7 +359,7 @@ namespace AionDpsMeter.UI.Pages
                 FightRecord = Fight is not null && fightIsBoss && Options.ShowRecords ? records.For(target!.Name, target.HpTotal) : null;
                 // One icon per event (rift, shugo, air raid, arena, reset), minus the ones hidden in settings.
                 var shown = TimersFeed.BuildSchedule(now, schedule.Current).Where(options.Current.Shows).Select(i => i.Id).ToHashSet();
-                Chips = EventChips.Build(now, schedule.Current).Where(c => shown.Contains(c.Id)).ToList();
+                Chips = EventChips.Build(now, schedule.Current, alwaysTime: options.Current.EventTimesAlways).Where(c => shown.Contains(c.Id)).ToList();
             }
             catch (Exception ex)
             {

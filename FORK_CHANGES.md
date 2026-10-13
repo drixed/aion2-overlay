@@ -22,6 +22,7 @@
 | `AionDpsMeter.Services/PacketCapture/CaptureDevice.cs` | TCP-сегменты идут через `TcpSegmentOrderer` (`PacketCapture/Fork`): опоздавшие ждут своего места, повторы отбрасываются, частичные обрезаются. Апстрим перепрыгивал разрыв и потом выбрасывал опоздавший сегмент как старый, теряя удары; +2 строки `segmentOrderer.Clear()` |
 | `AionDpsMeter.UI/ViewModels/History/HistoryEntryViewModel.cs`, `Views/HistoryWindow.xaml` | точка в строке истории — итог боя (зелёная — убит, красная — не добит, серая — HP неизвестно), подсказка `OutcomeText` на точке и имени |
 | `AionDpsMeter.Services/PacketProcessing/Processors/DamagePacketProcessor.cs`, `DotDamagePacketProcessor.cs` | каждый удар и каждое лечение (апстрим его выбрасывал) уходят в `Fork/CombatFeed` — для режимов Урон/Хил/Манекен/Гринд |
+| `AionDpsMeter.Services/Services/Session/TargetEntry.cs` | `IdleTimeout` (45 с без ударов — бой окончен) — настраиваемое свойство, задаётся из настроек форка |
 | `AionDpsMeter.UI/wwwroot/index.html` | +2 строки: `<script src="js/ru.js">` и `<script src="js/fit.js">` перед `blazor.webview.js` |
 
 Новые файлы внутри проектов апстрима (с ними конфликтов не бывает, помечены первой строкой `aion2-overlay fork`):

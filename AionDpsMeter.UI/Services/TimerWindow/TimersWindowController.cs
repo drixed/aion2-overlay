@@ -46,11 +46,17 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             alertRunner.Start();
             DisposedWebViewGuard.Install(logger);
             UpdaterSelfUpdate.Apply(logger);
+            ApplyFightTimeout();
             if (options.Current.ShowBossTimers) OpenWindow();
         }
 
+        /// <summary>Seconds without hits before a fight ends (upstream's fixed 45 s, now a setting).</summary>
+        private void ApplyFightTimeout() =>
+            AionDpsMeter.Services.Services.Session.TargetEntry.IdleTimeout = TimeSpan.FromSeconds(Math.Clamp(options.Current.FightIdleSeconds, 10, 120));
+
         private void FollowSetting()
         {
+            ApplyFightTimeout();
             // Turned off, the window is hidden, not closed: closing disposes its WebView while Blazor may still be
             // sending it a render, and that crashed the whole app. Turned on again, the same window comes back.
             var open = windowManager.IsOpen(Key);

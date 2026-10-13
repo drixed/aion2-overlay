@@ -5,7 +5,7 @@
 
 @if (ViewModel != null)
 {
-    <div class="boss-panel @(Options.FocusMode && Fight is not null ? "bp-focus" : "")" @ref="panel" style="zoom:@(Options.UiScale)%">
+    <div class="boss-panel @PanelClasses @(Options.FocusMode && Fight is not null ? "bp-focus" : "")" @ref="panel" style="zoom:@(Options.UiScale)%;@PanelStyle">
         <div class="bp-header" @onmousedown="ViewModel.BeginDrag">
             <span class="bp-dot @(Fight is not null ? "bp-dot--fight" : "")"></span>
             <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
@@ -70,7 +70,10 @@
                     <span class="bp-name" title="@f.Name">@f.Name</span>
                     <span class="bp-hp">@Hp(f.HpCurrent) / @Hp(f.HpTotal) · <b>@f.HpPercent.ToString("0", CultureInfo.InvariantCulture)%</b></span>
                 </div>
-                <div class="bp-track"><div class="bp-fill" style="width:@(f.HpPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></div></div>
+                @if (!Options.HideBossHpBar)
+                {
+                    <div class="bp-track"><div class="bp-fill" style="width:@(f.HpPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></div></div>
+                }
                 @if (RecordLine(f) is { } rec)
                 {
                     <div class="bp-record">🏆 @rec.Text @if (rec.Pace is not null) { <b class="@(rec.Faster ? "bp-win" : "bp-rage")">· @rec.Pace</b> }</div>
@@ -110,12 +113,17 @@
         <div class="bp-players" style="@(noticeOpen ? "display:none" : "")">
             @if (AltMode)
             {
-                @foreach (var r in AltRows())
+                @foreach (var (r, altRank) in OrderedAltRows())
                 {
                     <div class="bp-row @(r.IsUser ? "bp-row--me" : "")">
                         <div class="bp-row-bar @AltRowClass(r)" style="width:@(r.Bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                        @if (Options.RankNumbers)
+                        {
+                            <span class="bp-row-rank">@altRank</span>
+                        }
                         <span class="bp-row-icon" style="background-image:url('/images/classes/@(r.ClassId).png')"></span>
                         <span class="bp-row-name">@r.Name</span>
+                        <span class="bp-row-gauge"><i class="@AltRowClass(r)" style="width:@(r.Bar.ToString("0.##", CultureInfo.InvariantCulture))%"></i></span>
                         <span class="bp-row-dmg">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(r.Total) (@r.Share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
                         <span class="bp-row-dps">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(r.PerSecond)<small>/s</small></span>
                     </div>
@@ -123,12 +131,17 @@
             }
             else
             {
-            @foreach (var (player, share, bar) in Rows())
+            @foreach (var (player, share, bar, rank) in OrderedRows())
             {
                 <div class="bp-row @ViewModel.GetIsUserClass(player)" @onclick="() => ViewModel.OpenPlayerDetails(player)">
                     <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                    @if (Options.RankNumbers)
+                    {
+                        <span class="bp-row-rank">@rank</span>
+                    }
                     <span class="bp-row-icon" style="background-image:url('/images/classes/@(player.ClassId).png')"></span>
                     <span class="bp-row-name">@player.PlayerNameDisplay</span>
+                    <span class="bp-row-gauge"><i class="@ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%"></i></span>
                     @if (player.IsUser && VsBest() is { } vs)
                     {
                         <span class="bp-row-vs @(vs.StartsWith('+') ? "bp-row-vs--up" : vs.StartsWith('−') ? "bp-row-vs--down" : "")"

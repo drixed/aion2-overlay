@@ -22,6 +22,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         CombatSessionManager sessions,
         EntityTracker entities,
         IWindowManagerService windowManager,
+        AionDpsMeter.Services.Services.Settings.IAppSettingsService appSettings,
         ILogger<OverlayRuntime> logger)
     {
         private const int WmHotkey = 0x0312;
@@ -136,6 +137,11 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 if (clickThrough) windowManager.SetClickThrough(key);
                 else windowManager.RestoreClickThrough(key);
             }
+            // Locked over the game the windows can fade further (LOXIN's "while locked"); unlocked they come back.
+            var factor = clickThrough ? Math.Clamp(options.Current.LockedOpacity, 10, 100) / 100.0 : 1.0;
+            if (Application.Current.MainWindow is { } main) main.Opacity = factor;
+            foreach (Window w in Application.Current.Windows)
+                if (w.Title == "AION2 Timers") w.Opacity = Math.Clamp(appSettings.WindowOpacity, 0.1, 1) * factor;
         }
 
         private void CopySummary()

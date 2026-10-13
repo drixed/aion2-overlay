@@ -7,6 +7,93 @@
 @switch (Section)
 {
     case "appearance":
+        <div class="fs-label fs-label--spaced">ПОЛОСЫ И ЦВЕТА</div>
+        <SettingRow Title="Стиль полос" Description="Классика — как сейчас; толстые; тонкие линии; шкала справа от имени; таблица">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    @foreach (var (style, label) in BarStyles)
+                    {
+                        <button type="button" class="fs-segmented__option @(O.BarStyle == style ? "is-selected" : "")" @onclick="() => Set(o => o.BarStyle = style)">@label</button>
+                    }
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Высота полос" Description="@($"{O.BarHeight}%")">
+            <ValueSlot><input class="fs-range" type="range" min="60" max="160" step="10" value="@O.BarHeight" @onchange="e => SetInt(e.Value, v => Set(o => o.BarHeight = v))" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Тема" Description="Цвета окна: обычная, минимальная (без подложек), плотная, светлая">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    @foreach (var (theme, label) in Themes)
+                    {
+                        <button type="button" class="fs-segmented__option @(O.Theme == theme ? "is-selected" : "")" @onclick="() => Set(o => o.Theme = theme)">@label</button>
+                    }
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Шрифт" Description="Шрифты, которые есть в любой Windows">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    @foreach (var (font, label) in Fonts)
+                    {
+                        <button type="button" class="fs-segmented__option @(O.Font == font ? "is-selected" : "")" @onclick="() => Set(o => o.Font = font)">@label</button>
+                    }
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Размер шрифта" Description="@($"{O.FontSize} px")">
+            <ValueSlot><input class="fs-range" type="range" min="10" max="16" step="1" value="@O.FontSize" @onchange="e => SetInt(e.Value, v => Set(o => o.FontSize = v))" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Акцентный цвет" Description="Полоса HP босса и выделение в меню">
+            <ValueSlot>
+                <span class="fs-hotkey">
+                    <input type="color" class="fs-color" value="@(string.IsNullOrEmpty(O.AccentColor) ? "#ff6b81" : O.AccentColor)" @onchange="e => Set(o => o.AccentColor = e.Value?.ToString() ?? string.Empty)" />
+                    <button type="button" class="fs-segmented__option fs-button" @onclick="() => Set(o => o.AccentColor = string.Empty)">Сброс</button>
+                </span>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Цвет фона" Description="Фон главного окна; прозрачность — ползунком «Прозрачность окна» выше">
+            <ValueSlot>
+                <span class="fs-hotkey">
+                    <input type="color" class="fs-color" value="@(string.IsNullOrEmpty(O.BackgroundColor) ? "#121018" : O.BackgroundColor)" @onchange="e => Set(o => o.BackgroundColor = e.Value?.ToString() ?? string.Empty)" />
+                    <button type="button" class="fs-segmented__option fs-button" @onclick="() => Set(o => o.BackgroundColor = string.Empty)">Сброс</button>
+                </span>
+            </ValueSlot>
+        </SettingRow>
+
+        <div class="fs-label fs-label--spaced">СПИСОК ИГРОКОВ</div>
+        <SettingRow Title="Порядок" Description="Где первое место: сверху или снизу (удобно, если окно внизу экрана)">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    <button type="button" class="fs-segmented__option @(!O.FirstPlaceAtBottom ? "is-selected" : "")" @onclick="() => Set(o => o.FirstPlaceAtBottom = false)">Первый сверху</button>
+                    <button type="button" class="fs-segmented__option @(O.FirstPlaceAtBottom ? "is-selected" : "")" @onclick="() => Set(o => o.FirstPlaceAtBottom = true)">Первый снизу</button>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Я всегда сверху" Description="Твоя строка у заголовка, место по урону остаётся своим">
+            <ValueSlot><ToggleSwitch Checked="@O.KeepMeOnTop" CheckedChanged="v => Set(o => o.KeepMeOnTop = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Номера мест" Description="1, 2, 3… перед именем">
+            <ValueSlot><ToggleSwitch Checked="@O.RankNumbers" CheckedChanged="v => Set(o => o.RankNumbers = v)" /></ValueSlot>
+        </SettingRow>
+
+        <div class="fs-label fs-label--spaced">ОКНО</div>
+        <SettingRow Title="Расти вверх" Description="Нижний край окна стоит на месте, окно растёт вверх — для метра внизу экрана">
+            <ValueSlot><ToggleSwitch Checked="@O.GrowUpward" CheckedChanged="v => Set(o => o.GrowUpward = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Компактно вне боя" Description="Вне боя окно само сворачивается в полосу, в бою разворачивается">
+            <ValueSlot><ToggleSwitch Checked="@O.AutoCompact" CheckedChanged="v => Set(o => o.AutoCompact = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Скрыть полосу HP босса" Description="В карточке босса останутся цифры, без полосы">
+            <ValueSlot><ToggleSwitch Checked="@O.HideBossHpBar" CheckedChanged="v => Set(o => o.HideBossHpBar = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Прозрачность при сквозном клике" Description="@($"{O.LockedOpacity}% — когда клики проходят сквозь окна в игру (горячая клавиша «Сквозной клик»)")">
+            <ValueSlot><input class="fs-range" type="range" min="10" max="100" step="5" value="@O.LockedOpacity" @onchange="e => SetInt(e.Value, v => Set(o => o.LockedOpacity = v))" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Время у событий всегда" Description="Отсчёт рядом с иконками разлома, шуго и других событий виден постоянно, а не только перед началом">
+            <ValueSlot><ToggleSwitch Checked="@O.EventTimesAlways" CheckedChanged="v => Set(o => o.EventTimesAlways = v)" /></ValueSlot>
+        </SettingRow>
+
         <div class="fs-label fs-label--spaced">ОВЕРЛЕЙ AION2</div>
         <SettingRow Title="Компактная полоса" Description="Главное окно — только шапка и твоя строка">
             <ValueSlot><ToggleSwitch Checked="@O.Compact" CheckedChanged="v => Set(o => o.Compact = v)" /></ValueSlot>
@@ -29,6 +116,9 @@
 
     case "tracking":
         <div class="fs-label fs-label--spaced">ЧИСЛА</div>
+        <SettingRow Title="Бой окончен через" Description="@($"{O.FightIdleSeconds} с без ударов — бой завершается и уходит в историю (по умолчанию 45)")">
+            <ValueSlot><input class="fs-range" type="range" min="10" max="120" step="5" value="@O.FightIdleSeconds" @onchange="e => SetInt(e.Value, v => Set(o => o.FightIdleSeconds = v))" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Манекен при ударе по чучелу" Description="Ударил тренировочное чучело — окно само показывает замер фиксированной длины (режим «Манекен» в меню у заголовка)">
             <ValueSlot><ToggleSwitch Checked="@O.AutoDummy" CheckedChanged="v => Set(o => o.AutoDummy = v)" /></ValueSlot>
         </SettingRow>

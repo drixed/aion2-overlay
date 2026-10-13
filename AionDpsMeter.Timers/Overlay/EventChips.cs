@@ -12,7 +12,8 @@ public sealed record EventChip(string Id, string Name, string Icon, ChipState St
 /// <summary>The row of event icons in the main window: idle, glowing shortly before the start, lit while open.</summary>
 public static class EventChips
 {
-    public static IReadOnlyList<EventChip> Build(DateTimeOffset now, ScheduleData data, TimeZoneInfo? local = null)
+    /// <param name="alwaysTime">Show the countdown next to a waiting event too, not only shortly before it.</param>
+    public static IReadOnlyList<EventChip> Build(DateTimeOffset now, ScheduleData data, TimeZoneInfo? local = null, bool alwaysTime = false)
     {
         local ??= TimeZoneInfo.Local;
         var chips = new List<EventChip>();
@@ -27,6 +28,7 @@ public static class EventChips
             {
                 ChipState.Open => Minutes(o.End - now),
                 ChipState.Soon => Minutes(toStart),
+                _ when alwaysTime => Minutes(toStart),
                 _ => "",
             };
             var unverified = e.Verified ? "" : " (не проверено)";
@@ -38,7 +40,11 @@ public static class EventChips
         return chips;
     }
 
-    private static string Minutes(TimeSpan t) => $"{Math.Max(1, (int)Math.Ceiling(t.TotalMinutes))}м";
+    private static string Minutes(TimeSpan t)
+    {
+        var minutes = Math.Max(1, (int)Math.Ceiling(t.TotalMinutes));
+        return minutes < 60 ? $"{minutes}м" : $"{minutes / 60}ч {minutes % 60}м";
+    }
 
     private static string DefaultIcon(ScheduledEvent e) =>
         e.Category.Equals("rift", StringComparison.OrdinalIgnoreCase) ? "rift"

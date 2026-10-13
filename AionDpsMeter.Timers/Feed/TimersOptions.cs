@@ -60,6 +60,33 @@ public sealed class TimersOptions
     /// <summary>Length of a dummy run, seconds.</summary>
     public int DummyRunSeconds { get; set; } = 60;
 
+    // Look of the main window (Appearance), as in the LOXIN meter.
+    public AionDpsMeter.Timers.Overlay.BarStyle BarStyle { get; set; } = AionDpsMeter.Timers.Overlay.BarStyle.Classic;
+    /// <summary>Bar height, percent (60–160).</summary>
+    public int BarHeight { get; set; } = 100;
+    public AionDpsMeter.Timers.Overlay.PanelTheme Theme { get; set; } = AionDpsMeter.Timers.Overlay.PanelTheme.Default;
+    public AionDpsMeter.Timers.Overlay.PanelFont Font { get; set; } = AionDpsMeter.Timers.Overlay.PanelFont.System;
+    /// <summary>Font size, px (10–16).</summary>
+    public int FontSize { get; set; } = 13;
+    /// <summary>"#rrggbb" or empty for the theme's.</summary>
+    public string AccentColor { get; set; } = "";
+    /// <summary>"#rrggbb" or empty for the theme's.</summary>
+    public string BackgroundColor { get; set; } = "";
+    /// <summary>The window grows upward: its bottom edge stays put (for a meter low on the screen).</summary>
+    public bool GrowUpward { get; set; }
+    public bool FirstPlaceAtBottom { get; set; }
+    public bool KeepMeOnTop { get; set; }
+    public bool RankNumbers { get; set; }
+    /// <summary>The event icons show their countdown all the time, not only shortly before.</summary>
+    public bool EventTimesAlways { get; set; }
+    /// <summary>Out of combat the main window folds into the compact bar by itself.</summary>
+    public bool AutoCompact { get; set; }
+    public bool HideBossHpBar { get; set; }
+    /// <summary>Window opacity while clicks pass through it (locked over the game), percent; 100 = unchanged.</summary>
+    public int LockedOpacity { get; set; } = 100;
+    /// <summary>Seconds without hits before a fight ends (upstream: 45).</summary>
+    public int FightIdleSeconds { get; set; } = 45;
+
     /// <summary>Next to a player's name in the main window: БМ, ГС, both or nothing.</summary>
     public AionDpsMeter.Timers.Overlay.PowerColumn PowerColumn { get; set; } = AionDpsMeter.Timers.Overlay.PowerColumn.CombatPower;
     /// <summary>The field boss timers window is shown.</summary>

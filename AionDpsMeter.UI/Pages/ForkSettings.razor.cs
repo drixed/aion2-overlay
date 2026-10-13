@@ -9,6 +9,20 @@ namespace AionDpsMeter.UI.Pages
     /// <summary>The fork's settings as blocks of RATmeter's settings window: "appearance", "tracking", "hotkeys", "timers".</summary>
     public partial class ForkSettings(TimersOptionsStore store, AionDpsMeter.Timers.Schedule.ScheduleSource schedule, AionDpsMeter.UI.Services.TimerWindow.AlertSoundPlayer soundPlayer) : ComponentBase
     {
+        private static readonly (BarStyle Style, string Label)[] BarStyles =
+            [(BarStyle.Classic, "Классика"), (BarStyle.Thick, "Толстые"), (BarStyle.Slim, "Тонкие"), (BarStyle.Gauge, "Шкала"), (BarStyle.Table, "Таблица")];
+
+        private static readonly (PanelTheme Theme, string Label)[] Themes =
+            [(PanelTheme.Default, "Обычная"), (PanelTheme.Minimal, "Минимум"), (PanelTheme.Solid, "Плотная"), (PanelTheme.Light, "Светлая")];
+
+        private static readonly (PanelFont Font, string Label)[] Fonts =
+            [(PanelFont.System, "Системный"), (PanelFont.Narrow, "Узкий"), (PanelFont.Mono, "Моно"), (PanelFont.Wide, "Широкий")];
+
+        private static void SetInt(object? value, Action<int> apply)
+        {
+            if (int.TryParse(value?.ToString(), out var v)) apply(v);
+        }
+
         private static readonly (PowerColumn Mode, string Label)[] PowerModes =
             [(PowerColumn.CombatPower, "БМ"), (PowerColumn.GearScore, "ГС"), (PowerColumn.Both, "Оба"), (PowerColumn.None, "Нет")];
 

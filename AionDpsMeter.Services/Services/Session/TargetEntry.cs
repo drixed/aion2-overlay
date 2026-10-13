@@ -12,7 +12,7 @@ namespace AionDpsMeter.Services.Services.Session
     /// </summary>
     public sealed class TargetEntry
     {
-        private static readonly TimeSpan IdleTimeout = TimeSpan.FromSeconds(45);
+        public static TimeSpan IdleTimeout { get; set; } = TimeSpan.FromSeconds(45); // aion2-overlay fork: set from the meter's settings
         private static readonly TimeSpan ScarecrowIdleTimeout = TimeSpan.FromSeconds(10);
 
         private readonly EntityTracker entityTracker;

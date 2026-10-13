@@ -56,6 +56,14 @@ public class EventChipsTests
     }
 
     [Fact]
+    public void With_times_always_on_a_waiting_event_shows_its_countdown_too()
+    {
+        var at = new DateTimeOffset(2026, 10, 13, 9, 10, 0, TimeSpan.Zero);
+        Assert.Equal("20м", EventChips.Build(at, Data, Berlin, alwaysTime: true).Single(c => c.Id == "beritra-air-raid").Text);
+        Assert.Equal("2ч 50м", EventChips.Build(at, Data, Berlin, alwaysTime: true).Single(c => c.Id == "arena-of-tactics").Text);
+    }
+
+    [Fact]
     public void Chips_carry_the_icon_from_the_schedule() =>
         Assert.Equal("arena", Chip("arena-of-tactics", DateTimeOffset.UtcNow).Icon);
 
