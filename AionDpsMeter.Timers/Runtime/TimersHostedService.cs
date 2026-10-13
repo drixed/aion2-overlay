@@ -17,6 +17,7 @@ public sealed class TimersHostedService(
     FieldBossTracker tracker,
     KillWatcher kills,
     TimerStateStore store,
+    AionDpsMeter.Timers.Modes.MeterModesService modes, // created with the app, so the modes hear every hit
     TimeProvider time,
     ILogger<TimersHostedService> logger) : BackgroundService
 {
@@ -46,6 +47,7 @@ public sealed class TimersHostedService(
         tracker.Changed += () => dirty = true;
         dirty = false;
         _ = RefreshAsync(ct);
+        logger.LogDebug("Meter modes listening: dummy run {Seconds} s", modes.Dummy.Length.TotalSeconds);
 
         var lastSave = time.GetUtcNow();
         var lastRefresh = lastSave;

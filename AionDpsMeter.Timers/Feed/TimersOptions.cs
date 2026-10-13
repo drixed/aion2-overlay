@@ -53,6 +53,13 @@ public sealed class TimersOptions
     /// <summary>The boss card shows the boss's records and the pace against them; a new record gets a banner.</summary>
     public bool ShowRecords { get; set; } = true;
 
+    /// <summary>What the rows show: DPS, total damage, healing on others, a dummy run or a grind session.</summary>
+    public AionDpsMeter.Timers.Modes.MeterMode Mode { get; set; } = AionDpsMeter.Timers.Modes.MeterMode.Dps;
+    /// <summary>Hitting a training scarecrow shows the dummy run (from DPS or Damage mode).</summary>
+    public bool AutoDummy { get; set; } = true;
+    /// <summary>Length of a dummy run, seconds.</summary>
+    public int DummyRunSeconds { get; set; } = 60;
+
     /// <summary>Next to a player's name in the main window: БМ, ГС, both or nothing.</summary>
     public AionDpsMeter.Timers.Overlay.PowerColumn PowerColumn { get; set; } = AionDpsMeter.Timers.Overlay.PowerColumn.CombatPower;
     /// <summary>The field boss timers window is shown.</summary>

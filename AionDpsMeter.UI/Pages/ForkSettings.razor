@@ -29,6 +29,19 @@
 
     case "tracking":
         <div class="fs-label fs-label--spaced">ЧИСЛА</div>
+        <SettingRow Title="Манекен при ударе по чучелу" Description="Ударил тренировочное чучело — окно само показывает замер фиксированной длины (режим «Манекен» в меню у заголовка)">
+            <ValueSlot><ToggleSwitch Checked="@O.AutoDummy" CheckedChanged="v => Set(o => o.AutoDummy = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Длительность замера на манекене" Description="Замер начинается с первого удара и считает ровно это время, чтобы замеры можно было сравнивать">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    @foreach (var seconds in new[] { 30, 60, 120, 180 })
+                    {
+                        <button type="button" class="fs-segmented__option @(O.DummyRunSeconds == seconds ? "is-selected" : "")" @onclick="() => Set(o => o.DummyRunSeconds = seconds)">@(seconds < 60 ? $"{seconds} с" : $"{seconds / 60} мин")</button>
+                    }
+                </div>
+            </ValueSlot>
+        </SettingRow>
         <SettingRow Title="Расчёт DPS" Description="eDPS — урон за всё время боя; aDPS — только за твоё активное время, от первого удара до последнего">
             <ValueSlot>
                 <div class="fs-segmented">

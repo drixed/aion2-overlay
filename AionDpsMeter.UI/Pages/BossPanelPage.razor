@@ -9,6 +9,18 @@
         <div class="bp-header" @onmousedown="ViewModel.BeginDrag">
             <span class="bp-dot @(Fight is not null ? "bp-dot--fight" : "")"></span>
             <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
+            <div class="bp-mode-wrap" @onmousedown:stopPropagation="true">
+                <button type="button" class="bp-mode" @onclick="ToggleModeMenu" title="@ModeHint(Mode)">@ModeLabel(Mode) ▾</button>
+                @if (modeMenuOpen)
+                {
+                    <div class="bp-mode-menu">
+                        @foreach (var m in AllModes)
+                        {
+                            <button type="button" class="@(m == Options.Mode ? "is-on" : "")" title="@ModeHint(m)" @onclick="() => PickMode(m)">@ModeLabel(m)</button>
+                        }
+                    </div>
+                }
+            </div>
             <span class="bp-time">@ViewModel.CombatDuration</span>
             <span class="bp-ping" style="color:@ViewModel.PingColor">@ViewModel.PingDisplay</span>
             <div class="bp-controls">
@@ -85,7 +97,32 @@
                 <button type="button" class="bp-link" @onclick="ViewModel.DismissUpdate">✕</button>
             </div>
         }
+        @if (!noticeOpen && ModeStatus() is { } modeStatus)
+        {
+            <div class="bp-mode-status">
+                <span>@modeStatus</span>
+                @if (Mode == AionDpsMeter.Timers.Modes.MeterMode.Grind)
+                {
+                    <button type="button" class="bp-notice-btn" @onclick="ToggleGrind">@GrindButton</button>
+                }
+            </div>
+        }
         <div class="bp-players" style="@(noticeOpen ? "display:none" : "")">
+            @if (AltMode)
+            {
+                @foreach (var r in AltRows())
+                {
+                    <div class="bp-row @(r.IsUser ? "bp-row--me" : "")">
+                        <div class="bp-row-bar @AltRowClass(r)" style="width:@(r.Bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                        <span class="bp-row-icon" style="background-image:url('/images/classes/@(r.ClassId).png')"></span>
+                        <span class="bp-row-name">@r.Name</span>
+                        <span class="bp-row-dmg">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(r.Total) (@r.Share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
+                        <span class="bp-row-dps">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(r.PerSecond)<small>/s</small></span>
+                    </div>
+                }
+            }
+            else
+            {
             @foreach (var (player, share, bar) in Rows())
             {
                 <div class="bp-row @ViewModel.GetIsUserClass(player)" @onclick="() => ViewModel.OpenPlayerDetails(player)">
@@ -99,12 +136,21 @@
                     }
                     <span class="bp-row-cp">@PowerOf(player)</span>
                     <span class="bp-row-death">@player.DeathsDisplay</span>
-                    @if (!Options.HideTotalDamage)
+                    @if (Mode == AionDpsMeter.Timers.Modes.MeterMode.Damage)
                     {
-                        <span class="bp-row-dmg">@player.TotalDamageFormatted (@share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
+                        <span class="bp-row-dmg">@share.ToString("0.0", CultureInfo.InvariantCulture)%</span>
+                        <span class="bp-row-dps">@player.TotalDamageFormatted</span>
                     }
-                    <span class="bp-row-dps">@DpsOf(player)<small>/s</small></span>
+                    else
+                    {
+                        @if (!Options.HideTotalDamage)
+                        {
+                            <span class="bp-row-dmg">@player.TotalDamageFormatted (@share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
+                        }
+                        <span class="bp-row-dps">@DpsOf(player)<small>/s</small></span>
+                    }
                 </div>
+            }
             }
         </div>
         @if (!Compact && (Chips.Count > 0 || Energy is not null))

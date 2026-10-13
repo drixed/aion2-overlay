@@ -77,3 +77,14 @@
 .bp-row-vs { font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; opacity: .9; }
 .bp-row-vs--up { color: #7fdc9c; }
 .bp-row-vs--down { color: #ff8f8f; }
+/* mode menu (DPS / Урон / Хил / Манекен / Гринд) */
+.bp-mode-wrap { position: relative; flex-shrink: 0; }
+.bp-mode { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 5px; color: #e6edf3; font-size: 11px; font-weight: 700; padding: 1px 6px; cursor: pointer; }
+.bp-mode:hover { background: rgba(255,255,255,.12); }
+.bp-mode-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; display: flex; flex-direction: column; min-width: 110px; padding: 4px; border-radius: 8px;
+    background: #14171d; border: 1px solid rgba(255,255,255,.12); box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+.bp-mode-menu button { text-align: left; background: none; border: none; color: #c9d1d9; font-size: 12px; font-weight: 600; padding: 5px 8px; border-radius: 5px; cursor: pointer; }
+.bp-mode-menu button:hover { background: rgba(255,255,255,.08); color: #fff; }
+.bp-mode-menu button.is-on { color: #ff7a8a; background: rgba(255,122,138,.12); }
+.bp-mode-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 8px 6px; font-size: 11px; color: #c9d1d9; }
+.bp-row--me .bp-row-name { color: #fff; }

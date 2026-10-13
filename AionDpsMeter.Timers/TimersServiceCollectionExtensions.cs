@@ -53,6 +53,7 @@ public static class TimersServiceCollectionExtensions
             services.TryAddSingleton<CombatHistoryStore>();
             services.AddSingleton<ICombatHistoryStore, RecordingHistoryStore>();
         }
+        services.AddSingleton<AionDpsMeter.Timers.Modes.MeterModesService>();
         services.AddHostedService<TimersHostedService>();
         return services;
     }

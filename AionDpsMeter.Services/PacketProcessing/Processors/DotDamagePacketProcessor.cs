@@ -85,6 +85,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                 IsDot = true,
             };
 
+            Fork.CombatFeed.PublishDamage(dmg); // aion2-overlay fork
             sessionManager.ProcessDamageEvent(dmg);
         }
 

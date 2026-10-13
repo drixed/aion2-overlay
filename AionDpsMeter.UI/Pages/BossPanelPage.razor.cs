@@ -28,6 +28,7 @@ namespace AionDpsMeter.UI.Pages
         CubeMapWindow cubeMap,
         AlertRunner alertRunner,
         AionDpsMeter.Timers.Records.BossRecords records,
+        AionDpsMeter.Timers.Modes.MeterModesService modes,
         IJSRuntime js,
         IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
@@ -73,6 +74,101 @@ namespace AionDpsMeter.UI.Pages
         private Notice? ActiveNotice =>
             schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
         private IReadOnlyList<EventChip> Chips = [];
+        private bool modeMenuOpen;
+        private bool targetIsDummy;
+
+        private static readonly AionDpsMeter.Timers.Modes.MeterMode[] AllModes = Enum.GetValues<AionDpsMeter.Timers.Modes.MeterMode>();
+
+        /// <summary>The mode in effect: hitting a training scarecrow shows the dummy run (when the user asked for that).</summary>
+        private AionDpsMeter.Timers.Modes.MeterMode Mode =>
+            Options.AutoDummy && targetIsDummy && Options.Mode is AionDpsMeter.Timers.Modes.MeterMode.Dps or AionDpsMeter.Timers.Modes.MeterMode.Damage ? AionDpsMeter.Timers.Modes.MeterMode.Dummy : Options.Mode;
+
+        private static string ModeLabel(AionDpsMeter.Timers.Modes.MeterMode mode) => mode switch
+        {
+            AionDpsMeter.Timers.Modes.MeterMode.Damage => "Урон",
+            AionDpsMeter.Timers.Modes.MeterMode.Heal => "Хил",
+            AionDpsMeter.Timers.Modes.MeterMode.Dummy => "Манекен",
+            AionDpsMeter.Timers.Modes.MeterMode.Grind => "Гринд",
+            _ => "DPS",
+        };
+
+        private static string ModeHint(AionDpsMeter.Timers.Modes.MeterMode mode) => mode switch
+        {
+            AionDpsMeter.Timers.Modes.MeterMode.Damage => "Общий урон за бой",
+            AionDpsMeter.Timers.Modes.MeterMode.Heal => "Лечение других игроков за бой (HPS)",
+            AionDpsMeter.Timers.Modes.MeterMode.Dummy => "Замер на тренировочном чучеле фиксированной длины",
+            AionDpsMeter.Timers.Modes.MeterMode.Grind => "Урон по всем целям между «Старт» и «Стоп»",
+            _ => "Урон в секунду",
+        };
+
+        private bool AltMode => Mode is AionDpsMeter.Timers.Modes.MeterMode.Heal or AionDpsMeter.Timers.Modes.MeterMode.Dummy or AionDpsMeter.Timers.Modes.MeterMode.Grind;
+
+        private void PickMode(AionDpsMeter.Timers.Modes.MeterMode mode)
+        {
+            modeMenuOpen = false;
+            options.Current.Mode = mode;
+            options.Save();
+        }
+
+        private void ToggleModeMenu() => modeMenuOpen = !modeMenuOpen;
+
+        private string GrindButton => modes.Grind.Running ? "■ Стоп" : "▶ Старт";
+
+        private void ToggleGrind()
+        {
+            if (modes.Grind.Running) modes.Grind.Stop(DateTime.Now);
+            else modes.Grind.Play(DateTime.Now);
+        }
+
+        private sealed record AltRow(long PlayerId, string Name, string ClassId, bool IsUser, long Total, double PerSecond, double Share, double Bar);
+
+        /// <summary>Rows of the Heal, Dummy and Grind modes, named from the meter's players (or the entity table).</summary>
+        private IReadOnlyList<AltRow> AltRows()
+        {
+            var at = DateTime.Now;
+            IReadOnlyList<AionDpsMeter.Timers.Modes.ModeRow> rows = Mode switch
+            {
+                AionDpsMeter.Timers.Modes.MeterMode.Heal when sessions.GetCombatDuration() is var d && d > TimeSpan.Zero => modes.Heals.Rows(at - d, at),
+                AionDpsMeter.Timers.Modes.MeterMode.Dummy => modes.Dummy.View(at).Rows,
+                AionDpsMeter.Timers.Modes.MeterMode.Grind => modes.Grind.View(at).Rows,
+                _ => [],
+            };
+            if (rows.Count == 0) return [];
+            var known = ViewModel!.Players.GroupBy(p => p.PlayerId).ToDictionary(g => g.Key, g => g.First());
+            double sum = rows.Sum(r => r.Total), max = rows.Max(r => r.Total);
+            return rows.Select(r =>
+            {
+                known.TryGetValue(r.PlayerId, out var p);
+                var e = p is null ? entities.GetPlayerEntity((int)r.PlayerId) : null;
+                var name = p?.PlayerNameDisplay ?? (string.IsNullOrEmpty(e?.Name) ? $"Игрок {r.PlayerId}" : e!.Name);
+                var classId = p?.ClassId ?? e?.CharacterClass?.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+                return new AltRow(r.PlayerId, name, classId, p?.IsUser ?? e?.IsUser ?? false,
+                    r.Total, r.PerSecond, sum > 0 ? r.Total * 100 / sum : 0, max > 0 ? r.Total * 100 / max : 0);
+            }).ToList();
+        }
+
+        private string AltRowClass(AltRow r) => ViewModel!.GetPlayerRowClass(new PlayerRenderState { ClassId = r.ClassId, IsUser = r.IsUser });
+
+        /// <summary>The line under the header in the Dummy and Grind modes.</summary>
+        private string? ModeStatus()
+        {
+            var at = DateTime.Now;
+            switch (Mode)
+            {
+                case AionDpsMeter.Timers.Modes.MeterMode.Dummy:
+                    var v = modes.Dummy.View(at);
+                    return v.Rows.Count == 0 ? $"🎯 Ударь тренировочное чучело — замер {FeedText.Span(modes.Dummy.Length)} начнётся с первого удара"
+                        : v.Finished ? $"🎯 Итог замера за {FeedText.Span(v.Elapsed)}"
+                        : $"🎯 Замер: осталось {FeedText.Span(v.Left)}";
+                case AionDpsMeter.Timers.Modes.MeterMode.Grind:
+                    var g = modes.Grind.View(at);
+                    return g.Running ? $"⛏ Гринд идёт {FeedText.Span(g.Elapsed)}"
+                        : g.Elapsed > TimeSpan.Zero ? $"⛏ Гринд остановлен: {FeedText.Span(g.Elapsed)}"
+                        : "⛏ Нажми «Старт»: урон по всем целям копится до «Стоп»";
+                default:
+                    return null;
+            }
+        }
         private EnergyState? Energy => energy.Current;
         private TimersOptions Options => options.Current;
         private Dictionary<long, (double Effective, double Active)> dpsCache = new();
@@ -218,6 +314,7 @@ namespace AionDpsMeter.UI.Pages
                 // The card is for bosses (ordinary mobs too when the user asks for it); a dead target drops it.
                 var target = sessions.GetActiveTargetInfo();
                 fightIsBoss = target is { IsBoss: true, IsDummy: false };
+                targetIsDummy = target?.IsDummy == true;
                 Fight = target is { HpTotal: > 0, HpCurrent: > 0 } && (fightIsBoss || options.Current.CardForAllTargets)
                     ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),
                         sessions.GetCombatDuration(),

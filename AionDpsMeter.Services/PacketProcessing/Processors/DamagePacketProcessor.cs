@@ -40,12 +40,19 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
 
             var playerDamage = BuildPlayerDamage(parsed.Data!);
             if (playerDamage != null)
+            {
+                Fork.CombatFeed.PublishDamage(playerDamage); // aion2-overlay fork
                 sessionManager.ProcessDamageEvent(playerDamage);
+            }
         }
 
         private PlayerDamage? BuildPlayerDamage(DamagePacketData data)
         {
-            if (gameData.IsHealingSkill(data.SkillCode)) return null;
+            if (gameData.IsHealingSkill(data.SkillCode))
+            {
+                Fork.CombatFeed.PublishHeal(new Fork.HealEvent(data.ActorId, data.TargetId, data.Damage, data.SkillCode, data.Timestamp)); // aion2-overlay fork
+                return null;
+            }
             CharacterClass? characterClass;
             if (!gameData.IsTheostone(data.SkillCode))
             {
