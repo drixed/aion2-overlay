@@ -25,6 +25,7 @@
 | `AionDpsMeter.Services/PacketProcessing/Processors/EntityDeathProcessor.cs` | смерть игрока уходит в `CombatFeed.Death` (разбор смерти) |
 | `AionDpsMeter.Services/Services/Session/TargetEntry.cs` | `IdleTimeout` (45 с без ударов — бой окончен) — настраиваемое свойство, задаётся из настроек форка |
 | `AionDpsMeter.UI/Views/Controls/DpsChartControl.cs`, `ViewModels/PlayerDetailsViewModel.cs`, `Views/PlayerDetailsWindow.xaml` | `GhostPoints`: на графике подробностей твоего игрока пунктиром — накопительный DPS твоего лучшего боя с этим боссом (`BestFightGhost`) |
+| `AionDpsMeter.UI/ViewModels/MainDpsViewModel.cs` | проверка обновления при запуске и каждые 30 минут (`CheckForUpdatesLoopAsync`); закрытая крестиком версия больше не всплывает |
 | `AionDpsMeter.UI/wwwroot/index.html` | +2 строки: `<script src="js/ru.js">` и `<script src="js/fit.js">` перед `blazor.webview.js` |
 
 Новые файлы внутри проектов апстрима (с ними конфликтов не бывает, помечены первой строкой `aion2-overlay fork`):

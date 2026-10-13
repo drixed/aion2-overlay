@@ -61,7 +61,7 @@ namespace AionDpsMeter.UI.ViewModels
 
             RowScale = settingsService.PlayerRowScale > 0 ? settingsService.PlayerRowScale : 1.0;
 
-            _ = CheckForUpdatesAsync();
+            _ = CheckForUpdatesLoopAsync(); // aion2-overlay fork: at start and every 30 min while running
 
             _refreshTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(33));
             _ = UpdateLoopAsync();
@@ -184,10 +184,23 @@ namespace AionDpsMeter.UI.ViewModels
             }
         }
 
+        // aion2-overlay fork: a release published while the meter runs shows up too (GitHub allows 60 checks an hour)
+        private string? dismissedRelease;
+
+        private async Task CheckForUpdatesLoopAsync()
+        {
+            while (!_cts.IsCancellationRequested)
+            {
+                try { await CheckForUpdatesAsync(); } catch { /* offline: try again later */ }
+                try { await Task.Delay(TimeSpan.FromMinutes(30), _cts.Token); }
+                catch (OperationCanceledException) { return; }
+            }
+        }
+
         private async Task CheckForUpdatesAsync()
         {
             var release = await updateChecker.CheckForUpdateAsync();
-            if (release is not null)
+            if (release is not null && release.Name != dismissedRelease) // aion2-overlay fork: a dismissed version stays dismissed
             {
                 UpdateVersionText = $"New version available: {release.Name}";
                 UpdateAvailable = true;
@@ -255,7 +268,7 @@ namespace AionDpsMeter.UI.ViewModels
         public void OpenSettings() => windowHelper.OpenSettings();
         public void Minimize() => windowManager.Minimize(WindowKey.Main);
         public void Close() => windowManager.CloseApplication();
-        public void DismissUpdate() { UpdateAvailable = false; onStateChanged.Invoke(); }
+        public void DismissUpdate() { dismissedRelease = updateChecker.LatestReleaseInfo?.Name; UpdateAvailable = false; onStateChanged.Invoke(); } // aion2-overlay fork: remember
         public void OpenPlayerDetails(PlayerRenderState player) => windowHelper.OpenPlayerDetails(player);
 
         public void Dispose()
