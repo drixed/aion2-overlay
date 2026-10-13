@@ -48,6 +48,14 @@ namespace AionDpsMeter.UI.Pages
             return (text, delta is { } d ? AionDpsMeter.Timers.Records.RecordText.Pace(d) : null, delta is { } d2 && d2 < TimeSpan.Zero);
         }
 
+        /// <summary>"+4.2%" on my own row: my DPS now against my best on this boss, once the DPS settles.</summary>
+        private string? VsBest()
+        {
+            if (FightRecord is not { BestMyDps: > 0 } r || Fight is not { } f || f.Elapsed < BossFight.MinimumSample) return null;
+            var mine = sessions.PlayerStats.FirstOrDefault(p => p.IsUser)?.DamagePerSecond ?? 0;
+            return mine > 0 ? AionDpsMeter.Timers.Records.RecordText.VsBest(mine, r.BestMyDps) : null;
+        }
+
         /// <summary>"New record" for half a minute after the kill.</summary>
         private string? RecordNews()
         {

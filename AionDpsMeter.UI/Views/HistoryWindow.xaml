@@ -418,11 +418,13 @@
                                          Width="8" Height="8"
                                          VerticalAlignment="Center"
                                          HorizontalAlignment="Left"
-                                         Fill="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"/>
+                                         Fill="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
+                                         ToolTip="{Binding OutcomeText}"/>
 
                                 <!-- Mob name -->
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding TargetName}"
+                                           ToolTip="{Binding OutcomeText}"
                                            FontSize="11" FontWeight="SemiBold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            VerticalAlignment="Center"

@@ -74,3 +74,6 @@
 .bp-ev--open svg { animation: bp-ev-spin 6s linear infinite; }
 @keyframes bp-ev-glow { from { filter: drop-shadow(0 0 0 var(--ev)); } to { filter: drop-shadow(0 0 5px var(--ev)); } }
 @keyframes bp-ev-spin { to { transform: rotate(360deg); } }
+.bp-row-vs { font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; opacity: .9; }
+.bp-row-vs--up { color: #7fdc9c; }
+.bp-row-vs--down { color: #ff8f8f; }

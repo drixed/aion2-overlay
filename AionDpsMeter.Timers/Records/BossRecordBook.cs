@@ -119,8 +119,38 @@ public static class RecordText
     /// <summary>Kill times are truncated to whole seconds, like the fight timer.</summary>
     public static string Time(TimeSpan t) => AionDpsMeter.Timers.Feed.FeedText.Span(TimeSpan.FromSeconds(Math.Floor(t.TotalSeconds)));
 
+    /// <summary>"+4.2%": own DPS now against own best on this boss; null without a best.</summary>
+    public static string? VsBest(double dps, double best)
+    {
+        if (best <= 0) return null;
+        var pct = Math.Round((dps / best - 1) * 100, 1);
+        return pct == 0 ? "±0%"
+            : pct > 0 ? "+" + pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%"
+            : "−" + (-pct).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%";
+    }
+
     public static string Pace(TimeSpan delta) =>
         Math.Abs(delta.TotalSeconds) < 1 ? "в темпе рекорда"
         : delta < TimeSpan.Zero ? $"быстрее рекорда на {Time(-delta)}"
         : $"медленнее рекорда на {Time(delta)}";
+}
+
+public enum FightOutcome { Unknown, Killed, NotKilled }
+
+/// <summary>Whether a saved fight ended in a kill: the damage dealt covers the target's HP (give or take a little).</summary>
+public static class FightOutcomes
+{
+    private const double KillShare = 0.95;
+
+    public static FightOutcome Of(long hpTotal, long totalDamage) =>
+        hpTotal <= 0 ? FightOutcome.Unknown
+        : totalDamage >= hpTotal * KillShare ? FightOutcome.Killed
+        : FightOutcome.NotKilled;
+
+    public static string Text(long hpTotal, long totalDamage) => Of(hpTotal, totalDamage) switch
+    {
+        FightOutcome.Killed => "Убит",
+        FightOutcome.NotKilled => $"Не добит: осталось {Math.Round((1 - (double)totalDamage / hpTotal) * 100):0}%",
+        _ => "HP цели неизвестно",
+    };
 }

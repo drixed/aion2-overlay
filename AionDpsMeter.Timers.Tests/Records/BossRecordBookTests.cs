@@ -122,3 +122,29 @@ public class RecordTextTests
     public void Kill_times_read_as_minutes_and_seconds(double seconds, string expected) =>
         Assert.Equal(expected, RecordText.Time(TimeSpan.FromSeconds(seconds)));
 }
+
+public class VersusBestTests
+{
+    [Theory]
+    [InlineData(26_500, 25_440, "+4.2%")]
+    [InlineData(24_650, 25_440, "−3.1%")]
+    [InlineData(25_440, 25_440, "±0%")]
+    public void Own_dps_against_the_best_reads_as_a_signed_percent(double now, double best, string expected) =>
+        Assert.Equal(expected, RecordText.VsBest(now, best));
+
+    [Fact]
+    public void Without_a_best_there_is_nothing_to_compare() => Assert.Null(RecordText.VsBest(20_000, 0));
+}
+
+public class FightOutcomeTests
+{
+    [Theory]
+    [InlineData(8_208_000, 8_216_291, FightOutcome.Killed, "Убит")]
+    [InlineData(8_208_000, 5_982_726, FightOutcome.NotKilled, "Не добит: осталось 27%")]
+    [InlineData(0, 6_802_556, FightOutcome.Unknown, "HP цели неизвестно")]
+    public void A_fight_reads_as_killed_or_not(long hp, long damage, FightOutcome outcome, string text)
+    {
+        Assert.Equal(outcome, FightOutcomes.Of(hp, damage));
+        Assert.Equal(text, FightOutcomes.Text(hp, damage));
+    }
+}
