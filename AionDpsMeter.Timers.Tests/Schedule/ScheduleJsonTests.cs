@@ -20,6 +20,8 @@ public class ScheduleJsonTests
             e => Assert.False(e.AlertByDefault)); // quiet until switched on: shugo already alerts every hour
         Assert.Equal(60, Assert.Single(data.Events, e => e.Id == "daily-reset").SoonMinutes);
         Assert.Equal(2400, data.FieldBossMaps[1110].Block);
+        Assert.Equal("Воин краллов", data.PetName(1026));  // pet names learned from the user's screenshots
+        Assert.Null(data.PetName(99999));
     }
 
     [Fact]

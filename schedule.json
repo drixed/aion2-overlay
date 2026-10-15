@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Время — в часовом поясе timeZone (сервер EU). verified=false: не сверено на EU, оверлей пометит «(не проверено)». После правки этого файла на GitHub программа подхватит его при следующем запуске. enrageSeconds: код босса → секунды до ярости (0 — нет ярости); по умолчанию 300 у боссов данжей, у полевых — нет. cubeMaps: номер карты → страница с картой скрытых кубов (interactivemap.app), default — для остальных. icon: rift/shugo/raid/arena/reset — иконка в главном окне; alert:false — без уведомления, пока его не включат в настройках; soonMinutes — за сколько минут иконка начинает светиться; durationsMinutes — длительность каждого окна из times.",
+  "_note": "Время — в часовом поясе timeZone (сервер EU). verified=false: не сверено на EU, оверлей пометит «(не проверено)». После правки этого файла на GitHub программа подхватит его при следующем запуске. enrageSeconds: код босса → секунды до ярости (0 — нет ярости); по умолчанию 300 у боссов данжей, у полевых — нет. cubeMaps: номер карты → страница с картой скрытых кубов (interactivemap.app), default — для остальных. icon: rift/shugo/raid/arena/reset — иконка в главном окне; alert:false — без уведомления, пока его не включат в настройках; soonMinutes — за сколько минут иконка начинает светиться; durationsMinutes — длительность каждого окна из times. petNames: номер питомца в коллекции → имя (в пакетах игры только номер; метр показывает его, когда бьёшь моба, с которого падают души).",
   "events": [
     {
       "id": "rift",
@@ -82,5 +82,9 @@
     "default": "https://interactivemap.app/aion2/maps/ru/altgard/hidden-cube",
     "1110": "https://interactivemap.app/aion2/maps/ru/altgard/hidden-cube",
     "1010": "https://interactivemap.app/aion2/maps/ru/verteron/hidden-cube"
+  },
+  "petNames": {
+    "1014": "Сторожевой пес драканов",
+    "1026": "Воин краллов"
   }
 }

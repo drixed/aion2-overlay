@@ -80,9 +80,10 @@ namespace AionDpsMeter.UI.Pages
         private (AionDpsMeter.Timers.Pets.PetView Pet, string Name)? PetLine;
 
         /// <summary>"🐾 Сторожевой пес драканов · Ур. 2 · 13 / 75" while hitting a monster whose pet is not maxed.</summary>
-        private static string PetText((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line)
+        private string PetText((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line)
         {
-            var (p, name) = line;
+            var (p, monster) = line;
+            var name = schedule.Current.PetName(p.Pet) ?? $"Питомец с «{monster}»"; // names live in schedule.json
             var stage = p.Level == 0 ? "сбор" : $"ур. {p.Level}";
             var souls = p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}"; // exact once the game sends it (a full level)
             return $"{name} · {stage} · {souls}";
@@ -90,7 +91,8 @@ namespace AionDpsMeter.UI.Pages
 
         /// <summary>"A pet reached level 2" for half a minute.</summary>
         private string? PetNews() =>
-            Options.ShowPets && pets.Latest is { } n && now - n.At <= RecordNewsFor ? $"{n.Name}: уровень {n.Level}!" : null;
+            Options.ShowPets && pets.Latest is { } n && now - n.At <= RecordNewsFor
+                ? $"{schedule.Current.PetName(n.Pet) ?? n.Name}: уровень {n.Level}!" : null;
         private long? recapPlayer;
 
         /// <summary>The skull on a row opens (or closes) that player's last death recap.</summary>

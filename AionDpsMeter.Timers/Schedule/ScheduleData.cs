@@ -14,8 +14,12 @@ public sealed record ScheduleData(
     IReadOnlyDictionary<int, int>? EnrageSeconds = null,
     Notice? Notice = null,
     int EnergyMax = 0,
-    IReadOnlyDictionary<string, string>? CubeMaps = null)
+    IReadOnlyDictionary<string, string>? CubeMaps = null,
+    IReadOnlyDictionary<int, string>? PetNames = null)
 {
+    /// <summary>A pet's name by its collection id (the game's packets carry only the id); null when unknown.</summary>
+    public string? PetName(int pet) => PetNames is not null && PetNames.TryGetValue(pet, out var name) ? name : null;
+
     private static readonly IReadOnlyDictionary<int, int> None = new Dictionary<int, int>();
 
     public static ScheduleData Empty { get; } =

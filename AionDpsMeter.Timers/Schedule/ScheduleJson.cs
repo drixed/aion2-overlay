@@ -49,7 +49,11 @@ public static class ScheduleJson
             .Where(kv => Uri.TryCreate(kv.Value, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps)
             .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-        return new ScheduleData(events, maps, respawn, enrage, notice, Math.Max(0, file.EnergyMax), cubeMaps);
+        var petNames = new Dictionary<int, string>();
+        foreach (var (key, name) in file.PetNames ?? new())
+            if (int.TryParse(key, out var pet) && !string.IsNullOrWhiteSpace(name)) petNames[pet] = name;
+
+        return new ScheduleData(events, maps, respawn, enrage, notice, Math.Max(0, file.EnergyMax), cubeMaps, petNames);
     }
 
     private static bool TryEvent(EventDto dto, out ScheduledEvent e)
@@ -135,6 +139,7 @@ public static class ScheduleJson
         public NoticeDto? Notice { get; set; }
         public int EnergyMax { get; set; }
         public Dictionary<string, string>? CubeMaps { get; set; }
+        public Dictionary<string, string>? PetNames { get; set; }
     }
 
     internal sealed class NoticeDto
