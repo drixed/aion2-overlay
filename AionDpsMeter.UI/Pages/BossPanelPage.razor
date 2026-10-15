@@ -33,6 +33,10 @@
                 }
             </div>
         }
+        @if (PetNews() is { } petNews)
+        {
+            <div class="bp-record-news bp-pet-news">🐾 @petNews</div>
+        }
         @if (RecordNews() is { } recordNews)
         {
             <div class="bp-record-news">🏆 @recordNews</div>
@@ -100,6 +104,10 @@
                 <button type="button" class="bp-notice-btn" @onclick="ViewModel.OpenWhatsNew">Что нового</button>
                 <button type="button" class="bp-link" @onclick="ViewModel.DismissUpdate">✕</button>
             </div>
+        }
+        @if (!noticeOpen && PetLine is { } petLine)
+        {
+            <div class="bp-pet" title="Души питомца этого монстра: точное число игра присылает, когда уровень набран; до этого — прибавка за сессию">🐾 @PetText(petLine)</div>
         }
         @if (!noticeOpen && ModeStatus() is { } modeStatus)
         {

@@ -19,6 +19,8 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
         public static event Action<RawHit>? Hit;
         /// <summary>A player of the meter died (entity id, time).</summary>
         public static event Action<int, DateTime>? Death;
+        /// <summary>A monster died (entity id, monster code or 0, time) — for pets: which monster gave the soul.</summary>
+        public static event Action<int, int, DateTime>? MobDeath;
 
         public static void PublishDamage(PlayerDamage hit)
         {
@@ -38,6 +40,11 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
         public static void PublishDeath(int entityId, DateTime at)
         {
             try { Death?.Invoke(entityId, at); } catch { }
+        }
+
+        public static void PublishMobDeath(int entityId, int mobCode, DateTime at)
+        {
+            try { MobDeath?.Invoke(entityId, mobCode, at); } catch { }
         }
     }
 }

@@ -23,6 +23,10 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                 sessionManager.RegisterPlayerDeath(entityId);
                 Fork.CombatFeed.PublishDeath(entityId, DateTime.Now); // aion2-overlay fork: death recap
             }
+            else // aion2-overlay fork: a monster's death, for pets (which monster gave the soul)
+            {
+                Fork.CombatFeed.PublishMobDeath(entityId, entityTracker.GetTargetMob(entityId)?.MobCode ?? 0, DateTime.Now);
+            }
         }
     }
 }

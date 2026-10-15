@@ -22,7 +22,7 @@
 | `AionDpsMeter.Services/PacketCapture/CaptureDevice.cs` | TCP-сегменты идут через `TcpSegmentOrderer` (`PacketCapture/Fork`): опоздавшие ждут своего места, повторы отбрасываются, частичные обрезаются. Апстрим перепрыгивал разрыв и потом выбрасывал опоздавший сегмент как старый, теряя удары; +2 строки `segmentOrderer.Clear()` |
 | `AionDpsMeter.UI/ViewModels/History/HistoryEntryViewModel.cs`, `Views/HistoryWindow.xaml` | точка в строке истории — итог боя (зелёная — убит, красная — не добит, серая — HP неизвестно), подсказка `OutcomeText` на точке и имени |
 | `AionDpsMeter.Services/PacketProcessing/Processors/DamagePacketProcessor.cs`, `DotDamagePacketProcessor.cs` | каждый удар (и сырой — удары мобов по игрокам: умения монстров дочитываются до урона и уходят только в разбор смерти, метр их по-прежнему пропускает) и каждое лечение (апстрим его выбрасывал) уходят в `Fork/CombatFeed` — для режимов Урон/Хил/Манекен/Гринд и разбора смерти |
-| `AionDpsMeter.Services/PacketProcessing/Processors/EntityDeathProcessor.cs` | смерть игрока уходит в `CombatFeed.Death` (разбор смерти) |
+| `AionDpsMeter.Services/PacketProcessing/Processors/EntityDeathProcessor.cs` | смерть игрока уходит в `CombatFeed.Death` (разбор смерти), смерть монстра с его кодом — в `CombatFeed.MobDeath` (питомцы) |
 | `AionDpsMeter.Services/Services/Session/TargetEntry.cs` | `IdleTimeout` (45 с без ударов — бой окончен) — настраиваемое свойство, задаётся из настроек форка |
 | `AionDpsMeter.UI/Views/Controls/DpsChartControl.cs`, `ViewModels/PlayerDetailsViewModel.cs`, `Views/PlayerDetailsWindow.xaml` | `GhostPoints`: на графике подробностей твоего игрока пунктиром — накопительный DPS твоего лучшего боя с этим боссом (`BestFightGhost`) |
 | `AionDpsMeter.UI/ViewModels/MainDpsViewModel.cs` | проверка обновления при запуске и каждые 30 минут (`CheckForUpdatesLoopAsync`); закрытая крестиком версия больше не всплывает |
@@ -34,6 +34,7 @@
 - `AionDpsMeter.Services/PacketProcessing/Processors/FieldBossListForwarder.cs` — обработчик опкода `0x9101` (байты `01 91`)
 - `AionDpsMeter.Services/PacketProcessing/Fork/IEnergyListener.cs`, `Processors/EnergyForwarder.cs` — опкод `0x610C` (байты `0C 61`, энергия)
 - `AionDpsMeter.Services/PacketProcessing/Fork/IMapLoadListener.cs`, `Processors/MapLoadForwarder.cs` — опкод `0x3621` (байты `21 36`, загрузка карты)
+- `AionDpsMeter.Services/PacketProcessing/Fork/IPetListener.cs`, `Processors/PetForwarder.cs` — опкоды `0x9000`, `0x900D`, `0x900E`, `0x8D5C` (питомцы: список при входе, души, точное число, новый уровень)
 - `AionDpsMeter.UI/Pages/TimersOverlay.razor`, `.razor.cs`, `.razor.css`
 - `AionDpsMeter.UI/Services/TimerWindow/*`
 - `AionDpsMeter.UI/Pages/BossPanelPage.razor`, `.razor.cs`, `.razor.css` — главное окно «Бой с боссом»

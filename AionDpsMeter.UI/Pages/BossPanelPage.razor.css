@@ -143,3 +143,5 @@
 .bp-ev--soon { background: color-mix(in srgb, var(--ev) 30%, transparent); filter: none; animation: bp-ev-pulse 0.9s ease-in-out infinite alternate; }
 .bp-ev--open { background: var(--ev); border-color: var(--ev); color: #14161c; filter: drop-shadow(0 0 4px var(--ev)); }
 @keyframes bp-ev-pulse { from { box-shadow: 0 0 0 0 var(--ev); } to { box-shadow: 0 0 9px 1px var(--ev); } }
+.bp-pet { margin: 0 8px 6px; padding: 4px 8px; border-radius: 6px; background: rgba(126, 231, 135, .1); border: 1px solid rgba(126, 231, 135, .35); color: #b7f5bd; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-pet-news { background: linear-gradient(90deg, #2f8f45, #7ee787); }

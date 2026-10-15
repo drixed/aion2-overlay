@@ -29,6 +29,7 @@ namespace AionDpsMeter.UI.Pages
         AlertRunner alertRunner,
         AionDpsMeter.Timers.Records.BossRecords records,
         AionDpsMeter.Timers.Modes.MeterModesService modes,
+        AionDpsMeter.Timers.Pets.PetTracker pets,
         IJSRuntime js,
         IServiceProvider services,
         ILogger<BossPanelPage> logger) : ComponentBase
@@ -75,6 +76,20 @@ namespace AionDpsMeter.UI.Pages
             schedule.Current.Notice is { } n && !options.Current.IsDismissed(n.Id) && snoozedNotice != n.Id ? n : null;
         private IReadOnlyList<EventChip> Chips = [];
         private bool modeMenuOpen;
+        private (AionDpsMeter.Timers.Pets.PetView Pet, string Name)? PetLine;
+
+        /// <summary>"🐾 Сторожевой пес драканов · Ур. 2 · 13 / 75" while hitting a monster whose pet is not maxed.</summary>
+        private static string PetText((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line)
+        {
+            var (p, name) = line;
+            var stage = p.Level == 0 ? "сбор" : $"ур. {p.Level}";
+            var souls = p.Souls is { } s ? $"{s} / {p.Need}" : p.SessionGain > 0 ? $"+{p.SessionGain} за сессию" : "считаю души…";
+            return $"{name} · {stage} · {souls}";
+        }
+
+        /// <summary>"A pet reached level 2" for half a minute.</summary>
+        private string? PetNews() =>
+            Options.ShowPets && pets.Latest is { } n && now - n.At <= RecordNewsFor ? $"{n.Name}: уровень {n.Level}!" : null;
         private long? recapPlayer;
 
         /// <summary>The skull on a row opens (or closes) that player's last death recap.</summary>
@@ -360,6 +375,7 @@ namespace AionDpsMeter.UI.Pages
                 var target = sessions.GetActiveTargetInfo();
                 fightIsBoss = target is { IsBoss: true, IsDummy: false };
                 targetIsDummy = target?.IsDummy == true;
+                PetLine = Options.ShowPets ? pets.Current() : null;
                 Fight = target is { HpTotal: > 0, HpCurrent: > 0 } && (fightIsBoss || options.Current.CardForAllTargets)
                     ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),
                         sessions.GetCombatDuration(),

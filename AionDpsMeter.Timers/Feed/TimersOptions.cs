@@ -86,6 +86,8 @@ public sealed class TimersOptions
     public int LockedOpacity { get; set; } = 100;
     /// <summary>Seconds without hits before a fight ends (upstream: 45).</summary>
     public int FightIdleSeconds { get; set; } = 45;
+    /// <summary>Hitting a monster whose pet is not maxed shows its souls; a pet level up gets a banner and a sound.</summary>
+    public bool ShowPets { get; set; } = true;
 
     /// <summary>Next to a player's name in the main window: БМ, ГС, both or nothing.</summary>
     public AionDpsMeter.Timers.Overlay.PowerColumn PowerColumn { get; set; } = AionDpsMeter.Timers.Overlay.PowerColumn.CombatPower;

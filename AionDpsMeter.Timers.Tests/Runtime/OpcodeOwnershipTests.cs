@@ -14,6 +14,10 @@ public class OpcodeOwnershipTests
     [InlineData(FieldBossListParser.Opcode, "FieldBossListForwarder")]
     [InlineData(EnergyParser.Opcode, "EnergyForwarder")]
     [InlineData(AionDpsMeter.Timers.Zones.MapLoadParser.Opcode, "MapLoadForwarder")]
+    [InlineData(AionDpsMeter.Timers.Pets.PetParser.ListOpcode, "PetForwarder")]
+    [InlineData(AionDpsMeter.Timers.Pets.PetParser.SoulOpcode, "PetForwarder")]
+    [InlineData(AionDpsMeter.Timers.Pets.PetParser.ExactOpcode, "PetForwarder")]
+    [InlineData(AionDpsMeter.Timers.Pets.PetParser.LevelUpOpcode, "PetForwarder")]
     public void Only_the_fork_forwarder_handles_its_opcode(ushort opcode, string forwarder)
     {
         var owners = typeof(IFieldBossListListener).Assembly.GetTypes()

@@ -147,6 +147,9 @@
         <SettingRow Title="Рекорды по боссам" Description="В карточке босса — рекорд и темп относительно него; после боя — плашка «Новый рекорд». Список — во вкладке «Рекорды»">
             <ValueSlot><ToggleSwitch Checked="@O.ShowRecords" CheckedChanged="v => Set(o => o.ShowRecords = v)" /></ValueSlot>
         </SettingRow>
+        <SettingRow Title="Питомцы" Description="Бьёшь монстра, чей питомец ещё не прокачан, — над списком видно его уровень и души; новый уровень — плашка и звук. Метр сам учится, какой монстр какого питомца">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowPets" CheckedChanged="v => Set(o => o.ShowPets = v)" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Бой окончен через" Description="@($"{O.FightIdleSeconds} с без ударов — бой завершается и уходит в историю (по умолчанию 45)")">
             <ValueSlot><input class="fs-range" type="range" min="10" max="120" step="5" value="@O.FightIdleSeconds" @onchange="e => SetInt(e.Value, v => Set(o => o.FightIdleSeconds = v))" /></ValueSlot>
         </SettingRow>

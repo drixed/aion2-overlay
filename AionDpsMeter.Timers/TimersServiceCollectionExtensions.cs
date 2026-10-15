@@ -54,6 +54,10 @@ public static class TimersServiceCollectionExtensions
             services.AddSingleton<ICombatHistoryStore, RecordingHistoryStore>();
         }
         services.AddSingleton<AionDpsMeter.Timers.Modes.MeterModesService>();
+        services.AddSingleton(sp => new AionDpsMeter.Timers.Pets.PetTracker(TimersPaths.Of("pets-state.json"),
+            sp.GetRequiredService<BossCatalog>(), sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<ILogger<AionDpsMeter.Timers.Pets.PetTracker>>()));
+        services.AddSingleton<IPetListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Pets.PetTracker>());
         services.AddHostedService<TimersHostedService>();
         return services;
     }
