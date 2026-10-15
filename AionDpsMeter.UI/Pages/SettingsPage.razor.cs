@@ -40,6 +40,7 @@ namespace AionDpsMeter.UI.Pages
         new("overlays", "Overlays", "&#9635;"),
         new("fork-timers", "Timers", "&#9200;"), // aion2-overlay fork
         new("fork-records", "Records", "&#127942;"), // aion2-overlay fork
+        new("fork-pets", "Pets", "&#128062;"), // aion2-overlay fork
     };
 
         private readonly List<UiStyleOption> _uiStyles = new()

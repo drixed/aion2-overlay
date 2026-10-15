@@ -9,6 +9,9 @@ public sealed record PetLevel(int Pet, int Level);
 /// <param name="SessionGain">Souls gained since the meter started.</param>
 public sealed record PetView(int Pet, int Level, int? Souls, int Need, int SessionGain);
 
+/// <param name="Monster">The monster its souls come from (learned from kills), or null while unknown.</param>
+public sealed record PetRow(PetView View, int? Monster);
+
 /// <summary>
 /// Pet packets (EU capture 2026-10-16), bodies after the opcode. Wire bytes → RATmeter opcode (little-endian):
 /// <c>00 90</c> login list, <c>0D 90</c> souls gained, <c>0E 90</c> exact souls when a level is full, <c>5C 8D</c> level up.
@@ -136,6 +139,22 @@ public sealed class PetBook
                 .FirstOrDefault();
             if (e is null || e.Level >= MaxLevel) return null;
             return new PetView(e.Pet, e.Level, e.Souls, Need(e.Level), session.GetValueOrDefault(e.Pet));
+        }
+    }
+
+    /// <summary>Every pet: closest to its next level first, then unknown counts, maxed ones last.</summary>
+    public IReadOnlyList<PetRow> All()
+    {
+        lock (gate)
+        {
+            return pets.Values
+                .Select(e => new PetRow(
+                    new PetView(e.Pet, e.Level, e.Souls, Need(e.Level), session.GetValueOrDefault(e.Pet)),
+                    e.Monsters.Count > 0 ? e.Monsters.MaxBy(m => m.Value).Key : null))
+                .OrderBy(r => r.View.Level >= MaxLevel ? 2 : r.View.Souls is null ? 1 : 0)
+                .ThenBy(r => r.View.Souls is { } s ? r.View.Need - s : int.MaxValue)
+                .ThenBy(r => r.View.Pet)
+                .ToList();
         }
     }
 

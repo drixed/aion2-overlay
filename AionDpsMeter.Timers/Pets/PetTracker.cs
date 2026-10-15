@@ -56,6 +56,10 @@ public sealed class PetTracker : IPetListener, IDisposable
         return book.ForMonster(code) is { } view ? (view, NameOf(code)) : null;
     }
 
+    /// <summary>Every pet for the Pets tab, with the Russian name of the monster its souls come from.</summary>
+    public IReadOnlyList<(PetView View, string? Monster)> All() =>
+        book.All().Select(r => (r.View, r.Monster is { } code ? NameOf(code) : null)).ToList();
+
     public void OnPetPacket(ushort opcode, Packet packet)
     {
         try

@@ -1,0 +1,52 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Питомцы" tab of the settings window. *@
+@using AionDpsMeter.Timers.Pets
+@inject PetTracker Pets
+@inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
+
+<div class="fs-label">ПИТОМЦЫ</div>
+@if (rows.Count == 0)
+{
+    <p class="fp-empty">Пока пусто. Уровни всех питомцев игра присылает при входе в игру: перезайди персонажем.</p>
+}
+else
+{
+    <p class="fp-summary">
+        Всего @rows.Count · ур. 1: @rows.Count(r => r.View.Level == 1) · ур. 2: @rows.Count(r => r.View.Level == 2) · макс.: @rows.Count(r => r.View.Level >= PetBook.MaxLevel)
+    </p>
+    <p class="fp-hint">Сверху — кому меньше всего до нового уровня. «?» — точное число душ игра ещё не присылала: она шлёт его по ходу фарма, дальше метр считает сам. Монстра метр узнаёт, когда с него падает душа.</p>
+    <label class="fp-toggle"><input type="checkbox" checked="@hideMaxed" @onchange="e => hideMaxed = e.Value is true" /> Скрыть максимальные</label>
+    <div class="fp-table">
+        <div class="fp-row fp-head"><span>Питомец</span><span>Ур.</span><span>Души</span><span>С кого падают</span></div>
+        @foreach (var (view, monster) in rows.Where(r => !hideMaxed || r.View.Level < PetBook.MaxLevel))
+        {
+            var name = Schedule.Current.PetName(view.Pet) ?? $"№ {view.Pet}";
+            var maxed = view.Level >= PetBook.MaxLevel;
+            <div class="fp-row @(maxed ? "fp-maxed" : "")">
+                <span class="fp-name" title="@name">@name</span>
+                <span>@(maxed ? "макс." : view.Level == 0 ? "сбор" : view.Level.ToString())</span>
+                <span class="fp-souls">
+                    @if (maxed)
+                    {
+                        <text>—</text>
+                    }
+                    else
+                    {
+                        @(view.Souls is { } s ? $"{s} / {view.Need}" : $"? / {view.Need}")
+                        @if (view.Souls is { } known)
+                        {
+                            <i class="fp-bar"><b style="width:@((Math.Min(100, known * 100 / Math.Max(1, view.Need))).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></b></i>
+                        }
+                    }
+                </span>
+                <span class="fp-monster" title="@monster">@(monster ?? "—")</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<(PetView View, string? Monster)> rows = [];
+    private bool hideMaxed = true;
+
+    protected override void OnInitialized() => rows = Pets.All();
+}

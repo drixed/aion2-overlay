@@ -107,7 +107,14 @@
         }
         @if (!noticeOpen && PetLine is { } petLine)
         {
-            <div class="bp-pet" title="Души питомца, который падает с этого монстра. «?» — игра ещё не присылала точное число: она шлёт его, когда уровень набран, дальше метр считает сам">🐾 @PetText(petLine)</div>
+            <div class="bp-pet" title="@PetTitle(petLine)">
+                <span class="bp-pet-name">🐾 @PetName(petLine)</span>
+                <span class="bp-pet-stat">@PetStat(petLine.Pet)</span>
+                @if (petLine.Pet.Souls is { } petSouls)
+                {
+                    <i class="bp-pet-bar" style="width:@((Math.Min(100, petSouls * 100 / Math.Max(1, petLine.Pet.Need))).ToString(CultureInfo.InvariantCulture))%"></i>
+                }
+            </div>
         }
         @if (!noticeOpen && ModeStatus() is { } modeStatus)
         {

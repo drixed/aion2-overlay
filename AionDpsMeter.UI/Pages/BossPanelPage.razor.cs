@@ -79,15 +79,16 @@ namespace AionDpsMeter.UI.Pages
         private bool modeMenuOpen;
         private (AionDpsMeter.Timers.Pets.PetView Pet, string Name)? PetLine;
 
-        /// <summary>"🐾 Сторожевой пес драканов · Ур. 2 · 13 / 75" while hitting a monster whose pet is not maxed.</summary>
-        private string PetText((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line)
-        {
-            var (p, monster) = line;
-            var name = schedule.Current.PetName(p.Pet) ?? $"Питомец с «{monster}»"; // names live in schedule.json
-            var stage = p.Level == 0 ? "сбор" : $"ур. {p.Level}";
-            var souls = p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}"; // exact once the game sends it (a full level)
-            return $"{name} · {stage} · {souls}";
-        }
+        /// <summary>The pet line while hitting a monster whose pet is not maxed: its name (or the monster's) on the left,
+        /// "ур. 2 · 13 / 75" on the right — the numbers never get cut off.</summary>
+        private string PetName((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line) =>
+            schedule.Current.PetName(line.Pet.Pet) ?? line.Name; // names live in schedule.json
+
+        private static string PetStat(AionDpsMeter.Timers.Pets.PetView p) =>
+            $"{(p.Level == 0 ? "сбор" : $"ур. {p.Level}")} · {(p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}")}";
+
+        private string PetTitle((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line) =>
+            $"{PetName(line)} — души падают с «{line.Name}». «?» — точное число игра ещё не присылала; дальше метр считает сам. Все питомцы — в настройках, вкладка «Питомцы»";
 
         /// <summary>"A pet reached level 2" for half a minute.</summary>
         private string? PetNews() =>

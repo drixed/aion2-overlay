@@ -11,12 +11,12 @@
 | `AionDpsMeter.Services/Services/Update/UpdateCheckerService.cs` | `ReleasesApiUrl` → релизы `drixed/aion2-overlay` |
 | `AionDpsMeter.UI/Pages/MainDpsPage.razor` | +2 строки: `<ForkMainSwitch>` и `</ForkMainSwitch>` вокруг блока стилей апстрима (сами строки апстрима не тронуты) — панель боя или стили апстрима, переключается сразу |
 | `AionDpsMeter.Core/Models/Mob.cs` | `IsBoss`: цель без кода (спаун не увиден — метр запущен посреди данжа) считается боссом, если её HP хоть раз был ≥ 1 млн (`HpMaxSeen`, `UnknownBossHp`): у боссов 3,6 млн+, у обычных мобов до ~300 тыс.; `HpTotal` не бывает меньше `HpMaxSeen` — разбор пакета моба иногда даёт мусор (67), и полоса HP босса стояла на 100%; HP больше 32 бит (`MaxPlausibleHp`) отбрасывается — пакет HP игрока читается как мусор 4,5e18, и после PvP появлялся «босс» с миллиардами HP |
-| `AionDpsMeter.UI/Pages/SettingsPage.razor` | +4 строки с пометкой `aion2-overlay fork`: `<ForkSettings Section="…"/>` в конце вкладок appearance, hotkeys, tracking и новые секции `fork-timers` и `fork-records` (`<ForkRecords/>`); `@inject TimersOptionsStore`; в «Window layout» третий вариант «Панель боя», выбор стиля апстрима переключает на него (`ForkUpstreamStyle`, блок `@code` в конце) |
+| `AionDpsMeter.UI/Pages/SettingsPage.razor` | +4 строки с пометкой `aion2-overlay fork`: `<ForkSettings Section="…"/>` в конце вкладок appearance, hotkeys, tracking и новые секции `fork-timers`, `fork-records` (`<ForkRecords/>`) и `fork-pets` (`<ForkPets/>`); `@inject TimersOptionsStore`; в «Window layout» третий вариант «Панель боя», выбор стиля апстрима переключает на него (`ForkUpstreamStyle`, блок `@code` в конце) |
 | `AionDpsMeter.UI/Pages/SettingsPage.razor.css` | в конце: превью «Панели боя», три колонки в `.style-picker`, вкладки переносятся на вторую строку (их больше, чем влезает в окно, а прокрутка у апстрима скрыта) |
 | `AionDpsMeter.Core/Models/Player.cs` | +`GearScore` (ГС) |
 | `AionDpsMeter.Services/PacketProcessing/Processors/PartyProcessor.cs` | +1 строка: `GearScore` из списка группы (апстрим его читал, но выбрасывал) |
 | `AionDpsMeter.Services/Services/Entity/EntityTracker.cs` | +3 строки: `GearScore` переносится вместе с `CombatPower` |
-| `AionDpsMeter.UI/Pages/SettingsPage.razor.cs` | +2 строки в `_groups`: вкладки `fork-timers` ("Timers") и `fork-records` ("Records") |
+| `AionDpsMeter.UI/Pages/SettingsPage.razor.cs` | +2 строки в `_groups`: вкладки `fork-timers` ("Timers"), `fork-records` ("Records") и `fork-pets` ("Pets") |
 | `AionDpsMeter.UI/Converters/SafeImageSourceConverter.cs` | иконка умения, которой ещё нет в кэше, грузится прямо по ссылке (`LoadRemote`): обновление после скачивания у апстрима не срабатывало, и иконки появлялись только при повторном открытии окна |
 | `AionDpsMeter.Updater/Program.cs` | переписан: пишет, что делает (окно и `update.log`), повторяет занятые файлы, при ошибке не закрывается молча и всё равно запускает метр; свою новую копию кладёт как `AionDpsMeter.Updater.exe.new` (её подменяет `UpdaterSelfUpdate` при старте метра) |
 | `AionDpsMeter.Services/PacketCapture/CaptureDevice.cs` | TCP-сегменты идут через `TcpSegmentOrderer` (`PacketCapture/Fork`): опоздавшие ждут своего места, повторы отбрасываются, частичные обрезаются. Апстрим перепрыгивал разрыв и потом выбрасывал опоздавший сегмент как старый, теряя удары; +2 строки `segmentOrderer.Clear()` |
@@ -41,6 +41,7 @@
 - `AionDpsMeter.UI/wwwroot/js/ru.js` — русский словарь для Blazor-окон апстрима
 - `AionDpsMeter.UI/wwwroot/js/fit.js` — высота главного окна по содержимому
 - `AionDpsMeter.UI/Pages/ForkSettings.*` — настройки форка внутри окна настроек RATmeter
+- `AionDpsMeter.UI/Pages/ForkPets.*` — вкладка «Питомцы» (уровни и души всех питомцев, `AionDpsMeter.Timers/Pets`, файл `pets-state.json`)
 - `AionDpsMeter.UI/Pages/ForkMainSwitch.razor` — панель боя или стили апстрима в главном окне
 - `AionDpsMeter.UI/Pages/ForkRecords.*` — вкладка «Рекорды» (рекорды по боссам; сами рекорды — `AionDpsMeter.Timers/Records`, файл `boss-records.json`; хранилище истории апстрима обёрнуто `RecordingHistoryStore`)
 - `AionDpsMeter.UI/Services/TimerWindow/CubeMapWindow.cs` — окно «Карта кубов» (🗺)

@@ -83,3 +83,21 @@ public class PetBookTests
         Assert.Equal(new PetView(Dog, 2, 13, 75, 0), again.ForMonster(DogMonster));
     }
 }
+
+public class PetListTests
+{
+    /// <summary>The Pets tab: every pet, closest to its next level first; unknown counts after them, maxed last.</summary>
+    [Fact]
+    public void All_pets_are_listed_closest_to_their_next_level_first()
+    {
+        var book = new PetBook();
+        book.OnList([new PetLevel(1001, 3), new PetLevel(1014, 2), new PetLevel(1017, 2), new PetLevel(1026, 1)]);
+        book.OnExact(1014, 70);      // 5 to go
+        book.OnExact(1026, 10);      // 15 to go
+        book.OnSoul(1017, 1, 2100855);
+        var all = book.All();
+        Assert.Equal([1014, 1026, 1017, 1001], all.Select(p => p.View.Pet));
+        Assert.Equal(2100855, all.Single(p => p.View.Pet == 1017).Monster);
+        Assert.Null(all.Single(p => p.View.Pet == 1001).Monster);
+    }
+}

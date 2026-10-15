@@ -1,0 +1,14 @@
+.fs-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; color: var(--text-dim); padding: 0 2px 8px; }
+.fp-empty, .fp-hint { font-size: 11px; opacity: .65; margin: 0 2px 8px; }
+.fp-summary { font-size: 12px; margin: 0 2px 6px; }
+.fp-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 0 2px 8px; cursor: pointer; }
+.fp-table { display: flex; flex-direction: column; gap: 2px; }
+.fp-row { display: grid; grid-template-columns: minmax(0, 1.6fr) .45fr .9fr minmax(0, 1.5fr); gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; background: rgba(255,255,255,.03); font-size: 12px; font-variant-numeric: tabular-nums; }
+.fp-head { background: none; opacity: .6; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.fp-name, .fp-monster { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-name { font-weight: 600; }
+.fp-monster { opacity: .75; }
+.fp-souls { display: flex; flex-direction: column; gap: 2px; }
+.fp-bar { display: block; height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; }
+.fp-bar b { display: block; height: 100%; background: #7ee787; }
+.fp-maxed { opacity: .5; }
