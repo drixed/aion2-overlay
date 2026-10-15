@@ -48,6 +48,27 @@ catch (Exception ex)
     Say($"Не удалось дождаться закрытия метра: {ex.Message}");
 }
 
+// Another meter started from this folder (a second copy, or one that did not finish exiting) keeps the exe locked and
+// the update failed again and again: close every one of them too.
+var exePathToReplace = Path.GetFullPath(Path.Combine(targetDir, mainExe));
+foreach (var other in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(mainExe)))
+{
+    try
+    {
+        if (!string.Equals(other.MainModule?.FileName, exePathToReplace, StringComparison.OrdinalIgnoreCase)) continue;
+        Say($"Закрываю ещё один запущенный метр (процесс {other.Id})…");
+        if (!other.CloseMainWindow() || !other.WaitForExit(10_000))
+        {
+            other.Kill();
+            other.WaitForExit(5_000);
+        }
+    }
+    catch (Exception ex)
+    {
+        Say($"Не удалось закрыть процесс {other.Id}: {ex.Message}");
+    }
+}
+
 await Task.Delay(500);
 
 var failed = new List<string>();
