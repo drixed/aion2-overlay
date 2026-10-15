@@ -52,7 +52,9 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 petSound = true;
                 pets.LevelUp += _ => Application.Current.Dispatcher.BeginInvoke(() =>
                 {
-                    if (options.Current.ShowPets && options.Current.Sound) sounds.Play(AionDpsMeter.Timers.Feed.AlertSound.Default);
+                    var o = options.Current;
+                    if (o.ShowPets && !o.MutedIds.Contains(AionDpsMeter.Timers.Feed.TimersOptions.PetLevelUpKey))
+                        sounds.Play(o.SoundFor(AionDpsMeter.Timers.Feed.TimersOptions.PetLevelUpKey));
                 });
             }
             ApplyFightTimeout();

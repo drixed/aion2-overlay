@@ -244,6 +244,26 @@
             </SettingRow>
         }
 
+        <SettingRow Title="Питомец: новый уровень" Description="Звук, когда питомец поднимает уровень (вместе с плашкой в главном окне). Работает при включённых «Питомцах»">
+            <ValueSlot>
+                <span class="fs-hotkey">
+                    <select class="fs-select" value="@(O.SoundFor(TimersOptions.PetLevelUpKey).ToString())" @onchange="e => OnSoundPicked(TimersOptions.PetLevelUpKey, e.Value)" title="Звук">
+                        @foreach (var (value, label) in WindowsSounds)
+                        {
+                            <option value="@value">@label</option>
+                        }
+                        @if (O.SoundFor(TimersOptions.PetLevelUpKey) is { File: not null } petOwn)
+                        {
+                            <option value="@petOwn.ToString()">@FileLabel(petOwn)</option>
+                        }
+                        <option value="@PickFile">Свой файл…</option>
+                    </select>
+                    <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(TimersOptions.PetLevelUpKey)">▶</button>
+                    <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.PetLevelUpKey))" CheckedChanged="v => SetAlert(TimersOptions.PetLevelUpKey, v)" />
+                </span>
+            </ValueSlot>
+        </SettingRow>
+
         <div class="fs-label fs-label--spaced">ОКНО ТАЙМЕРОВ БОССОВ</div>
         <SettingRow Title="Окно таймеров боссов" Description="Полевые боссы в отдельном окне; закрыть его можно и крестиком в его шапке" IsLast="true">
             <ValueSlot><ToggleSwitch Checked="@O.ShowBossTimers" CheckedChanged="v => Set(o => o.ShowBossTimers = v)" /></ValueSlot>

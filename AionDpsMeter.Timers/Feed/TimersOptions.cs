@@ -136,6 +136,9 @@ public sealed class TimersOptions
         && !MutedIds.Contains(AlertKey(item))
         && (item.AlertByDefault || EnabledIds.Contains(AlertKey(item)));
 
+    /// <summary>The key the pet level-up sound is muted and chosen by, like an event's.</summary>
+    public const string PetLevelUpKey = "pet-levelup";
+
     /// <summary>Events that are quiet by default (schedule "alert": false) and the user switched on.</summary>
     public HashSet<string> EnabledIds { get; set; } = [];
 
