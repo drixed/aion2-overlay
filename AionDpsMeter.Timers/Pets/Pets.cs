@@ -15,11 +15,11 @@ public sealed record PetRow(PetView View, int? Monster);
 
 /// <summary>
 /// Pet packets (EU capture 2026-10-16), bodies after the opcode. Wire bytes → RATmeter opcode (little-endian):
-/// <c>00 90</c> login list, <c>0D 90</c> souls gained, <c>0E 90</c> exact souls when a level is full, <c>5C 8D</c> level up.
+/// <c>00 90</c> login list, <c>0D 90</c> souls gained, <c>0E 90</c> exact souls when a level is full, <c>14 90</c> level up.
 /// </summary>
 public static class PetParser
 {
-    public const ushort ListOpcode = 0x9000, SoulOpcode = 0x900D, ExactOpcode = 0x900E, LevelUpOpcode = 0x8D5C;
+    public const ushort ListOpcode = 0x9000, SoulOpcode = 0x900D, ExactOpcode = 0x900E, LevelUpOpcode = 0x9014;
 
     /// <summary><c>01, u32 pet, u32 amount</c>.</summary>
     public static PetSoul? ParseSoul(ReadOnlySpan<byte> body) => ReadPair(body);
@@ -27,12 +27,13 @@ public static class PetParser
     /// <summary><c>01, u32 pet, u32 souls</c> — the count within the level, sent when it is full.</summary>
     public static PetSoul? ParseExact(ReadOnlySpan<byte> body) => ReadPair(body);
 
-    /// <summary><c>01, u32 collection id (not the pet id), u32 new level, …</c>.</summary>
-    public static int? ParseLevelUp(ReadOnlySpan<byte> body)
+    /// <summary><c>00, u32 pet, u32 new level, …</c> — sent together with "25 of 25" (<c>0E 90</c>).</summary>
+    public static PetLevel? ParseLevelUp(ReadOnlySpan<byte> body)
     {
-        if (body.Length < 9 || body[0] != 0x01) return null;
+        if (body.Length < 9) return null;
+        var pet = BitConverter.ToInt32(body[1..5]);
         var level = BitConverter.ToInt32(body[5..9]);
-        return level is >= 1 and <= 3 ? level : null;
+        return pet is > 0 and < 100_000 && level is >= 1 and <= 3 ? new PetLevel(pet, level) : null;
     }
 
     /// <summary><c>u32, u16 count, then (u32 pet, u32 pet, u32 level)</c> records while the two ids match, then a varint
@@ -140,20 +141,14 @@ public sealed class PetBook
         lock (gate) { Get(pet).Souls = souls; }
     }
 
-    /// <summary>The level-up packet names no pet: it is the one whose level is full. Without one the packet is ignored
-    /// (it also comes for other things); a level gained unseen shows up in the login list.</summary>
-    public int? OnLevelUp(int newLevel)
+    public void OnLevelUp(PetLevel up)
     {
         lock (gate)
         {
-            var pick = pets.Values
-                .Where(e => e.Level == newLevel - 1 && e.Souls >= Need(e.Level))
-                .OrderByDescending(e => lastSoul.GetValueOrDefault(e.Pet))
-                .FirstOrDefault();
-            if (pick is null) return null;
-            pick.Souls = pick.Souls is { } s ? Math.Max(0, s - Need(pick.Level)) : null; // the extra souls carry over
-            pick.Level = newLevel;
-            return pick.Pet;
+            var e = Get(up.Pet);
+            if (up.Level <= e.Level) return;
+            e.Souls = e.Souls is { } s && up.Level == e.Level + 1 ? Math.Max(0, s - Need(e.Level)) : 0; // extra souls carry over
+            e.Level = up.Level;
         }
     }
 

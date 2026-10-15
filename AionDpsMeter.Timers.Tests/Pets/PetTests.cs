@@ -17,8 +17,9 @@ public class PetParserTests
         Assert.Equal(new PetSoul(1014, 25), PetParser.ParseExact(Convert.FromHexString("01F603000019000000")));
 
     [Fact]
-    public void A_level_up_carries_the_new_level() =>
-        Assert.Equal(2, PetParser.ParseLevelUp(Convert.FromHexString("01E15FCC0102000000010546000000")));
+    public void A_level_up_names_the_pet_and_its_new_level() =>
+        // 14 90 at 01:33:14.942, together with "25 of 25" (0E 90); 5C 8D twelve seconds later is something else
+        Assert.Equal(new PetLevel(1014, 2), PetParser.ParseLevelUp(Convert.FromHexString("00F603000002000000030A0000000000000000000000")));
 
     [Fact]
     public void The_login_list_gives_every_pet_s_level()
@@ -53,11 +54,10 @@ public class PetBookTests
         Assert.Equal(new PetView(Dog, 1, null, 25, 1), book.ForMonster(DogMonster));   // souls unknown yet: +1 this session
 
         book.OnExact(Dog, 25);                                     // the game: 25 of 25
-        book.OnSoul(Dog, 1, DogMonster);
-        book.OnSoul(Dog, 1, DogMonster);                           // 27
-        Assert.Equal(Dog, book.OnLevelUp(2));                      // level 2, 2 carried over
-        Assert.Equal(new PetView(Dog, 2, 2, 75, 3), book.ForMonster(DogMonster));
-        for (var i = 0; i < 10; i++) book.OnSoul(Dog, 1, DogMonster);
+        book.OnLevelUp(new PetLevel(Dog, 2));                      // and level 2 right away
+        for (var i = 0; i < 4; i++) book.OnSoul(Dog, 1, DogMonster);
+        Assert.Equal(new PetView(Dog, 2, 4, 75, 5), book.ForMonster(DogMonster));   // the game: 4/75
+        for (var i = 0; i < 8; i++) book.OnSoul(Dog, 1, DogMonster);
         book.OnList([new PetLevel(Dog, 2)]);                       // relog: same level, the count stays
         Assert.Equal(12, book.ForMonster(DogMonster)!.Souls);
     }
@@ -86,23 +86,25 @@ public class PetBookTests
     }
 
     [Fact]
-    public void A_level_up_is_not_pinned_on_a_pet_whose_level_is_not_full()
+    public void A_level_up_moves_its_own_pet_and_leaves_the_rest()
     {
-        // 2026-10-16: "Дозорщик драканов" at 19/25 got the last soul when a level-up packet came for something else
+        // 2026-10-16: "Дозорщик драканов" (1184) 23/25 at login, then level 2; the other pet must not move
         var book = new PetBook();
-        book.OnList([new PetLevel(1184, 1, 18)]);
+        book.OnList([new PetLevel(1184, 1, 23), new PetLevel(Dog, 1, 25)]);
         book.OnSoul(1184, 1, DogMonster);
-        Assert.Null(book.OnLevelUp(2));
-        Assert.Equal(new PetView(1184, 1, 19, 25, 1), book.ForMonster(DogMonster));
+        book.OnSoul(1184, 2, DogMonster);                          // 26: a double drop carries one over
+        book.OnLevelUp(new PetLevel(1184, 2));
+        Assert.Equal(new PetView(1184, 2, 1, 75, 3), book.ForMonster(DogMonster));
+        Assert.Equal(1, book.All().Single(r => r.View.Pet == Dog).View.Level);
     }
 
     [Fact]
-    public void A_level_up_is_not_pinned_on_a_pet_whose_count_is_unknown()
+    public void A_level_up_of_a_pet_with_an_unknown_count_starts_it_at_zero()
     {
         var book = new PetBook();
         book.OnList([new PetLevel(1184, 1)]);
-        book.OnSoul(1184, 1, DogMonster);
-        Assert.Null(book.OnLevelUp(2));
+        book.OnLevelUp(new PetLevel(1184, 2));
+        Assert.Equal(0, book.All().Single().View.Souls);
     }
 
     [Fact]

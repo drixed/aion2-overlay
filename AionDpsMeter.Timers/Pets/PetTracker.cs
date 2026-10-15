@@ -77,13 +77,11 @@ public sealed class PetTracker : IPetListener, IDisposable
                 case PetParser.ExactOpcode when PetParser.ParseExact(body) is { } exact:
                     book.OnExact(exact.Pet, exact.Amount);
                     break;
-                case PetParser.LevelUpOpcode when PetParser.ParseLevelUp(body) is { } level:
-                    if (book.OnLevelUp(level) is { } pet)
-                    {
-                        var news = new PetLevelNews(pet, level, NameOfPet(pet), time.GetUtcNow());
-                        Latest = news;
-                        LevelUp?.Invoke(news);
-                    }
+                case PetParser.LevelUpOpcode when PetParser.ParseLevelUp(body) is { } up:
+                    book.OnLevelUp(up);
+                    var news = new PetLevelNews(up.Pet, up.Level, NameOfPet(up.Pet), time.GetUtcNow());
+                    Latest = news;
+                    LevelUp?.Invoke(news);
                     break;
                 default:
                     return;

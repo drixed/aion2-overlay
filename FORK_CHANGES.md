@@ -34,7 +34,7 @@
 - `AionDpsMeter.Services/PacketProcessing/Processors/FieldBossListForwarder.cs` — обработчик опкода `0x9101` (байты `01 91`)
 - `AionDpsMeter.Services/PacketProcessing/Fork/IEnergyListener.cs`, `Processors/EnergyForwarder.cs` — опкод `0x610C` (байты `0C 61`, энергия)
 - `AionDpsMeter.Services/PacketProcessing/Fork/IMapLoadListener.cs`, `Processors/MapLoadForwarder.cs` — опкод `0x3621` (байты `21 36`, загрузка карты)
-- `AionDpsMeter.Services/PacketProcessing/Fork/IPetListener.cs`, `Processors/PetForwarder.cs` — опкоды `0x9000`, `0x900D`, `0x900E`, `0x8D5C` (питомцы: список при входе, души, точное число, новый уровень)
+- `AionDpsMeter.Services/PacketProcessing/Fork/IPetListener.cs`, `Processors/PetForwarder.cs` — опкоды `0x9000`, `0x900D`, `0x900E`, `0x9014` (питомцы: список при входе, души, точное число, новый уровень)
 - `AionDpsMeter.UI/Pages/TimersOverlay.razor`, `.razor.cs`, `.razor.css`
 - `AionDpsMeter.UI/Services/TimerWindow/*`
 - `AionDpsMeter.UI/Pages/BossPanelPage.razor`, `.razor.cs`, `.razor.css` — главное окно «Бой с боссом»

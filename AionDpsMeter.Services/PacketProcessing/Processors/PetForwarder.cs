@@ -8,7 +8,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
     [PacketOpcode(0x9000)]
     [PacketOpcode(0x900D)]
     [PacketOpcode(0x900E)]
-    [PacketOpcode(0x8D5C)]
+    [PacketOpcode(0x9014)]
     internal sealed class PetForwarder(IEnumerable<IPetListener> listeners) : IOpcodeProcessor
     {
         public void Process(Packet packet)
