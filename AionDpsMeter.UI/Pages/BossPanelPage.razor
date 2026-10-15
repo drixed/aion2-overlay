@@ -127,7 +127,7 @@
                     <b>💀 @RecapName(recapId)</b>
                     @if (recap is not null)
                     {
-                        <span>@recap.At.ToString("HH:mm:ss") · получено @AionDpsMeter.UI.ViewModels.DamageFormatter.Format(recap.Total) за 6 с</span>
+                        <span>@recap.At.ToString("HH:mm:ss") · получено @AionDpsMeter.UI.Utils.DamageFormatter.Format(recap.Total) за 6 с</span>
                     }
                     <button type="button" class="bp-link" @onclick="() => recapPlayer = null">✕</button>
                 </div>
@@ -143,7 +143,7 @@
                             <span class="bp-recap-t">@((hit.At - recap.At).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)) с</span>
                             <span class="bp-recap-src">@hit.Source</span>
                             <span class="bp-recap-sk">@hit.Skill</span>
-                            <span class="bp-recap-dmg">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(hit.Damage)@(hit.Critical ? " ✦" : "")</span>
+                            <span class="bp-recap-dmg">@AionDpsMeter.UI.Utils.DamageFormatter.Format(hit.Damage)@(hit.Critical ? " ✦" : "")</span>
                         </div>
                     }
                 }
@@ -163,8 +163,8 @@
                         <span class="bp-row-icon" style="background-image:url('/images/classes/@(r.ClassId).png')"></span>
                         <span class="bp-row-name">@r.Name</span>
                         <span class="bp-row-gauge"><i class="@AltRowClass(r)" style="width:@(r.Bar.ToString("0.##", CultureInfo.InvariantCulture))%"></i></span>
-                        <span class="bp-row-dmg">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(r.Total) (@r.Share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
-                        <span class="bp-row-dps">@AionDpsMeter.UI.ViewModels.DamageFormatter.Format(r.PerSecond)<small>/s</small></span>
+                        <span class="bp-row-dmg">@AionDpsMeter.UI.Utils.DamageFormatter.Format(r.Total) (@r.Share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
+                        <span class="bp-row-dps">@AionDpsMeter.UI.Utils.DamageFormatter.Format(r.PerSecond)<small>/s</small></span>
                     </div>
                 }
             }
@@ -184,7 +184,7 @@
                     @if (player.IsUser && VsBest() is { } vs)
                     {
                         <span class="bp-row-vs @(vs.StartsWith('+') ? "bp-row-vs--up" : vs.StartsWith('−') ? "bp-row-vs--down" : "")"
-                              title="@($"Твой DPS против твоего лучшего на этом боссе ({AionDpsMeter.UI.ViewModels.DamageFormatter.Format(FightRecord!.BestMyDps)}/s)")">@vs</span>
+                              title="@($"Твой DPS против твоего лучшего на этом боссе ({AionDpsMeter.UI.Utils.DamageFormatter.Format(FightRecord!.BestMyDps)}/s)")">@vs</span>
                     }
                     <span class="bp-row-cp">@PowerOf(player)</span>
                     @if (string.IsNullOrWhiteSpace(player.DeathsDisplay))

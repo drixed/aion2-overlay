@@ -4,5 +4,6 @@
   <Project Path="AionDpsMeter.Timers.Tests/AionDpsMeter.Timers.Tests.csproj" />
   <Project Path="AionDpsMeter.Timers/AionDpsMeter.Timers.csproj" />
   <Project Path="AionDpsMeter.UI/AionDpsMeter.UI.csproj" />
+  <Project Path="AionDpsMeter.Tests/AionDpsMeter.Tests.csproj" />
   <Project Path="AionDpsMeter.Updater/AionDpsMeter.Updater.csproj" />
 </Solution>

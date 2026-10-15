@@ -65,7 +65,7 @@ jobs:
         run: |
           dotnet build AionDpsMeter.slnx -c Release
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          dotnet test AionDpsMeter.Timers.Tests/AionDpsMeter.Timers.Tests.csproj -c Release --no-build
+          dotnet test --project AionDpsMeter.Timers.Tests/AionDpsMeter.Timers.Tests.csproj -c Release --no-build
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Push merge

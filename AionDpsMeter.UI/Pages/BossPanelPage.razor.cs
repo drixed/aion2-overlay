@@ -8,6 +8,7 @@ using AionDpsMeter.Timers.Fight;
 using AionDpsMeter.Timers.Overlay;
 using AionDpsMeter.Timers.Schedule;
 using AionDpsMeter.UI.Services.TimerWindow;
+using AionDpsMeter.UI.Utils;
 using AionDpsMeter.UI.ViewModels;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
