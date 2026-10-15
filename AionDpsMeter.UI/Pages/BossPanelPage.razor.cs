@@ -88,7 +88,7 @@ namespace AionDpsMeter.UI.Pages
             $"{(p.Level == 0 ? "сбор" : $"ур. {p.Level}")} · {(p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}")}";
 
         private string PetTitle((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line) =>
-            $"{PetName(line)} — души падают с «{line.Name}». «?» — точное число игра ещё не присылала; дальше метр считает сам. Все питомцы — в настройках, вкладка «Питомцы»";
+            $"{PetName(line)} — души падают с «{line.Name}». «?» — число придёт при следующем входе персонажа. Все питомцы — в настройках, вкладка «Питомцы»";
 
         /// <summary>"A pet reached level 2" for half a minute.</summary>
         private string? PetNews() =>

@@ -13,7 +13,7 @@ else
     <p class="fp-summary">
         Всего @rows.Count · ур. 1: @rows.Count(r => r.View.Level == 1) · ур. 2: @rows.Count(r => r.View.Level == 2) · макс.: @rows.Count(r => r.View.Level >= PetBook.MaxLevel)
     </p>
-    <p class="fp-hint">Сверху — кому меньше всего до нового уровня. «?» — точное число душ игра ещё не присылала: она шлёт его по ходу фарма, дальше метр считает сам. Монстра метр узнаёт, когда с него падает душа.</p>
+    <p class="fp-hint">Сверху — кому меньше всего до нового уровня. Точное число душ игра присылает при входе персонажа, дальше метр считает сам; «?» — перезайди, чтобы оно пришло. Монстра метр узнаёт, когда с него падает душа.</p>
     <label class="fp-toggle"><input type="checkbox" checked="@hideMaxed" @onchange="e => hideMaxed = e.Value is true" /> Скрыть максимальные</label>
     <div class="fp-table">
         <div class="fp-row fp-head"><span>Питомец</span><span>Ур.</span><span>Души</span><span>С кого падают</span></div>

@@ -27,6 +27,16 @@ public class PetParserTests
         var body = Convert.FromHexString("07040000BC01" + "F5030000F503000003000000" + "F6030000F603000001000000" + "0302AD01");
         Assert.Equal([new PetLevel(1013, 3), new PetLevel(1014, 1)], PetParser.ParseList(body));
     }
+
+    [Fact]
+    public void The_login_list_also_gives_the_souls_within_the_level()
+    {
+        // relog 2026-10-16 02:39: after the records a varint count, then (u32 pet, u32 souls) — "Дозорщик драканов"
+        // (1184) had 11/25 and showed 13/25 after two more souls; a maxed pet (1013) has no pair
+        var body = Convert.FromHexString("07040000BC01" + "F5030000F503000003000000" + "E9030000E903000002000000" + "A0040000A004000001000000"
+            + "02" + "E903000039000000" + "A00400000B000000" + "0302AD01");
+        Assert.Equal([new PetLevel(1013, 3), new PetLevel(1001, 2, 57), new PetLevel(1184, 1, 11)], PetParser.ParseList(body));
+    }
 }
 
 public class PetBookTests
@@ -61,6 +71,18 @@ public class PetBookTests
         book.OnSoul(Dog, 1, DogMonster);
         book.OnList([new PetLevel(Dog, 2)]);
         Assert.Null(book.ForMonster(DogMonster)!.Souls);
+    }
+
+    [Fact]
+    public void The_count_from_the_login_list_replaces_what_the_meter_counted()
+    {
+        var book = new PetBook();
+        book.OnList([new PetLevel(Dog, 2)]);
+        book.OnExact(Dog, 35);
+        book.OnSoul(Dog, 1, DogMonster);                           // 36, but souls were missed while the meter was blind
+        book.OnList([new PetLevel(Dog, 2, 57)]);                   // relog: the game says 57
+        book.OnSoul(Dog, 1, DogMonster);
+        Assert.Equal(58, book.ForMonster(DogMonster)!.Souls);
     }
 
     [Fact]

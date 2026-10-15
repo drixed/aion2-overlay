@@ -2,7 +2,8 @@ namespace AionDpsMeter.Timers.Pets;
 
 public sealed record PetSoul(int Pet, int Amount);
 
-public sealed record PetLevel(int Pet, int Level);
+/// <param name="Souls">Souls within the level from the login list; null for pets it does not list (maxed ones).</param>
+public sealed record PetLevel(int Pet, int Level, int? Souls = null);
 
 /// <param name="Souls">Souls within the current level; null until the game has given an exact count.</param>
 /// <param name="Need">Souls the current level needs: 5 to collect, 25 to level 2, 75 to level 3.</param>
@@ -34,11 +35,13 @@ public static class PetParser
         return level is >= 1 and <= 3 ? level : null;
     }
 
-    /// <summary><c>u32, u16 count, then (u32 pet, u32 pet, u32 level)</c> records while the two ids match.</summary>
+    /// <summary><c>u32, u16 count, then (u32 pet, u32 pet, u32 level)</c> records while the two ids match, then a varint
+    /// count of <c>(u32 pet, u32 souls within the level)</c> pairs.</summary>
     public static IReadOnlyList<PetLevel> ParseList(ReadOnlySpan<byte> body)
     {
         var pets = new List<PetLevel>();
-        for (var o = 6; o + 12 <= body.Length; o += 12)
+        var o = 6;
+        for (; o + 12 <= body.Length; o += 12)
         {
             var id = BitConverter.ToInt32(body[o..(o + 4)]);
             if (id != BitConverter.ToInt32(body[(o + 4)..(o + 8)]) || id is < 1 or > 100_000) break;
@@ -46,7 +49,30 @@ public static class PetParser
             if (level is < 0 or > 3) break;
             pets.Add(new PetLevel(id, level));
         }
-        return pets;
+        var souls = ParseSouls(body[o..]);
+        return pets.Select(p => souls.TryGetValue(p.Pet, out var s) ? p with { Souls = s } : p).ToList();
+    }
+
+    private static Dictionary<int, int> ParseSouls(ReadOnlySpan<byte> rest)
+    {
+        var souls = new Dictionary<int, int>();
+        int count = 0, shift = 0, o = 0;
+        for (; o < rest.Length && o < 3; o++)
+        {
+            count |= (rest[o] & 0x7F) << shift;
+            shift += 7;
+            if ((rest[o] & 0x80) == 0) break;
+        }
+        o++;
+        if (count <= 0 || o + count * 8 > rest.Length) return souls; // not the pairs this build knows: keep the levels only
+        for (var i = 0; i < count; i++, o += 8)
+        {
+            var id = BitConverter.ToInt32(rest[o..(o + 4)]);
+            var value = BitConverter.ToInt32(rest[(o + 4)..(o + 8)]);
+            if (id is < 1 or > 100_000 || value is < 0 or >= 10_000) return [];
+            souls[id] = value;
+        }
+        return souls;
     }
 
     private static PetSoul? ReadPair(ReadOnlySpan<byte> body)
@@ -92,6 +118,7 @@ public sealed class PetBook
                 var e = Get(l.Pet);
                 if (e.Level != l.Level) e.Souls = l.Level > e.Level ? null : e.Souls; // a level gained while we were away
                 e.Level = l.Level;
+                if (l.Souls is { } souls) e.Souls = souls; // the game's own count beats ours
             }
         }
     }
