@@ -27,12 +27,12 @@ public static class PetParser
     /// <summary><c>01, u32 pet, u32 souls</c> — the count within the level, sent when it is full.</summary>
     public static PetSoul? ParseExact(ReadOnlySpan<byte> body) => ReadPair(body);
 
-    /// <summary><c>00, u32 pet, u32 new level, …</c> — sent together with "25 of 25" (<c>0E 90</c>).</summary>
+    /// <summary><c>00 00, u32 pet, u32 new level, …</c> — sent together with "25 of 25" (<c>0E 90</c>).</summary>
     public static PetLevel? ParseLevelUp(ReadOnlySpan<byte> body)
     {
-        if (body.Length < 9) return null;
-        var pet = BitConverter.ToInt32(body[1..5]);
-        var level = BitConverter.ToInt32(body[5..9]);
+        if (body.Length < 10) return null;
+        var pet = BitConverter.ToInt32(body[2..6]);
+        var level = BitConverter.ToInt32(body[6..10]);
         return pet is > 0 and < 100_000 && level is >= 1 and <= 3 ? new PetLevel(pet, level) : null;
     }
 

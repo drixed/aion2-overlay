@@ -19,7 +19,7 @@ public class PetParserTests
     [Fact]
     public void A_level_up_names_the_pet_and_its_new_level() =>
         // 14 90 at 01:33:14.942, together with "25 of 25" (0E 90); 5C 8D twelve seconds later is something else
-        Assert.Equal(new PetLevel(1014, 2), PetParser.ParseLevelUp(Convert.FromHexString("00F603000002000000030A0000000000000000000000")));
+        Assert.Equal(new PetLevel(1014, 2), PetParser.ParseLevelUp(Convert.FromHexString("0000F603000002000000030A0000000000000000000000")));
 
     [Fact]
     public void The_login_list_gives_every_pet_s_level()
