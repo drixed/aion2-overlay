@@ -84,7 +84,7 @@ namespace AionDpsMeter.UI.Pages
         {
             var (p, name) = line;
             var stage = p.Level == 0 ? "сбор" : $"ур. {p.Level}";
-            var souls = p.Souls is { } s ? $"{s} / {p.Need}" : p.SessionGain > 0 ? $"+{p.SessionGain} за сессию" : "считаю души…";
+            var souls = p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}"; // exact once the game sends it (a full level)
             return $"{name} · {stage} · {souls}";
         }
 

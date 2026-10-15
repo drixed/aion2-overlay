@@ -107,7 +107,7 @@
         }
         @if (!noticeOpen && PetLine is { } petLine)
         {
-            <div class="bp-pet" title="Души питомца этого монстра: точное число игра присылает, когда уровень набран; до этого — прибавка за сессию">🐾 @PetText(petLine)</div>
+            <div class="bp-pet" title="Души питомца, который падает с этого монстра. «?» — игра ещё не присылала точное число: она шлёт его, когда уровень набран, дальше метр считает сам">🐾 @PetText(petLine)</div>
         }
         @if (!noticeOpen && ModeStatus() is { } modeStatus)
         {
