@@ -140,14 +140,16 @@ public sealed class PetBook
         lock (gate) { Get(pet).Souls = souls; }
     }
 
-    /// <summary>The level-up packet names no pet: it is the one whose level is full, else the last to get a soul.</summary>
+    /// <summary>The level-up packet names no pet: it is the one whose level is full. Without one the packet is ignored
+    /// (it also comes for other things); a level gained unseen shows up in the login list.</summary>
     public int? OnLevelUp(int newLevel)
     {
         lock (gate)
         {
-            var candidates = pets.Values.Where(e => e.Level == newLevel - 1).ToList();
-            var pick = candidates.Where(e => e.Souls >= Need(e.Level)).OrderByDescending(e => lastSoul.GetValueOrDefault(e.Pet)).FirstOrDefault()
-                ?? candidates.OrderByDescending(e => lastSoul.GetValueOrDefault(e.Pet)).FirstOrDefault(e => lastSoul.ContainsKey(e.Pet));
+            var pick = pets.Values
+                .Where(e => e.Level == newLevel - 1 && e.Souls >= Need(e.Level))
+                .OrderByDescending(e => lastSoul.GetValueOrDefault(e.Pet))
+                .FirstOrDefault();
             if (pick is null) return null;
             pick.Souls = pick.Souls is { } s ? Math.Max(0, s - Need(pick.Level)) : null; // the extra souls carry over
             pick.Level = newLevel;

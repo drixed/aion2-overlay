@@ -86,6 +86,26 @@ public class PetBookTests
     }
 
     [Fact]
+    public void A_level_up_is_not_pinned_on_a_pet_whose_level_is_not_full()
+    {
+        // 2026-10-16: "Дозорщик драканов" at 19/25 got the last soul when a level-up packet came for something else
+        var book = new PetBook();
+        book.OnList([new PetLevel(1184, 1, 18)]);
+        book.OnSoul(1184, 1, DogMonster);
+        Assert.Null(book.OnLevelUp(2));
+        Assert.Equal(new PetView(1184, 1, 19, 25, 1), book.ForMonster(DogMonster));
+    }
+
+    [Fact]
+    public void A_level_up_is_not_pinned_on_a_pet_whose_count_is_unknown()
+    {
+        var book = new PetBook();
+        book.OnList([new PetLevel(1184, 1)]);
+        book.OnSoul(1184, 1, DogMonster);
+        Assert.Null(book.OnLevelUp(2));
+    }
+
+    [Fact]
     public void A_maxed_pet_shows_no_line() 
     {
         var book = new PetBook();
