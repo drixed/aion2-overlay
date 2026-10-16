@@ -48,6 +48,20 @@ public class DummyRunTests
         Assert.Equal(4_000, view.Rows.Single().Total);
         Assert.False(view.Finished);
     }
+
+    [Fact]
+    public void Hitting_on_after_the_run_keeps_its_result_until_a_pause()
+    {
+        // 2026-10-16: the user kept hitting the dummy and the result was wiped by a new run a few seconds after the end
+        var run = new DummyRun(TimeSpan.FromMinutes(1));
+        for (var s = 0; s <= 120; s += 2) run.Add(OnDummy(1, 1_000, s));
+        var kept = run.View(T0.AddSeconds(121));
+        Assert.True(kept.Finished);
+        Assert.Equal(30_000, kept.Rows.Single().Total);             // hits at 0, 2 … 58
+
+        run.Add(OnDummy(1, 7_000, 130));                             // 10 s without hitting: a new run
+        Assert.Equal(7_000, run.View(T0.AddSeconds(131)).Rows.Single().Total);
+    }
 }
 
 public class GrindSessionTests

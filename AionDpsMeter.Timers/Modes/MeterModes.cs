@@ -32,15 +32,20 @@ public sealed class DummyRun(TimeSpan length)
     private readonly Lock gate = new();
     private readonly Dictionary<long, long> totals = [];
     private DateTime? start;
+    private DateTime lastHit;
 
     public TimeSpan Length { get; } = length;
 
+    /// <summary>A new run starts with the first hit after the last one ended and 5 s without hitting: hitting on keeps
+    /// the result on screen.</summary>
     public void Add(Hit hit)
     {
         if (!hit.OnDummy) return;
         lock (gate)
         {
-            if (start is null || hit.At >= start.Value + Length + Pause)
+            var paused = hit.At - lastHit >= Pause;
+            lastHit = hit.At;
+            if (start is null || (hit.At >= start.Value + Length && paused))
             {
                 start = hit.At;
                 totals.Clear();

@@ -186,7 +186,7 @@ namespace AionDpsMeter.UI.Pages
                 case AionDpsMeter.Timers.Modes.MeterMode.Dummy:
                     var v = modes.Dummy.View(at);
                     return v.Rows.Count == 0 ? $"🎯 Ударь тренировочное чучело — замер {FeedText.Span(modes.Dummy.Length)} начнётся с первого удара"
-                        : v.Finished ? $"🎯 Итог замера за {FeedText.Span(v.Elapsed)}"
+                        : v.Finished ? $"🎯 Итог за {FeedText.Span(v.Elapsed)} · новый замер — после паузы 5 с"
                         : $"🎯 Замер: осталось {FeedText.Span(v.Left)}";
                 case AionDpsMeter.Timers.Modes.MeterMode.Grind:
                     var g = modes.Grind.View(at);
