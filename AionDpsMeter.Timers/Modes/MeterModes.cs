@@ -4,13 +4,15 @@ namespace AionDpsMeter.Timers.Modes;
 public enum MeterMode { Dps, Damage, Heal, Dummy, Grind }
 
 /// <param name="OnDummy">The target is a training scarecrow.</param>
-public sealed record Hit(long PlayerId, long Damage, bool OnDummy, DateTime At);
+/// <param name="Mine">The user's own hit.</param>
+public sealed record Hit(long PlayerId, long Damage, bool OnDummy, DateTime At, bool Mine = false);
 
 public sealed record Heal(long CasterId, long TargetId, long Amount, DateTime At);
 
 public sealed record ModeRow(long PlayerId, long Total, double PerSecond);
 
-public sealed record DummyView(IReadOnlyList<ModeRow> Rows, TimeSpan Elapsed, TimeSpan Left, bool Finished);
+/// <param name="Started">The user has a run; Elapsed, Left and Finished are about it.</param>
+public sealed record DummyView(IReadOnlyList<ModeRow> Rows, TimeSpan Elapsed, TimeSpan Left, bool Finished, bool Started);
 
 public sealed record GrindView(IReadOnlyList<ModeRow> Rows, TimeSpan Elapsed, bool Running);
 
@@ -23,47 +25,71 @@ internal static class Rows
 }
 
 /// <summary>
-/// A fixed-length run on a training scarecrow: it starts with the first hit on one and counts exactly the run length,
-/// so runs compare fairly. A pause after a run (5 s without counting) lets the next hit start a new one.
+/// Fixed-length runs on training scarecrows, one per player: each starts with that player's first hit on one and counts
+/// exactly the run length, so runs compare fairly. Hitting on after the end keeps the result; the first hit 5 s after
+/// both the end and the last hit starts a new run. The time left is the user's own run.
 /// </summary>
 public sealed class DummyRun(TimeSpan length)
 {
     private static readonly TimeSpan Pause = TimeSpan.FromSeconds(5);
     private readonly Lock gate = new();
-    private readonly Dictionary<long, long> totals = [];
-    private DateTime? start;
-    private DateTime lastHit;
+    private readonly Dictionary<long, Run> runs = [];
+    private long? me;
+
+    private sealed class Run
+    {
+        public DateTime Start;
+        public DateTime LastHit;
+        public long Total;
+    }
 
     public TimeSpan Length { get; } = length;
 
-    /// <summary>A new run starts with the first hit after the last one ended and 5 s without hitting: hitting on keeps
-    /// the result on screen.</summary>
     public void Add(Hit hit)
     {
         if (!hit.OnDummy) return;
         lock (gate)
         {
-            var paused = hit.At - lastHit >= Pause;
-            lastHit = hit.At;
-            if (start is null || (hit.At >= start.Value + Length && paused))
+            if (hit.Mine) me = hit.PlayerId;
+            if (!runs.TryGetValue(hit.PlayerId, out var run))
+                runs[hit.PlayerId] = run = new Run { Start = hit.At, LastHit = hit.At };
+            else if (hit.At >= run.Start + Length && hit.At - Max(run.LastHit, run.Start + Length) >= Pause)
             {
-                start = hit.At;
-                totals.Clear();
+                run.Start = hit.At;
+                run.Total = 0;
             }
-            if (hit.At >= start.Value + Length) return; // the run is over
-            totals[hit.PlayerId] = totals.GetValueOrDefault(hit.PlayerId) + hit.Damage;
+            run.LastHit = hit.At;
+            if (hit.At < run.Start + Length) run.Total += hit.Damage; // after the run: not counted
         }
     }
 
+    /// <summary>The user's run and everyone who hit a scarecrow within the run length; players without the user's
+    /// run started still show, with <see cref="DummyView.Started"/> false.</summary>
     public DummyView View(DateTime now)
     {
         lock (gate)
         {
-            if (start is not { } s) return new DummyView([], TimeSpan.Zero, Length, false);
-            var elapsed = now - s < Length ? now - s : Length;
-            if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
-            return new DummyView(Rows.Of(totals, elapsed), elapsed, Length - elapsed, elapsed >= Length);
+            var rows = runs
+                .Where(kv => kv.Key == me || now - kv.Value.LastHit <= Length)
+                .Select(kv =>
+                {
+                    var elapsed = Elapsed(kv.Value, now);
+                    return new ModeRow(kv.Key, kv.Value.Total, elapsed.TotalSeconds > 0 ? kv.Value.Total / elapsed.TotalSeconds : 0);
+                })
+                .OrderByDescending(r => r.Total)
+                .ToList();
+            if (me is not { } id || !runs.TryGetValue(id, out var mine)) return new DummyView(rows, TimeSpan.Zero, Length, false, false);
+            var mineElapsed = Elapsed(mine, now);
+            return new DummyView(rows, mineElapsed, Length - mineElapsed, mineElapsed >= Length, true);
         }
+    }
+
+    private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
+
+    private TimeSpan Elapsed(Run run, DateTime now)
+    {
+        var elapsed = now - run.Start;
+        return elapsed < TimeSpan.Zero ? TimeSpan.Zero : elapsed > Length ? Length : elapsed;
     }
 }
 

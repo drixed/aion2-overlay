@@ -56,7 +56,7 @@ public sealed class MeterModesService : IDisposable
     private void OnDamage(PlayerDamage d)
     {
         if (d.SourceEntity is null || d.Damage <= 0) return;
-        var hit = new Hit(d.SourceEntity.Id, d.Damage, d.TargetEntity?.IsDummy == true, d.DateTime);
+        var hit = new Hit(d.SourceEntity.Id, d.Damage, d.TargetEntity?.IsDummy == true, d.DateTime, d.SourceEntity.IsUser);
         Dummy.Add(hit);
         Grind.Add(hit);
     }

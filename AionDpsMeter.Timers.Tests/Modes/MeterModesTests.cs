@@ -6,7 +6,10 @@ public class DummyRunTests
 {
     private static readonly DateTime T0 = new(2026, 10, 13, 12, 0, 0);
 
-    private static Hit OnDummy(long player, long damage, double atSeconds) => new(player, damage, OnDummy: true, T0.AddSeconds(atSeconds));
+    private const long Me = 1;
+
+    private static Hit OnDummy(long player, long damage, double atSeconds) =>
+        new(player, damage, OnDummy: true, T0.AddSeconds(atSeconds), Mine: player == Me);
 
     [Fact]
     public void A_run_starts_with_the_first_hit_on_a_dummy_and_counts_one_minute()
@@ -61,6 +64,27 @@ public class DummyRunTests
 
         run.Add(OnDummy(1, 7_000, 130));                             // 10 s without hitting: a new run
         Assert.Equal(7_000, run.View(T0.AddSeconds(131)).Rows.Single().Total);
+    }
+
+    [Fact]
+    public void Each_player_has_an_own_run_and_others_do_not_start_or_reset_mine()
+    {
+        // 2026-10-16: two strangers on nearby dummies started the run; the user was not in the list
+        var run = new DummyRun(TimeSpan.FromMinutes(1));
+        run.Add(OnDummy(7, 50_000, 0));
+        var before = run.View(T0.AddSeconds(10));
+        Assert.False(before.Started);                                // my run has not started: the hint stays
+        Assert.Equal(7, before.Rows.Single().PlayerId);
+
+        run.Add(OnDummy(Me, 1_000, 20));
+        run.Add(OnDummy(7, 50_000, 66));                             // 6 s after his run ended: his new run
+        run.Add(OnDummy(Me, 2_000, 70));
+        var view = run.View(T0.AddSeconds(70));
+        Assert.True(view.Started);
+        Assert.Equal(TimeSpan.FromSeconds(10), view.Left);           // mine started at 20 s
+        Assert.Equal(3_000, view.Rows.Single(r => r.PlayerId == Me).Total);
+        Assert.Equal(3_000 / 50.0, view.Rows.Single(r => r.PlayerId == Me).PerSecond, 3);
+        Assert.Equal(50_000, view.Rows.Single(r => r.PlayerId == 7).Total);
     }
 }
 
