@@ -161,7 +161,7 @@
             {
                 @foreach (var (r, altRank) in OrderedAltRows())
                 {
-                    <div class="bp-row @(r.IsUser ? "bp-row--me" : "")">
+                    <div class="bp-row @(r.IsUser ? "bp-row--me" : "")" @onclick="() => OpenAltDetails(r)">
                         <div class="bp-row-bar @AltRowClass(r)" style="width:@(r.Bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
                         @if (Options.RankNumbers)
                         {

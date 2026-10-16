@@ -175,6 +175,13 @@ namespace AionDpsMeter.UI.Pages
             }).ToList();
         }
 
+        /// <summary>Clicking a name in the Heal, Dummy and Grind modes opens the same skill breakdown as in DPS mode
+        /// (the player's current fight); a player the fight does not have opens nothing.</summary>
+        private void OpenAltDetails(AltRow r)
+        {
+            if (ViewModel!.Players.FirstOrDefault(p => p.PlayerId == r.PlayerId) is { } player) ViewModel.OpenPlayerDetails(player);
+        }
+
         private string AltRowClass(AltRow r) => ViewModel!.GetPlayerRowClass(new PlayerRenderState { ClassId = r.ClassId, IsUser = r.IsUser });
 
         /// <summary>The line under the header in the Dummy and Grind modes.</summary>
