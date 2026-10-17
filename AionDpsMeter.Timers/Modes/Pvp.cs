@@ -4,6 +4,9 @@ namespace AionDpsMeter.Timers.Modes;
 /// <param name="Icon">The skill icon's URL from the game data, when it has one.</param>
 public sealed record PvpHit(long AttackerId, long VictimId, int SkillId, string Skill, long Damage, bool Critical, DateTime At, bool Mine, string? Icon = null);
 
+/// <summary>A player killed by another: the last PvP hit on them within 5 s of the death.</summary>
+public sealed record PvpKill(long KillerId, long VictimId, string Skill, string? Icon, DateTime At);
+
 public sealed record PvpSkillRow(string Skill, long Total, int Hits, int Crits, string? Icon = null);
 
 public sealed record PvpReceivedRow(long AttackerId, string Skill, long Total, int Hits, string? Icon = null);
@@ -18,7 +21,9 @@ public sealed record PvpView(IReadOnlyList<ModeRow> Rows, TimeSpan Elapsed, bool
 public sealed class PvpLog(TimeSpan idle)
 {
     private readonly Lock gate = new();
+    private static readonly TimeSpan KillWindow = TimeSpan.FromSeconds(5);
     private readonly List<PvpHit> fight = [];
+    private readonly List<PvpKill> kills = [];
     private DateTime lastMine = DateTime.MinValue;
 
     /// <summary>A PvP target: a player the game named (or the user), not one the game sent as a monster, not a summon.
@@ -30,7 +35,11 @@ public sealed class PvpLog(TimeSpan idle)
     {
         lock (gate)
         {
-            if (fight.Count > 0 && hit.At - fight[^1].At > idle) fight.Clear();
+            if (fight.Count > 0 && hit.At - fight[^1].At > idle)
+            {
+                fight.Clear();
+                kills.Clear();
+            }
             fight.Add(hit);
             if (hit.Mine) lastMine = hit.At;
         }
@@ -42,8 +51,25 @@ public sealed class PvpLog(TimeSpan idle)
         lock (gate)
         {
             fight.Clear();
+            kills.Clear();
             lastMine = DateTime.MinValue;
         }
+    }
+
+    /// <summary>A player died: a PvP kill when another player hit them within 5 s before.</summary>
+    public void Died(long victim, DateTime at)
+    {
+        lock (gate)
+        {
+            if (fight.LastOrDefault(h => h.VictimId == victim) is { } last && at - last.At <= KillWindow && at >= last.At)
+                kills.Add(new PvpKill(last.AttackerId, victim, last.Skill, last.Icon, at));
+        }
+    }
+
+    /// <summary>Kills in the fight, newest first.</summary>
+    public IReadOnlyList<PvpKill> Kills()
+    {
+        lock (gate) return kills.AsEnumerable().Reverse().ToList();
     }
 
     /// <summary>A PvP hit dealt or taken by the user within the idle time: the overlay switches to the PvP mode.</summary>

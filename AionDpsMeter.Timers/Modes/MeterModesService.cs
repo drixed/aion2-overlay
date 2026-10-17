@@ -47,7 +47,11 @@ public sealed class MeterModesService : IDisposable
         Deaths.Add(new IncomingHit(h.TargetId, source, skill, h.Damage, h.Critical, h.At));
     }
 
-    private void OnDeath(int entityId, DateTime at) => Deaths.Died(entityId, at);
+    private void OnDeath(int entityId, DateTime at)
+    {
+        Deaths.Died(entityId, at);
+        Pvp.Died(entityId, at);
+    }
 
     private void OnOptionsChanged()
     {

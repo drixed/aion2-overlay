@@ -93,6 +93,23 @@ public class PvpLogTests
     }
 
     [Fact]
+    public void A_death_goes_to_the_last_player_who_hit_within_five_seconds()
+    {
+        var log = new PvpLog(TimeSpan.FromSeconds(45));
+        log.Add(Hit(Other, Foe, "Стрела", 1_000, 0));
+        log.Add(new PvpHit(Me, Foe, 9, "Snipe", 9_000, true, T0.AddSeconds(3), Mine: true, Icon: "snipe.png"));
+        log.Died(Foe, T0.AddSeconds(4));
+        log.Add(Hit(Foe, Me, "Пинок", 500, 10));
+        log.Died(Me, T0.AddSeconds(20));                               // 10 s after the last hit: not a PvP kill
+        log.Add(Hit(Other, Me, "Стрела", 700, 30));
+        log.Died(Me, T0.AddSeconds(31));
+
+        Assert.Equal(
+            [new PvpKill(Other, Me, "Стрела", null, T0.AddSeconds(31)), new PvpKill(Me, Foe, "Snipe", "snipe.png", T0.AddSeconds(4))],
+            log.Kills());
+    }
+
+    [Fact]
     public void Clearing_drops_the_fight_and_leaves_the_pvp_mode()
     {
         var log = new PvpLog(TimeSpan.FromSeconds(45));
@@ -101,6 +118,7 @@ public class PvpLogTests
         Assert.False(log.View(T0.AddSeconds(1)).HasFight);
         Assert.False(log.MineActive(T0.AddSeconds(1)));
         Assert.Empty(log.Received(Me));
+        Assert.Empty(log.Kills());
     }
 
     [Fact]

@@ -126,6 +126,21 @@
                 }
             </div>
         }
+        @if (!noticeOpen && Mode == AionDpsMeter.Timers.Modes.MeterMode.Pvp && MyPvpKills() is { Count: > 0 } myKills)
+        {
+            <div class="bp-pvp-kills">
+                @foreach (var k in myKills)
+                {
+                    var iKilled = entities.IsCurrentPlayer((int)k.KillerId);
+                    <div class="bp-pvp-kill @(iKilled ? "is-mine" : "is-death")" title="@k.At.ToString("HH:mm:ss")">
+                        <span>@(iKilled ? "☠ Ты убил" : "💀 Тебя убил")</span>
+                        <b>@RecapName(iKilled ? k.VictimId : k.KillerId)</b>
+                        <span class="bp-pvp-icon">@if (k.Icon is { } killIcon) { <img src="@killIcon" alt="" /> }</span>
+                        <span class="bp-pvp-kill-sk">@k.Skill</span>
+                    </div>
+                }
+            </div>
+        }
         @if (!noticeOpen && Mode == AionDpsMeter.Timers.Modes.MeterMode.Pvp && pvpPlayer is { } pvpId)
         {
             <div class="bp-recap bp-pvp">

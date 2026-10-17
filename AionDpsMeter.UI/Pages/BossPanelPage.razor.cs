@@ -186,6 +186,10 @@ namespace AionDpsMeter.UI.Pages
 
         /// <summary>Clicking a name in the Heal, Dummy and Grind modes opens the same skill breakdown as in DPS mode
         /// (the player's current fight); a player the fight does not have opens nothing.</summary>
+        /// <summary>The user's kills and deaths in the PvP fight, newest first (at most 5).</summary>
+        private IReadOnlyList<AionDpsMeter.Timers.Modes.PvpKill> MyPvpKills() =>
+            modes.Pvp.Kills().Where(k => entities.IsCurrentPlayer((int)k.KillerId) || entities.IsCurrentPlayer((int)k.VictimId)).Take(5).ToList();
+
         private void OpenAltDetails(AltRow r)
         {
             if (Mode == AionDpsMeter.Timers.Modes.MeterMode.Pvp)

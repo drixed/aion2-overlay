@@ -158,3 +158,9 @@
 .bp-pvp .bp-recap-row { align-items: center; }
 .bp-pvp-icon { width: 18px; height: 18px; flex: 0 0 18px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.06); }
 .bp-pvp-icon img { width: 18px; height: 18px; display: block; }
+.bp-pvp-kills { margin: 0 8px 6px; display: flex; flex-direction: column; gap: 2px; font-size: 11px; }
+.bp-pvp-kill { display: flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 6px; white-space: nowrap; overflow: hidden; }
+.bp-pvp-kill.is-mine { background: rgba(126, 231, 135, .1); color: #b7f5bd; }
+.bp-pvp-kill.is-death { background: rgba(255, 90, 90, .1); color: #ffb3b3; }
+.bp-pvp-kill b { color: #fff; overflow: hidden; text-overflow: ellipsis; }
+.bp-pvp-kill-sk { min-width: 0; overflow: hidden; text-overflow: ellipsis; opacity: .8; }
