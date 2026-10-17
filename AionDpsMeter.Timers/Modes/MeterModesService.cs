@@ -8,9 +8,10 @@ namespace AionDpsMeter.Timers.Modes;
 public sealed class MeterModesService : IDisposable
 {
     private readonly TimersOptionsStore options;
-    private int dummySeconds;
+    private int dummySeconds, pvpIdle;
 
     public DummyRun Dummy { get; private set; }
+    public PvpLog Pvp { get; private set; }
     public GrindSession Grind { get; } = new();
     public HealTally Heals { get; } = new();
     public DeathRecaps Deaths { get; } = new();
@@ -23,6 +24,8 @@ public sealed class MeterModesService : IDisposable
         this.entities = entities;
         dummySeconds = options.Current.DummyRunSeconds;
         Dummy = new DummyRun(TimeSpan.FromSeconds(dummySeconds));
+        pvpIdle = options.Current.FightIdleSeconds;
+        Pvp = new PvpLog(TimeSpan.FromSeconds(pvpIdle));
         options.Changed += OnOptionsChanged;
         CombatFeed.Damage += OnDamage;
         CombatFeed.Heal += OnHeal;
@@ -48,6 +51,11 @@ public sealed class MeterModesService : IDisposable
 
     private void OnOptionsChanged()
     {
+        if (options.Current.FightIdleSeconds != pvpIdle)
+        {
+            pvpIdle = options.Current.FightIdleSeconds;
+            Pvp = new PvpLog(TimeSpan.FromSeconds(pvpIdle));
+        }
         if (options.Current.DummyRunSeconds == dummySeconds) return;
         dummySeconds = options.Current.DummyRunSeconds;
         Dummy = new DummyRun(TimeSpan.FromSeconds(dummySeconds));
@@ -59,6 +67,10 @@ public sealed class MeterModesService : IDisposable
         var hit = new Hit(d.SourceEntity.Id, d.Damage, d.TargetEntity?.IsDummy == true, d.DateTime, d.SourceEntity.IsUser);
         Dummy.Add(hit);
         Grind.Add(hit);
+        // a hit on a player the meter knows (named, or one who attacked someone), not on a summon: PvP
+        if (d.TargetEntity is { } target && !entities.IsSummon(target.Id) && entities.GetPlayerEntity(target.Id) is { } victim)
+            Pvp.Add(new PvpHit(d.SourceEntity.Id, victim.Id, d.Skill?.Id ?? 0, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name,
+                d.Damage, d.IsCritical, d.DateTime, d.SourceEntity.IsUser || victim.IsUser));
     }
 
     private void OnHeal(HealEvent h) => Heals.Add(new Heal(h.CasterId, h.TargetId, h.Amount, h.At));

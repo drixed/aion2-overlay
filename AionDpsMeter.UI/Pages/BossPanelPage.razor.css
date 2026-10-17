@@ -148,3 +148,10 @@
 .bp-pet-stat { flex: 0 0 auto; white-space: nowrap; font-variant-numeric: tabular-nums; color: #e6ffe9; }
 .bp-pet-bar { position: absolute; left: 0; bottom: 0; height: 2px; background: #7ee787; }
 .bp-pet-news { background: linear-gradient(90deg, #2f8f45, #7ee787); }
+.bp-pvp { background: rgba(120, 160, 255, .08); border-color: rgba(120, 160, 255, .3); }
+.bp-pvp .bp-recap-head { color: #b8cbff; }
+.bp-pvp-tabs { display: flex; gap: 4px; flex: 1; }
+.bp-pvp-tabs button { padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: none; color: #c9d1d9; font-size: 11px; cursor: pointer; }
+.bp-pvp-tabs button.is-on { background: rgba(120, 160, 255, .25); border-color: rgba(120, 160, 255, .6); color: #fff; }
+.bp-pvp-skill { flex: 1 1 auto; opacity: 1; }
+.bp-pvp-crit { width: 28px; flex: 0 0 28px; color: #ffd27a; }

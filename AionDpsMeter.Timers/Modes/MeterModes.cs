@@ -1,7 +1,7 @@
 namespace AionDpsMeter.Timers.Modes;
 
 /// <summary>What the main window's rows show; picked from the menu in its header.</summary>
-public enum MeterMode { Dps, Damage, Heal, Dummy, Grind }
+public enum MeterMode { Dps, Damage, Heal, Dummy, Grind, Pvp }
 
 /// <param name="OnDummy">The target is a training scarecrow.</param>
 /// <param name="Mine">The user's own hit.</param>

@@ -126,6 +126,53 @@
                 }
             </div>
         }
+        @if (!noticeOpen && Mode == AionDpsMeter.Timers.Modes.MeterMode.Pvp && pvpPlayer is { } pvpId)
+        {
+            <div class="bp-recap bp-pvp">
+                <div class="bp-recap-head">
+                    <b>⚔ @RecapName(pvpId)</b>
+                    <span class="bp-pvp-tabs">
+                        <button type="button" class="@(pvpReceived ? "" : "is-on")" @onclick="() => pvpReceived = false">Нанёс</button>
+                        <button type="button" class="@(pvpReceived ? "is-on" : "")" @onclick="() => pvpReceived = true">Получил</button>
+                    </span>
+                    <button type="button" class="bp-link" @onclick="() => pvpPlayer = null">✕</button>
+                </div>
+                @if (!pvpReceived)
+                {
+                    var dealt = modes.Pvp.Dealt(pvpId);
+                    @if (dealt.Count == 0)
+                    {
+                        <div class="bp-recap-empty">Этот игрок в бою никого из игроков не бил</div>
+                    }
+                    @foreach (var s in dealt)
+                    {
+                        <div class="bp-recap-row">
+                            <span class="bp-recap-sk bp-pvp-skill">@s.Skill</span>
+                            <span class="bp-recap-t">@s.Hits×</span>
+                            <span class="bp-pvp-crit">@(s.Crits > 0 ? $"✦{s.Crits}" : "")</span>
+                            <span class="bp-recap-dmg">@AionDpsMeter.UI.Utils.DamageFormatter.Format(s.Total)</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    var taken = modes.Pvp.Received(pvpId);
+                    @if (taken.Count == 0)
+                    {
+                        <div class="bp-recap-empty">Этого игрока в бою никто из игроков не бил</div>
+                    }
+                    @foreach (var s in taken)
+                    {
+                        <div class="bp-recap-row">
+                            <span class="bp-recap-src">@RecapName(s.AttackerId)</span>
+                            <span class="bp-recap-sk">@s.Skill</span>
+                            <span class="bp-recap-t">@s.Hits×</span>
+                            <span class="bp-recap-dmg">@AionDpsMeter.UI.Utils.DamageFormatter.Format(s.Total)</span>
+                        </div>
+                    }
+                }
+            </div>
+        }
         @if (!noticeOpen && recapPlayer is { } recapId)
         {
             var recap = modes.Deaths.LastFor(recapId);

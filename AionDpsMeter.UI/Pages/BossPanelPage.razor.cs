@@ -95,6 +95,8 @@ namespace AionDpsMeter.UI.Pages
             Options.ShowPets && pets.Latest is { } n && now - n.At <= RecordNewsFor
                 ? $"{schedule.Current.PetName(n.Pet) ?? n.Name}: уровень {n.Level}!" : null;
         private long? recapPlayer;
+        private long? pvpPlayer;
+        private bool pvpReceived;
 
         /// <summary>The skull on a row opens (or closes) that player's last death recap.</summary>
         private void ToggleRecap(long playerId) => recapPlayer = recapPlayer == playerId ? null : playerId;
@@ -107,8 +109,10 @@ namespace AionDpsMeter.UI.Pages
 
         private static readonly AionDpsMeter.Timers.Modes.MeterMode[] AllModes = Enum.GetValues<AionDpsMeter.Timers.Modes.MeterMode>();
 
-        /// <summary>The mode in effect: hitting a training scarecrow shows the dummy run (when the user asked for that).</summary>
+        /// <summary>The mode in effect: PvP involving the user shows the PvP fight, hitting a training scarecrow the dummy run
+        /// (each when the user asked for that).</summary>
         private AionDpsMeter.Timers.Modes.MeterMode Mode =>
+            Options.AutoPvp && Options.Mode is AionDpsMeter.Timers.Modes.MeterMode.Dps or AionDpsMeter.Timers.Modes.MeterMode.Damage && modes.Pvp.MineActive(DateTime.Now) ? AionDpsMeter.Timers.Modes.MeterMode.Pvp :
             Options.AutoDummy && targetIsDummy && Options.Mode is AionDpsMeter.Timers.Modes.MeterMode.Dps or AionDpsMeter.Timers.Modes.MeterMode.Damage ? AionDpsMeter.Timers.Modes.MeterMode.Dummy : Options.Mode;
 
         private static string ModeLabel(AionDpsMeter.Timers.Modes.MeterMode mode) => mode switch
@@ -117,6 +121,7 @@ namespace AionDpsMeter.UI.Pages
             AionDpsMeter.Timers.Modes.MeterMode.Heal => "Хил",
             AionDpsMeter.Timers.Modes.MeterMode.Dummy => "Манекен",
             AionDpsMeter.Timers.Modes.MeterMode.Grind => "Гринд",
+            AionDpsMeter.Timers.Modes.MeterMode.Pvp => "PvP",
             _ => "DPS",
         };
 
@@ -126,10 +131,11 @@ namespace AionDpsMeter.UI.Pages
             AionDpsMeter.Timers.Modes.MeterMode.Heal => "Лечение других игроков за бой (HPS)",
             AionDpsMeter.Timers.Modes.MeterMode.Dummy => "Замер на тренировочном чучеле фиксированной длины",
             AionDpsMeter.Timers.Modes.MeterMode.Grind => "Урон по всем целям между «Старт» и «Стоп»",
+            AionDpsMeter.Timers.Modes.MeterMode.Pvp => "Урон игроков по игрокам (арена, открытый мир); клик по нику — чем бил и чем били его",
             _ => "Урон в секунду",
         };
 
-        private bool AltMode => Mode is AionDpsMeter.Timers.Modes.MeterMode.Heal or AionDpsMeter.Timers.Modes.MeterMode.Dummy or AionDpsMeter.Timers.Modes.MeterMode.Grind;
+        private bool AltMode => Mode is AionDpsMeter.Timers.Modes.MeterMode.Heal or AionDpsMeter.Timers.Modes.MeterMode.Dummy or AionDpsMeter.Timers.Modes.MeterMode.Grind or AionDpsMeter.Timers.Modes.MeterMode.Pvp;
 
         private void PickMode(AionDpsMeter.Timers.Modes.MeterMode mode)
         {
@@ -159,6 +165,7 @@ namespace AionDpsMeter.UI.Pages
                 AionDpsMeter.Timers.Modes.MeterMode.Heal when sessions.GetCombatDuration() is var d && d > TimeSpan.Zero => modes.Heals.Rows(at - d, at),
                 AionDpsMeter.Timers.Modes.MeterMode.Dummy => modes.Dummy.View(at).Rows,
                 AionDpsMeter.Timers.Modes.MeterMode.Grind => modes.Grind.View(at).Rows,
+                AionDpsMeter.Timers.Modes.MeterMode.Pvp => modes.Pvp.View(at).Rows,
                 _ => [],
             };
             if (rows.Count == 0) return [];
@@ -179,6 +186,11 @@ namespace AionDpsMeter.UI.Pages
         /// (the player's current fight); a player the fight does not have opens nothing.</summary>
         private void OpenAltDetails(AltRow r)
         {
+            if (Mode == AionDpsMeter.Timers.Modes.MeterMode.Pvp)
+            {
+                pvpPlayer = pvpPlayer == r.PlayerId ? null : r.PlayerId;
+                return;
+            }
             if (ViewModel!.Players.FirstOrDefault(p => p.PlayerId == r.PlayerId) is { } player) ViewModel.OpenPlayerDetails(player);
         }
 
@@ -200,6 +212,11 @@ namespace AionDpsMeter.UI.Pages
                     return g.Running ? $"⛏ Гринд идёт {FeedText.Span(g.Elapsed)}"
                         : g.Elapsed > TimeSpan.Zero ? $"⛏ Гринд остановлен: {FeedText.Span(g.Elapsed)}"
                         : "⛏ Нажми «Старт»: урон по всем целям копится до «Стоп»";
+                case AionDpsMeter.Timers.Modes.MeterMode.Pvp:
+                    var p = modes.Pvp.View(at);
+                    return !p.HasFight ? "⚔ Ударь игрока или получи удар — бой начнётся сам"
+                        : p.Active ? $"⚔ PvP-бой {FeedText.Span(p.Elapsed)} · клик по нику — скиллы"
+                        : $"⚔ Последний PvP-бой: {FeedText.Span(p.Elapsed)} · клик по нику — скиллы";
                 default:
                     return null;
             }

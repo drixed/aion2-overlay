@@ -166,6 +166,9 @@
         <SettingRow Title="Манекен при ударе по чучелу" Description="Ударил тренировочное чучело — окно само показывает замер фиксированной длины (режим «Манекен» в меню у заголовка)">
             <ValueSlot><ToggleSwitch Checked="@O.AutoDummy" CheckedChanged="v => Set(o => o.AutoDummy = v)" /></ValueSlot>
         </SettingRow>
+        <SettingRow Title="PvP при бое с игроком" Description="Ударил игрока или получил удар от игрока — окно само показывает PvP: урон игроков по игрокам, клик по нику — чем бил и чем били его (режим «PvP» в меню у заголовка)">
+            <ValueSlot><ToggleSwitch Checked="@O.AutoPvp" CheckedChanged="v => Set(o => o.AutoPvp = v)" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Длительность замера на манекене" Description="Замер начинается с первого удара и считает ровно это время, чтобы замеры можно было сравнивать" IsLast="true">
             <ValueSlot>
                 <div class="fs-segmented">

@@ -57,6 +57,8 @@ public sealed class TimersOptions
     public AionDpsMeter.Timers.Modes.MeterMode Mode { get; set; } = AionDpsMeter.Timers.Modes.MeterMode.Dps;
     /// <summary>Hitting a training scarecrow shows the dummy run (from DPS or Damage mode).</summary>
     public bool AutoDummy { get; set; } = true;
+    /// <summary>A PvP hit dealt or taken by the user shows the PvP mode (from DPS or Damage mode).</summary>
+    public bool AutoPvp { get; set; } = true;
     /// <summary>Length of a dummy run, seconds.</summary>
     public int DummyRunSeconds { get; set; } = 60;
 
