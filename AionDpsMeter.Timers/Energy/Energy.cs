@@ -57,16 +57,25 @@ public static class EnergyParser
         if (!Wire.TryVarint(body, o, out var id, out var len) || id != EnergyId) return null;
         o += len;
         int? current = null, extra = null;
+        // a zero is left out: the field is in the mask and the record ends before its value
         if ((mask & CurrentField) != 0)
         {
-            if (!Wire.TryVarint(body, o, out var c, out len) || c is < 0 or > 100_000) return null;
-            current = (int)c;
-            o += len;
+            if (o >= body.Length) current = 0;
+            else
+            {
+                if (!Wire.TryVarint(body, o, out var c, out len) || c is < 0 or > 100_000) return null;
+                current = (int)c;
+                o += len;
+            }
         }
         if ((mask & ExtraField) != 0)
         {
-            if (!Wire.TryVarint(body, o, out var x, out _) || x is < 0 or > 1_000_000) return null;
-            extra = (int)x;
+            if (o >= body.Length) extra = 0;
+            else
+            {
+                if (!Wire.TryVarint(body, o, out var x, out _) || x is < 0 or > 1_000_000) return null;
+                extra = (int)x;
+            }
         }
         return new EnergyUpdate(current, extra);
     }

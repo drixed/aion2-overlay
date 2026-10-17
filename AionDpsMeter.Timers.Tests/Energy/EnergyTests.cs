@@ -50,6 +50,18 @@ public class EnergyTests
         Assert.Equal(new EnergyReading(40, 265), update!.ApplyTo(new EnergyReading(120, 265)));
     }
 
+    /// <summary>
+    /// 2026-10-17: in game the extra went 80 → 0 while the meter was locked on, yet it kept "+80": no record it could read
+    /// came. A zero is left out of the record — the field is in the mask, its value is not — and means 0.
+    /// </summary>
+    [Fact]
+    public void A_field_in_the_mask_without_a_value_is_zero()
+    {
+        var update = EnergyParser.ParseUpdate(Convert.FromHexString("000801879303"));
+        Assert.Equal(new EnergyUpdate(Current: null, Extra: 0), update);
+        Assert.Equal(new EnergyUpdate(Current: 0, Extra: null), EnergyParser.ParseUpdate(Convert.FromHexString("000401879303")));
+    }
+
     [Fact]
     public void Other_shapes_of_the_same_opcode_are_ignored()
     {
