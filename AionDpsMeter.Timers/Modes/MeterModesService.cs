@@ -67,8 +67,8 @@ public sealed class MeterModesService : IDisposable
         var hit = new Hit(d.SourceEntity.Id, d.Damage, d.TargetEntity?.IsDummy == true, d.DateTime, d.SourceEntity.IsUser);
         Dummy.Add(hit);
         Grind.Add(hit);
-        // a hit on a player the meter knows (named, or one who attacked someone), not on a summon: PvP
-        if (d.TargetEntity is { } target && !entities.IsSummon(target.Id) && entities.GetPlayerEntity(target.Id) is { } victim)
+        if (d.TargetEntity is { } target && entities.GetPlayerEntity(target.Id) is { } victim
+            && PvpLog.IsPlayerTarget(victim, entities.GetTargetMob(target.Id), entities.IsSummon(target.Id)))
             Pvp.Add(new PvpHit(d.SourceEntity.Id, victim.Id, d.Skill?.Id ?? 0, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name,
                 d.Damage, d.IsCritical, d.DateTime, d.SourceEntity.IsUser || victim.IsUser));
     }

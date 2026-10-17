@@ -69,6 +69,21 @@ public class PvpLogTests
     }
 
     [Fact]
+    public void Only_a_named_player_or_the_user_counts_as_a_pvp_target()
+    {
+        // 2026-10-17: "Player_17921" rows — hits on monsters the meter had once taken for players
+        var named = new AionDpsMeter.Core.Models.Player { Id = 5, Name = "Rafff", IsIdentified = true };
+        var unnamed = new AionDpsMeter.Core.Models.Player { Id = 6, Name = "Player_6" };
+        var me = new AionDpsMeter.Core.Models.Player { Id = 7, Name = "DRIXED", IsUser = true };
+        Assert.True(PvpLog.IsPlayerTarget(named, asMob: null, summon: false));
+        Assert.True(PvpLog.IsPlayerTarget(me, asMob: null, summon: false));
+        Assert.False(PvpLog.IsPlayerTarget(unnamed, asMob: null, summon: false));
+        Assert.False(PvpLog.IsPlayerTarget(named, asMob: new AionDpsMeter.Core.Models.Mob { MobCode = 2_100_855 }, summon: false));
+        Assert.False(PvpLog.IsPlayerTarget(named, asMob: null, summon: true));
+        Assert.False(PvpLog.IsPlayerTarget(null, asMob: null, summon: false));
+    }
+
+    [Fact]
     public void Without_any_pvp_there_is_no_fight()
     {
         var view = new PvpLog(TimeSpan.FromSeconds(45)).View(T0);

@@ -20,6 +20,11 @@ public sealed class PvpLog(TimeSpan idle)
     private readonly List<PvpHit> fight = [];
     private DateTime lastMine = DateTime.MinValue;
 
+    /// <summary>A PvP target: a player the game named (or the user), not one the game sent as a monster, not a summon.
+    /// Monsters casting skills with player-like codes become unnamed "Player_…" entries and are not targets.</summary>
+    public static bool IsPlayerTarget(AionDpsMeter.Core.Models.Player? victim, AionDpsMeter.Core.Models.Mob? asMob, bool summon) =>
+        victim is { } v && (v.IsIdentified || v.IsUser) && asMob is not { MobCode: > 0 } && !summon;
+
     public void Add(PvpHit hit)
     {
         lock (gate)
