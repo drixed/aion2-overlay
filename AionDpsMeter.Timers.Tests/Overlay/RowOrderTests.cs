@@ -22,6 +22,15 @@ public class RowOrderTests
         Assert.Equal([("Castform", 4), ("Me", 3), ("Stoopzz", 2), ("Wolves", 1)], Order(false, true));
 
     [Fact]
+    public void A_limit_keeps_the_top_rows_and_my_row_when_i_am_below_it()
+    {
+        // 2026-10-17: a mass PvP fight listed 30 players over half the screen
+        Assert.Equal(["Wolves", "Stoopzz"], RowOrder.Limit(new[] { "Wolves", "Stoopzz", "Castform" }, n => n == "Me", 2));
+        Assert.Equal(["Wolves", "Me"], RowOrder.Limit(new[] { "Wolves", "Stoopzz", "Castform", "Me" }, n => n == "Me", 2));
+        Assert.Equal(ByDamage, RowOrder.Limit(ByDamage, n => n == "Me", 10));
+    }
+
+    [Fact]
     public void With_both_my_row_sits_next_to_the_header_side_it_belongs_to() =>
         Assert.Equal([("Castform", 4), ("Stoopzz", 2), ("Wolves", 1), ("Me", 3)], Order(true, true));
 }

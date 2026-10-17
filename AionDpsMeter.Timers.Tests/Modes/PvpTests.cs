@@ -84,6 +84,17 @@ public class PvpLogTests
     }
 
     [Fact]
+    public void Clearing_drops_the_fight_and_leaves_the_pvp_mode()
+    {
+        var log = new PvpLog(TimeSpan.FromSeconds(45));
+        log.Add(Hit(Foe, Me, "Пинок", 500, 0));
+        log.Clear();
+        Assert.False(log.View(T0.AddSeconds(1)).HasFight);
+        Assert.False(log.MineActive(T0.AddSeconds(1)));
+        Assert.Empty(log.Received(Me));
+    }
+
+    [Fact]
     public void Without_any_pvp_there_is_no_fight()
     {
         var view = new PvpLog(TimeSpan.FromSeconds(45)).View(T0);

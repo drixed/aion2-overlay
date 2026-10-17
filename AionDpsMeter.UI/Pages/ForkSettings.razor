@@ -169,6 +169,9 @@
         <SettingRow Title="PvP при бое с игроком" Description="Ударил игрока или получил удар от игрока — окно само показывает PvP: урон игроков по игрокам, клик по нику — чем бил и чем били его (режим «PvP» в меню у заголовка)">
             <ValueSlot><ToggleSwitch Checked="@O.AutoPvp" CheckedChanged="v => Set(o => o.AutoPvp = v)" /></ValueSlot>
         </SettingRow>
+        <SettingRow Title="Строк в PvP" Description="@($"{O.PvpMaxRows} — в массовом бою список не растёт на пол-экрана; твоя строка видна всегда")">
+            <ValueSlot><input class="fs-range" type="range" min="3" max="40" step="1" value="@O.PvpMaxRows" @onchange="e => SetInt(e.Value, v => Set(o => o.PvpMaxRows = v))" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Длительность замера на манекене" Description="Замер начинается с первого удара и считает ровно это время, чтобы замеры можно было сравнивать" IsLast="true">
             <ValueSlot>
                 <div class="fs-segmented">

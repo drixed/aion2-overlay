@@ -59,6 +59,8 @@ public sealed class TimersOptions
     public bool AutoDummy { get; set; } = true;
     /// <summary>A PvP hit dealt or taken by the user shows the PvP mode (from DPS or Damage mode).</summary>
     public bool AutoPvp { get; set; } = true;
+    /// <summary>Rows in the PvP mode (a mass fight lists dozens); the user's row always stays.</summary>
+    public int PvpMaxRows { get; set; } = 10;
     /// <summary>Length of a dummy run, seconds.</summary>
     public int DummyRunSeconds { get; set; } = 60;
 

@@ -35,6 +35,16 @@ public sealed class PvpLog(TimeSpan idle)
         }
     }
 
+    /// <summary>The "clear meter" and "reset fight" hotkeys: the fight is gone and the window leaves the PvP mode.</summary>
+    public void Clear()
+    {
+        lock (gate)
+        {
+            fight.Clear();
+            lastMine = DateTime.MinValue;
+        }
+    }
+
     /// <summary>A PvP hit dealt or taken by the user within the idle time: the overlay switches to the PvP mode.</summary>
     public bool MineActive(DateTime now)
     {

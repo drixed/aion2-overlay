@@ -169,6 +169,8 @@ namespace AionDpsMeter.UI.Pages
                 _ => [],
             };
             if (rows.Count == 0) return [];
+            if (Mode == AionDpsMeter.Timers.Modes.MeterMode.Pvp)
+                rows = AionDpsMeter.Timers.Overlay.RowOrder.Limit(rows, r => entities.IsCurrentPlayer((int)r.PlayerId), Math.Clamp(Options.PvpMaxRows, 3, 40));
             var known = ViewModel!.Players.GroupBy(p => p.PlayerId).ToDictionary(g => g.Key, g => g.First());
             double sum = rows.Sum(r => r.Total), max = rows.Max(r => r.Total);
             return rows.Select(r =>

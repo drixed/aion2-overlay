@@ -21,6 +21,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         TimersOptionsStore options,
         CombatSessionManager sessions,
         EntityTracker entities,
+        AionDpsMeter.Timers.Modes.MeterModesService modes,
         IWindowManagerService windowManager,
         AionDpsMeter.Services.Services.Settings.IAppSettingsService appSettings,
         ILogger<OverlayRuntime> logger)
@@ -88,8 +89,14 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 switch ((HotkeyId)wParam.ToInt32())
                 {
                     case HotkeyId.HideOverlay: ToggleOverlay(); break;
-                    case HotkeyId.ResetFight: sessions.CompleteAndPersistActiveSessions(); break;
-                    case HotkeyId.ClearMeter: sessions.Reset(); break;
+                    case HotkeyId.ResetFight:
+                        sessions.CompleteAndPersistActiveSessions();
+                        modes.Pvp.Clear();
+                        break;
+                    case HotkeyId.ClearMeter:
+                        sessions.Reset();
+                        modes.Pvp.Clear();
+                        break;
                     case HotkeyId.CopySummary: CopySummary(); break;
                     case HotkeyId.Compact:
                         options.Current.Compact = !options.Current.Compact;
