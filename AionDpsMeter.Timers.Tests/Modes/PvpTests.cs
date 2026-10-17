@@ -84,6 +84,15 @@ public class PvpLogTests
     }
 
     [Fact]
+    public void Rows_carry_the_skill_icon()
+    {
+        var log = new PvpLog(TimeSpan.FromSeconds(45));
+        log.Add(new PvpHit(Me, Foe, 7, "Удар", 3_000, false, T0, Mine: true, Icon: "https://cdn/skill7.png"));
+        Assert.Equal("https://cdn/skill7.png", log.Dealt(Me).Single().Icon);
+        Assert.Equal("https://cdn/skill7.png", log.Received(Foe).Single().Icon);
+    }
+
+    [Fact]
     public void Clearing_drops_the_fight_and_leaves_the_pvp_mode()
     {
         var log = new PvpLog(TimeSpan.FromSeconds(45));

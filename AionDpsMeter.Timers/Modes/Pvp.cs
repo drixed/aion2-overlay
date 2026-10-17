@@ -1,11 +1,12 @@
 namespace AionDpsMeter.Timers.Modes;
 
 /// <param name="Mine">The user is the attacker or the victim.</param>
-public sealed record PvpHit(long AttackerId, long VictimId, int SkillId, string Skill, long Damage, bool Critical, DateTime At, bool Mine);
+/// <param name="Icon">The skill icon's URL from the game data, when it has one.</param>
+public sealed record PvpHit(long AttackerId, long VictimId, int SkillId, string Skill, long Damage, bool Critical, DateTime At, bool Mine, string? Icon = null);
 
-public sealed record PvpSkillRow(string Skill, long Total, int Hits, int Crits);
+public sealed record PvpSkillRow(string Skill, long Total, int Hits, int Crits, string? Icon = null);
 
-public sealed record PvpReceivedRow(long AttackerId, string Skill, long Total, int Hits);
+public sealed record PvpReceivedRow(long AttackerId, string Skill, long Total, int Hits, string? Icon = null);
 
 /// <param name="Active">PvP hits within the idle time; otherwise the last fight is shown until the next one.</param>
 public sealed record PvpView(IReadOnlyList<ModeRow> Rows, TimeSpan Elapsed, bool Active, bool HasFight);
@@ -72,7 +73,7 @@ public sealed class PvpLog(TimeSpan idle)
         lock (gate)
             return fight.Where(h => h.AttackerId == player)
                 .GroupBy(h => h.Skill)
-                .Select(g => new PvpSkillRow(g.Key, g.Sum(h => h.Damage), g.Count(), g.Count(h => h.Critical)))
+                .Select(g => new PvpSkillRow(g.Key, g.Sum(h => h.Damage), g.Count(), g.Count(h => h.Critical), g.Select(h => h.Icon).FirstOrDefault(i => i is not null)))
                 .OrderByDescending(r => r.Total)
                 .ToList();
     }
@@ -83,7 +84,7 @@ public sealed class PvpLog(TimeSpan idle)
         lock (gate)
             return fight.Where(h => h.VictimId == player)
                 .GroupBy(h => (h.AttackerId, h.Skill))
-                .Select(g => new PvpReceivedRow(g.Key.AttackerId, g.Key.Skill, g.Sum(h => h.Damage), g.Count()))
+                .Select(g => new PvpReceivedRow(g.Key.AttackerId, g.Key.Skill, g.Sum(h => h.Damage), g.Count(), g.Select(h => h.Icon).FirstOrDefault(i => i is not null)))
                 .OrderByDescending(r => r.Total)
                 .ToList();
     }

@@ -70,7 +70,7 @@ public sealed class MeterModesService : IDisposable
         if (d.TargetEntity is { } target && entities.GetPlayerEntity(target.Id) is { } victim
             && PvpLog.IsPlayerTarget(victim, entities.GetTargetMob(target.Id), entities.IsSummon(target.Id)))
             Pvp.Add(new PvpHit(d.SourceEntity.Id, victim.Id, d.Skill?.Id ?? 0, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name,
-                d.Damage, d.IsCritical, d.DateTime, d.SourceEntity.IsUser || victim.IsUser));
+                d.Damage, d.IsCritical, d.DateTime, d.SourceEntity.IsUser || victim.IsUser, d.Skill is { HasIcon: true } s ? s.Icon : null));
     }
 
     private void OnHeal(HealEvent h) => Heals.Add(new Heal(h.CasterId, h.TargetId, h.Amount, h.At));

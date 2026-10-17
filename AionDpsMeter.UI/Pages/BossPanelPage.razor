@@ -147,6 +147,7 @@
                     @foreach (var s in dealt)
                     {
                         <div class="bp-recap-row">
+                            <span class="bp-pvp-icon">@if (s.Icon is { } dealtIcon) { <img src="@dealtIcon" alt="" /> }</span>
                             <span class="bp-recap-sk bp-pvp-skill">@s.Skill</span>
                             <span class="bp-recap-t">@s.Hits×</span>
                             <span class="bp-pvp-crit">@(s.Crits > 0 ? $"✦{s.Crits}" : "")</span>
@@ -165,6 +166,7 @@
                     {
                         <div class="bp-recap-row">
                             <span class="bp-recap-src">@RecapName(s.AttackerId)</span>
+                            <span class="bp-pvp-icon">@if (s.Icon is { } takenIcon) { <img src="@takenIcon" alt="" /> }</span>
                             <span class="bp-recap-sk">@s.Skill</span>
                             <span class="bp-recap-t">@s.Hits×</span>
                             <span class="bp-recap-dmg">@AionDpsMeter.UI.Utils.DamageFormatter.Format(s.Total)</span>

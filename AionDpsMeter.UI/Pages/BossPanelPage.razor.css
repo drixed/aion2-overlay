@@ -155,3 +155,6 @@
 .bp-pvp-tabs button.is-on { background: rgba(120, 160, 255, .25); border-color: rgba(120, 160, 255, .6); color: #fff; }
 .bp-pvp-skill { flex: 1 1 auto; opacity: 1; }
 .bp-pvp-crit { width: 28px; flex: 0 0 28px; color: #ffd27a; }
+.bp-pvp .bp-recap-row { align-items: center; }
+.bp-pvp-icon { width: 18px; height: 18px; flex: 0 0 18px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.06); }
+.bp-pvp-icon img { width: 18px; height: 18px; display: block; }
