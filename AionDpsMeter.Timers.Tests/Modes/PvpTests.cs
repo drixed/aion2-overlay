@@ -84,6 +84,23 @@ public class PvpLogTests
     }
 
     [Fact]
+    public void Hits_from_unnamed_attackers_or_between_party_members_are_not_pvp()
+    {
+        // 2026-10-18, a dungeon boss: mechanics with player-like skills ("Player_59214", 20 damage) hit the user, and a
+        // party member's damage landed on another — the window switched to PvP mid-fight
+        var me = new AionDpsMeter.Core.Models.Player { Id = 1, Name = "DROXARED", IsUser = true, IsIdentified = true, CharacterLevel = 45 };
+        var mate = new AionDpsMeter.Core.Models.Player { Id = 2, Name = "ywt", IsIdentified = true, CharacterLevel = 45 };
+        var mechanic = new AionDpsMeter.Core.Models.Player { Id = 3, Name = "Player_3" };
+        var stranger = new AionDpsMeter.Core.Models.Player { Id = 4, Name = "Razy", IsIdentified = true };
+        Assert.False(PvpLog.IsPvpHit(mechanic, me));
+        Assert.False(PvpLog.IsPvpHit(mate, me));
+        Assert.False(PvpLog.IsPvpHit(me, mate));
+        Assert.True(PvpLog.IsPvpHit(stranger, me));
+        Assert.True(PvpLog.IsPvpHit(me, stranger));
+        Assert.True(PvpLog.IsPvpHit(stranger, mate));
+    }
+
+    [Fact]
     public void Rows_carry_the_skill_icon()
     {
         var log = new PvpLog(TimeSpan.FromSeconds(45));

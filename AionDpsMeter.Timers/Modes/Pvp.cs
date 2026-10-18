@@ -31,6 +31,14 @@ public sealed class PvpLog(TimeSpan idle)
     public static bool IsPlayerTarget(AionDpsMeter.Core.Models.Player? victim, AionDpsMeter.Core.Models.Mob? asMob, bool summon) =>
         victim is { } v && (v.IsIdentified || v.IsUser) && asMob is not { MobCode: > 0 } && !summon;
 
+    /// <summary>Both sides are players the game named (or the user), and not both in the user's party: dungeon mechanics with
+    /// player-like skills are unnamed, and party members cannot fight each other.</summary>
+    public static bool IsPvpHit(AionDpsMeter.Core.Models.Player attacker, AionDpsMeter.Core.Models.Player victim) =>
+        (attacker.IsIdentified || attacker.IsUser) && (victim.IsIdentified || victim.IsUser) && !(InParty(attacker) && InParty(victim));
+
+    /// <summary>The party packet fills the level; the user is always in the party.</summary>
+    private static bool InParty(AionDpsMeter.Core.Models.Player p) => p.IsUser || p.CharacterLevel > 0;
+
     public void Add(PvpHit hit)
     {
         lock (gate)

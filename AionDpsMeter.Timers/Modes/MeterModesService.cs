@@ -72,7 +72,8 @@ public sealed class MeterModesService : IDisposable
         Dummy.Add(hit);
         Grind.Add(hit);
         if (d.TargetEntity is { } target && entities.GetPlayerEntity(target.Id) is { } victim
-            && PvpLog.IsPlayerTarget(victim, entities.GetTargetMob(target.Id), entities.IsSummon(target.Id)))
+            && PvpLog.IsPlayerTarget(victim, entities.GetTargetMob(target.Id), entities.IsSummon(target.Id))
+            && PvpLog.IsPvpHit(entities.GetPlayerEntity(d.SourceEntity.Id) ?? d.SourceEntity, victim))
             Pvp.Add(new PvpHit(d.SourceEntity.Id, victim.Id, d.Skill?.Id ?? 0, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name,
                 d.Damage, d.IsCritical, d.DateTime, d.SourceEntity.IsUser || victim.IsUser, d.Skill is { HasIcon: true } s ? s.Icon : null));
     }
