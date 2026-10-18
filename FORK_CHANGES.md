@@ -60,3 +60,5 @@
 
 Если упал тест `Only_the_fork_forwarder_handles_the_field_boss_list_opcode` — апстрим сам начал обрабатывать
 `01 91`: удалить `FieldBossListForwarder.cs` и подписаться на их обработчик.
+
+- `site/` и `docs/index.html`, `docs/assets/` — сайт на GitHub Pages (лендинг). Окно метра на нём собрано из настоящих стилей метра (`site/build.py` берёт `BossPanelPage.razor.css` и `app.css`); после изменения вида метра: `python site/build.py`

@@ -372,3 +372,6 @@ combat-history.db
 combat-history.db-shm
 combat-history.db-wal
 appsettings.user.json
+
+# brainstorming mockups (local)
+.superpowers/
