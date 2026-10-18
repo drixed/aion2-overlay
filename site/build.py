@@ -210,11 +210,11 @@ def page():
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<header class="top">
+<header class="top"><div class="top-in">
   <a class="brand" href="#">AION 2 Overlay</a>
   <nav><a href="#tour" {t('nav_features')}></a><a href="#install" {t('nav_install')}></a><a href="#faq" {t('nav_faq')}></a>
   <a href="https://github.com/{REPO}" {t('github')}></a><button id="lang" class="lang" {t('lang')}></button></nav>
-</header>
+</div></header>
 
 <section class="hero wrap">
   <div>
