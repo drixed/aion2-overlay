@@ -11,7 +11,7 @@ section { padding-top: 64px; padding-bottom: 64px; border-top: 1px solid var(--l
 section.hero { border-top: 0; }
 
 .top { position: sticky; top: 0; z-index: 10; background: rgba(13, 9, 22, .82); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
-.top-in { max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.top-in { max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px 40px; flex-wrap: wrap; }
 .brand { color: var(--ink); font-weight: 800; text-decoration: none; letter-spacing: .02em; }
 .top nav { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .top nav a { color: var(--dim); text-decoration: none; font-size: 14px; }
