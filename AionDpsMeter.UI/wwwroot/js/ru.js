@@ -3,7 +3,7 @@
 // whenever the page changes; anything not in the dictionary stays English (a new upstream string never breaks).
 (function () {
     const ru = {
-        "Settings": "Настройки", "Close": "Закрыть", "Close settings": "Закрыть настройки",
+        "Settings": "Настройки", "Overlays": "Оверлеи", "Close": "Закрыть", "Close settings": "Закрыть настройки",
         "Appearance": "Вид", "Hotkeys": "Клавиши", "Tracking": "Учёт", "Developer": "Отладка",
         "[BETA] Overlays": "Оверлеи β", "Timers": "Таймеры", "Records": "Рекорды", "Pets": "Питомцы",
         "Window layout": "Расположение окон", "WINDOW LAYOUT": "РАСПОЛОЖЕНИЕ ОКОН", "WINDOW": "ОКНО",

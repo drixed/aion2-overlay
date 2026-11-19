@@ -9,7 +9,7 @@
 @if (Panel is { } p)
 {
     <div class="ep @(p.Vertical ? "ep--vertical" : "") @(p.Look == "bars" ? "ep--bars" : "ep--cards") @(p.Shape == "circle" ? "ep--circle" : "") @(Panels.Editing ? "ep--editing" : "")"
-         style="--ep-icon:@(p.IconSize)px;--ep-gap:@(p.Spacing)px"
+         style="--ep-icon:@(p.IconSize)px;--ep-gap:@(p.Spacing)px;--ep-text:@(Math.Clamp(p.TextSize, 8, 24))px;font-family:@FontFamily(p.Font)"
          @onmousedown="() => Panels.Drag(p.Id)">
         @if (Panels.Editing)
         {
@@ -44,6 +44,14 @@
     [Parameter] public string PanelId { get; set; } = "";
 
     private System.Threading.Timer? tick;
+
+    private static string FontFamily(string font) => font switch
+    {
+        "narrow" => "'Bahnschrift SemiCondensed', Bahnschrift, 'Segoe UI', sans-serif",
+        "mono" => "Consolas, 'Cascadia Mono', monospace",
+        "wide" => "Verdana, 'Segoe UI', sans-serif",
+        _ => "'Segoe UI', sans-serif",
+    };
 
     private EventPanel? Panel => Store.Current.EventPanels.FirstOrDefault(x => x.Id == PanelId);
 

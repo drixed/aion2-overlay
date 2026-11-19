@@ -73,7 +73,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             foreach (var panel in wanted.Values)
             {
                 if (!windows.TryGetValue(panel.Id, out var w)) w = Open(panel);
-                var (width, height) = Size(panel);
+                var (width, height) = EventPanels.WindowSize(panel);
                 w.Width = width;
                 w.Height = height;
                 w.Opacity = Math.Clamp(panel.Opacity, 20, 100) / 100.0;
@@ -118,20 +118,6 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 if (hide && w.IsVisible) w.Hide();
                 else if (!hide && !w.IsVisible) w.Show();
             }
-        }
-
-        /// <summary>The window fits its tiles: a card is an icon with the time and a two-line name under it, a bar is a row
-        /// with the icon, name, time and a progress line; "Вертикально" stacks them.</summary>
-        public static (double Width, double Height) Size(EventPanel p)
-        {
-            const double pad = 12;
-            var n = Math.Max(1, p.EventIds.Count);
-            var bars = p.Look == "bars";
-            var tileW = bars ? 170 + p.IconSize : Math.Max(p.IconSize + 16, 92);
-            var tileH = bars ? p.IconSize + 10 : p.IconSize + 48;
-            return p.Vertical
-                ? (tileW + pad, n * tileH + (n - 1) * p.Spacing + pad)
-                : (n * tileW + (n - 1) * p.Spacing + pad, tileH + pad);
         }
     }
 }

@@ -20,6 +20,10 @@ public sealed class EventPanel
     public int IconSize { get; set; } = 36;
     public int Spacing { get; set; } = 4;
     public int Opacity { get; set; } = 100;
+    /// <summary>"system", "narrow", "mono" or "wide", like the main window's fonts.</summary>
+    public string Font { get; set; } = "system";
+    /// <summary>The name's size in px; the time is 4 px bigger.</summary>
+    public int TextSize { get; set; } = 11;
     public bool Visible { get; set; } = true;
     /// <summary>Screen position; null until the user places it.</summary>
     public double? Left { get; set; }
@@ -51,6 +55,29 @@ public static class EventPanels
             tiles.Add(new EventTile(e.Id, e.Name, e.Icon ?? "event", state, Clock(open ? o.End - now : toStart), progress));
         }
         return tiles;
+    }
+
+    /// <summary>The panel window's size for its tiles: a card is an icon with the time and a two-line name under it, a
+    /// bar is a row with the icon, name, time and a progress line; "Вертикально" stacks them.</summary>
+    public static (double Width, double Height) WindowSize(EventPanel p)
+    {
+        const double pad = 12;
+        var n = Math.Max(1, p.EventIds.Count);
+        var text = Math.Clamp(p.TextSize, 8, 24);
+        double tileW, tileH;
+        if (p.Look == "bars")
+        {
+            tileW = 150 + p.IconSize + text * 5;
+            tileH = Math.Max(p.IconSize, (text + 2) * 1.4) + 10;
+        }
+        else
+        {
+            tileW = Math.Max(p.IconSize + 16, text * 8.4);
+            tileH = p.IconSize + 5 + (text + 4) * 1.3 + text * 1.2 * 2;
+        }
+        return p.Vertical
+            ? (tileW + pad, n * tileH + (n - 1) * p.Spacing + pad)
+            : (n * tileW + (n - 1) * p.Spacing + pad, tileH + pad);
     }
 
     /// <summary>"m:ss" under an hour, "h:mm:ss" from an hour, like the game's own timers.</summary>

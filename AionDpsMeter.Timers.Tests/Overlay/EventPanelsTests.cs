@@ -63,4 +63,27 @@ public class EventPanelsTests
         Assert.Equal(("cards", "square", 36, 4, 100), (a.Look, a.Shape, a.IconSize, a.Spacing, a.Opacity));
         Assert.True(a.Visible);
     }
+
+    [Fact]
+    public void A_bigger_text_makes_a_bigger_window()
+    {
+        var small = new EventPanel { EventIds = ["a", "b", "c"], TextSize = 11 };
+        var big = new EventPanel { EventIds = ["a", "b", "c"], TextSize = 16 };
+        var (w1, h1) = EventPanels.WindowSize(small);
+        var (w2, h2) = EventPanels.WindowSize(big);
+        Assert.True(w2 > w1 && h2 > h1);
+    }
+
+    [Fact]
+    public void Vertical_stacks_the_tiles_and_horizontal_lines_them_up()
+    {
+        var row = EventPanels.WindowSize(new EventPanel { EventIds = ["a", "b", "c"] });
+        var column = EventPanels.WindowSize(new EventPanel { EventIds = ["a", "b", "c"], Vertical = true });
+        Assert.True(row.Width > row.Height);
+        Assert.True(column.Height > column.Width);
+    }
+
+    [Fact]
+    public void A_new_panel_uses_the_system_font_at_11px() =>
+        Assert.Equal(("system", 11), (EventPanel.Create("x", []).Font, EventPanel.Create("x", []).TextSize));
 }

@@ -105,6 +105,20 @@
                         <b class="pe-val">@(panel.IconSize)px</b>
                     </div>
                     <div class="pe-row">
+                        <span class="pe-row-title">Шрифт</span>
+                        <span class="pe-seg">
+                            @foreach (var (font, label) in new[] { ("system", "Системный"), ("narrow", "Узкий"), ("mono", "Моно"), ("wide", "Широкий") })
+                            {
+                                <button type="button" class="@(panel.Font == font ? "on" : "")" @onclick="() => Edit(panel, x => x.Font = font)">@label</button>
+                            }
+                        </span>
+                    </div>
+                    <div class="pe-row">
+                        <span class="pe-row-title">Размер текста</span>
+                        <input class="pe-range" type="range" min="8" max="20" step="1" value="@panel.TextSize" @onchange="e => EditInt(panel, e.Value, (x, v) => x.TextSize = v)" />
+                        <b class="pe-val">@(panel.TextSize)px</b>
+                    </div>
+                    <div class="pe-row">
                         <span class="pe-row-title">Отступ</span>
                         <input class="pe-range" type="range" min="0" max="16" step="1" value="@panel.Spacing" @onchange="e => EditInt(panel, e.Value, (x, v) => x.Spacing = v)" />
                         <b class="pe-val">@(panel.Spacing)px</b>
