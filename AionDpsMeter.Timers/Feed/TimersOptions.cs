@@ -221,6 +221,9 @@ public sealed class TimersOptionsStore(string path)
         try
         {
             Current = File.Exists(path) ? JsonSerializer.Deserialize<TimersOptions>(File.ReadAllText(path), Json) ?? new() : new();
+            // The boss timers window holds nothing but field bosses, and its own switch shows or hides it: an old
+            // "hide every boss" left the window empty while it was on (Nov 2026).
+            Current.HiddenKinds.Remove(FeedKind.Boss);
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {

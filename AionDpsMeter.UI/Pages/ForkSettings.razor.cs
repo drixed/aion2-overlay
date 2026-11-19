@@ -39,6 +39,9 @@ namespace AionDpsMeter.UI.Pages
                 .Append(new AlertRow(TimersOptions.AllFieldBosses, "Полевые боссы", "Перед респауном", FeedKind.Boss))
                 .ToList();
 
+        /// <summary>The main window shows schedule events only; field bosses live in their own window with its own switch.</summary>
+        private IEnumerable<AlertRow> MainWindowRows => AlertRows.Where(r => r.Kind != FeedKind.Boss);
+
         private const string PickFile = "pick-file";
 
         private static readonly (string Value, string Label)[] WindowsSounds =

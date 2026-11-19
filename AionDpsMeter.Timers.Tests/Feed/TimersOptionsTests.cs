@@ -111,4 +111,15 @@ public class TimersOptionsTests
         store.Load();
         Assert.Equal(2, store.Current.RiftLeadMinutes);
     }
+    [Fact]
+    public void An_old_hide_all_bosses_setting_is_dropped_the_timers_window_is_all_bosses()
+    {
+        using var dir = new TempDir();
+        var path = dir.File("timers-settings.json");
+        File.WriteAllText(path, """{ "HiddenKinds": ["Boss", "Rift"] }""");
+        var store = new TimersOptionsStore(path);
+        store.Load();
+        Assert.DoesNotContain(FeedKind.Boss, store.Current.HiddenKinds);
+        Assert.Contains(FeedKind.Rift, store.Current.HiddenKinds);
+    }
 }

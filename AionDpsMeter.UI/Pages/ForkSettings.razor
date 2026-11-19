@@ -273,9 +273,9 @@
 
     case "timers":
         <div class="fs-label fs-label--spaced">СОБЫТИЯ В ГЛАВНОМ ОКНЕ</div>
-        @foreach (var alert in AlertRows)
+        @foreach (var alert in MainWindowRows)
         {
-            <SettingRow Title="@alert.Title" Description="@(alert.Kind == FeedKind.Boss ? "Строки полевых боссов в окне таймеров" : "Иконка внизу главного окна")">
+            <SettingRow Title="@alert.Title" Description="Иконка внизу главного окна">
                 <ValueSlot><ToggleSwitch Checked="@Shown(alert)" CheckedChanged="v => SetShown(alert, v)" /></ValueSlot>
             </SettingRow>
         }
