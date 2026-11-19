@@ -1,52 +1,122 @@
-@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Питомцы" tab of the settings window. *@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Питомцы" tab of the settings window, in the fork's card design:
+   level tiles that filter, search by pet or monster, sorting and toggles, one card per pet with its souls bar. *@
 @using AionDpsMeter.Timers.Pets
+@using System.Globalization
 @inject PetTracker Pets
 @inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
 
 <div class="fs-label">ПИТОМЦЫ</div>
 @if (rows.Count == 0)
 {
-    <p class="fp-empty">Пока пусто. Уровни всех питомцев игра присылает при входе в игру: перезайди персонажем.</p>
+    <div class="fp-empty">
+        <b>🐾 Пока пусто</b>
+        <span>Уровни всех питомцев игра присылает при входе в игру: перезайди персонажем.</span>
+    </div>
 }
 else
 {
-    <p class="fp-summary">
-        Всего @rows.Count · ур. 1: @rows.Count(r => r.View.Level == 1) · ур. 2: @rows.Count(r => r.View.Level == 2) · макс.: @rows.Count(r => r.View.Level >= PetBook.MaxLevel)
-    </p>
-    <p class="fp-hint">Сверху — кому меньше всего до нового уровня. Точное число душ игра присылает при входе персонажа, дальше метр считает сам; «?» — перезайди, чтобы оно пришло. Монстра метр узнаёт, когда с него падает душа.</p>
-    <label class="fp-toggle"><input type="checkbox" checked="@hideMaxed" @onchange="e => hideMaxed = e.Value is true" /> Скрыть максимальные</label>
-    <div class="fp-table">
-        <div class="fp-row fp-head"><span>Питомец</span><span>Ур.</span><span>Души</span><span>С кого падают</span></div>
-        @foreach (var (view, monster) in rows.Where(r => !hideMaxed || r.View.Level < PetBook.MaxLevel))
+    <div class="fp-levels">
+        <button type="button" class="fp-level @(level is null ? "on" : "")" @onclick="() => level = null">
+            <small>Все</small><b>@rows.Count</b><i class="fp-mini"><i style="width:100%"></i></i>
+        </button>
+        @for (var l = 0; l <= PetBook.MaxLevel; l++)
+        {
+            var lv = l;
+            var count = rows.Count(r => Math.Min(r.View.Level, PetBook.MaxLevel) == lv);
+            <button type="button" class="fp-level lv@(lv) @(level == lv ? "on" : "")" @onclick="() => level = level == lv ? null : lv">
+                <small>@LevelName(lv)</small><b>@count</b>
+                <i class="fp-mini"><i style="width:@((count * 100.0 / rows.Count).ToString("0.#", CultureInfo.InvariantCulture))%"></i></i>
+            </button>
+        }
+    </div>
+
+    <div class="fp-tools">
+        <input class="fp-search" type="search" placeholder="Питомец или монстр…" value="@query" @oninput="e => query = e.Value?.ToString() ?? string.Empty" />
+        <div class="fp-seg">
+            @foreach (var (id, label) in Sorts)
+            {
+                <button type="button" class="@(sort == id ? "on" : "")" @onclick="() => sort = id">@label</button>
+            }
+        </div>
+    </div>
+    <div class="fp-toggles">
+        <button type="button" class="fp-tog @(hideMaxed ? "on" : "")" @onclick="() => hideMaxed = !hideMaxed"><i></i>Скрыть максимальные</button>
+        <button type="button" class="fp-tog @(knownMonster ? "on" : "")" @onclick="() => knownMonster = !knownMonster"><i></i>Монстр известен</button>
+        <button type="button" class="fp-tog @(gainedToday ? "on" : "")" @onclick="() => gainedToday = !gainedToday"><i></i>Души за сессию</button>
+        <span class="fp-count">показано @Shown().Count() из @rows.Count</span>
+    </div>
+    <p class="fp-hint">Точное число душ игра присылает при входе персонажа, дальше метр считает сам; «?» — перезайди, чтобы оно пришло. Монстра метр узнаёт, когда с него падает душа.</p>
+
+    <div class="fp-grid">
+        @foreach (var (view, monster) in Shown())
         {
             var name = Schedule.Current.PetName(view.Pet) ?? $"№ {view.Pet}";
             var maxed = view.Level >= PetBook.MaxLevel;
-            <div class="fp-row @(maxed ? "fp-maxed" : "")">
-                <span class="fp-name" title="@name">@name</span>
-                <span>@(maxed ? "макс." : view.Level == 0 ? "сбор" : view.Level.ToString())</span>
-                <span class="fp-souls">
-                    @if (maxed)
-                    {
-                        <text>—</text>
-                    }
-                    else
-                    {
-                        @(view.Souls is { } s ? $"{s} / {view.Need}" : $"? / {view.Need}")
-                        @if (view.Souls is { } known)
-                        {
-                            <i class="fp-bar"><b style="width:@((Math.Min(100, known * 100 / Math.Max(1, view.Need))).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></b></i>
-                        }
-                    }
-                </span>
-                <span class="fp-monster" title="@monster">@(monster ?? "—")</span>
+            var share = view.Souls is { } s0 ? Math.Min(1, s0 / (double)Math.Max(1, view.Need)) : 0;
+            <div class="fp-card @(maxed ? "maxed" : "")">
+                <div class="fp-head">
+                    <span class="fp-badge lv@(Math.Min(view.Level, PetBook.MaxLevel))">@(maxed ? "★" : view.Level.ToString())</span>
+                    <span class="fp-name" title="@name"><b>@name</b><small>@LevelName(Math.Min(view.Level, PetBook.MaxLevel))</small></span>
+                    @if (view.SessionGain > 0) { <em class="fp-gain">+@view.SessionGain</em> }
+                </div>
+                @if (maxed)
+                {
+                    <div class="fp-done">Максимальный уровень</div>
+                }
+                else
+                {
+                    <div class="fp-progress">
+                        <i class="fp-bar"><i style="width:@((share * 100).ToString("0.#", CultureInfo.InvariantCulture))%"></i></i>
+                        <span>
+                            <b>@(view.Souls?.ToString() ?? "?") / @view.Need</b>
+                            @if (view.Souls is { } s) { <small>осталось @Math.Max(0, view.Need - s) · @((share * 100).ToString("0", CultureInfo.InvariantCulture))%</small> }
+                            else { <small>перезайди, чтобы узнать</small> }
+                        </span>
+                    </div>
+                }
+                <div class="fp-monster @(monster is null ? "unknown" : "")" title="@monster">🎯 @(monster ?? "монстр ещё не известен")</div>
             </div>
         }
     </div>
+    @if (!Shown().Any())
+    {
+        <p class="fp-none">По этим фильтрам питомцев нет.</p>
+    }
 }
 
 @code {
+    private static readonly (string Id, string Label)[] Sorts = [("close", "Ближе к уровню"), ("name", "По имени"), ("level", "По уровню")];
+
     private IReadOnlyList<(PetView View, string? Monster)> rows = [];
-    private bool hideMaxed = true;
+    private bool hideMaxed = true, knownMonster, gainedToday;
+    private int? level;
+    private string query = "";
+    private string sort = "close";
+
+    private IEnumerable<(PetView View, string? Monster)> Shown()
+    {
+        var list = rows.Where(r =>
+            (level is null || Math.Min(r.View.Level, PetBook.MaxLevel) == level)
+            && (!hideMaxed || level == PetBook.MaxLevel || r.View.Level < PetBook.MaxLevel)
+            && (!knownMonster || r.Monster is not null)
+            && (!gainedToday || r.View.SessionGain > 0)
+            && (query.Length == 0
+                || (Schedule.Current.PetName(r.View.Pet) ?? "").Contains(query, StringComparison.OrdinalIgnoreCase)
+                || (r.Monster ?? "").Contains(query, StringComparison.OrdinalIgnoreCase)));
+        return sort switch
+        {
+            "name" => list.OrderBy(r => Schedule.Current.PetName(r.View.Pet) ?? $"№ {r.View.Pet}"),
+            "level" => list.OrderByDescending(r => r.View.Level).ThenByDescending(r => r.View.Souls ?? 0),
+            _ => list, // the tracker's own order: closest to the next level first
+        };
+    }
+
+    private static string LevelName(int level) => level switch
+    {
+        0 => "сбор",
+        >= PetBook.MaxLevel => "макс.",
+        _ => $"ур. {level}",
+    };
 
     protected override void OnInitialized() => rows = Pets.All();
 }

@@ -16,11 +16,15 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         /// <summary>What to show when the window opens or is asked again: a player of the current fight, or the list.</summary>
         public long? RequestedPlayer { get; private set; }
 
+        /// <summary>A saved fight to show (the records open their best fights), or null for the current one.</summary>
+        public Guid? RequestedSession { get; private set; }
+
         public event Action? Requested;
 
-        public void Open(long? player = null)
+        public void Open(long? player = null, Guid? session = null)
         {
             RequestedPlayer = player;
+            RequestedSession = session;
             if (!windowManager.IsOpen(Key))
             {
                 var w = new BlazorWindow(App.AppHost.Services, typeof(HistoryBrowserPage))

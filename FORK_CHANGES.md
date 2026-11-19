@@ -74,6 +74,9 @@
 - `AionDpsMeter.Services/PacketProcessing/Processors/DotDamagePacketProcessor.cs` — периодическое лечение (HoT) из списка лечения уходит в `CombatFeed.PublishHeal`, в том числе на себя
 - `AionDpsMeter.Services/PacketProcessing/Fork/HealProbe.cs` — диагностика лечения: умения игроков по игрокам и на себя пишутся в `Logs/heal-probe.txt` (до 4000 строк в день), чтобы найти лечащие умения, которых нет в списке
 - `AionDpsMeter.Services/PacketProcessing/Processors/PlayerStatsProcessor.cs` — пакет характеристик ещё и запоминается в `Fork/StatsMemory.cs` (переживает сброс метра и перезапуск, файл `player-stats.json`), чтобы калькулятор не был пустым
+- `AionDpsMeter.UI/Pages/ForkRecords.*` — «Рекорды» в карточках: итоги, поиск, сортировка; бой открывается в «Истории боёв» (`HistoryBrowserWindow.Open(session:)`)
+- `AionDpsMeter.UI/Pages/ForkPets.*` — «Питомцы» в карточках: плитки уровней-фильтры, поиск по питомцу и монстру, сортировка, переключатели, полоса душ
+- `AionDpsMeter.Timers/Bosses/FieldBossTracker.cs` — места полевых боссов карт, где боссы не одним блоком кодов (Элийцы, карта 1010), выучиваются по убийству и следующему списку карты (`LearnedSlots` в `timers-state.json`)
 - `AionDpsMeter.UI/Pages/StatCalcPage.*`, `Services/TimerWindow/StatCalcWindow.cs` — калькулятор статов в стиле форка и на русском (итог сверху, «Что даст больше урона», характеристики из игры с правкой вручную, настройка боя, симулятор опции); расчёт — авторский `StatEfficiencyCalculatorViewModel`
 - `AionDpsMeter.UI/Services/Windowing/WindowHelper.cs` — `OpenStatEff` открывает калькулятор форка (авторское окно остаётся ниже, если службы нет)
 - «Итоги» в «Истории боёв» — шесть карточек как у Abyss: лечение, получено лечения, получено урона, самый сильный удар, первый удар, бой

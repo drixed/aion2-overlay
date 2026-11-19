@@ -1,14 +1,59 @@
 .fs-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; color: var(--text-dim); padding: 0 2px 8px; }
-.fp-empty, .fp-hint { font-size: 11px; opacity: .65; margin: 0 2px 8px; }
-.fp-summary { font-size: 12px; margin: 0 2px 6px; }
-.fp-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 0 2px 8px; cursor: pointer; }
-.fp-table { display: flex; flex-direction: column; gap: 2px; }
-.fp-row { display: grid; grid-template-columns: minmax(0, 1.6fr) .45fr .9fr minmax(0, 1.5fr); gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; background: rgba(255,255,255,.03); font-size: 12px; font-variant-numeric: tabular-nums; }
-.fp-head { background: none; opacity: .6; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
-.fp-name, .fp-monster { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fp-name { font-weight: 600; }
-.fp-monster { opacity: .75; }
-.fp-souls { display: flex; flex-direction: column; gap: 2px; }
-.fp-bar { display: block; height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; }
-.fp-bar b { display: block; height: 100%; background: #7ee787; }
-.fp-maxed { opacity: .5; }
+
+.fp-empty { display: flex; flex-direction: column; gap: 4px; padding: 18px; border-radius: 10px; background: #19202a; border: 1px dashed #2f3846; color: #8b95a5; font-size: 12px; }
+.fp-empty b { color: #dfe6ee; font-size: 13px; }
+
+/* level tiles: counts with a share bar; a click filters */
+.fp-levels { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.fp-level { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 11px; border-radius: 9px; background: #19202a; border: 1px solid #252e3b;
+    color: #dfe6ee; font: inherit; cursor: pointer; text-align: left; transition: border-color .12s; }
+.fp-level:hover { border-color: #3d4858; }
+.fp-level.on { border-color: rgba(95, 212, 196, .7); background: rgba(95, 212, 196, .07); }
+.fp-level small { color: #7d8898; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; }
+.fp-level b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.fp-mini { display: block; width: 100%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+.fp-mini i { display: block; height: 100%; background: #5fd4c4; }
+.fp-level.lv0 .fp-mini i { background: #8b95a5; }
+.fp-level.lv1 .fp-mini i { background: #7ee787; }
+.fp-level.lv2 .fp-mini i { background: #58a6ff; }
+.fp-level.lv3 .fp-mini i { background: #f5c76b; }
+
+.fp-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.fp-search { flex: 1; min-width: 0; box-sizing: border-box; background: #0f141b; color: #e6edf3; border: 1px solid #2f3846; border-radius: 7px; padding: 6px 10px; font: inherit; font-size: 12px; outline: none; }
+.fp-search:focus { border-color: #5fd4c4; }
+.fp-seg { display: inline-flex; border: 1px solid #2f3846; border-radius: 7px; overflow: hidden; flex: 0 0 auto; }
+.fp-seg button { background: none; border: 0; color: #c9d1d9; padding: 5px 10px; font: inherit; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
+.fp-seg button + button { border-left: 1px solid #2f3846; }
+.fp-seg button.on { background: rgba(95, 212, 196, .14); color: #5fd4c4; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(95, 212, 196, .6); }
+.fp-toggles { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.fp-tog { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 7px; background: #121820; border: 1px solid #2b3442; color: #8b95a5; font: inherit; font-size: 11.5px; cursor: pointer; }
+.fp-tog i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid currentColor; }
+.fp-tog.on { color: #5fd4c4; border-color: rgba(95, 212, 196, .7); background: rgba(95, 212, 196, .1); }
+.fp-tog.on i { background: currentColor; }
+.fp-count { margin-left: auto; color: #7d8898; font-size: 11px; }
+.fp-hint { font-size: 11px; color: #7d8898; margin: 0 2px 8px; }
+
+/* pet cards */
+.fp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fp-card { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 9px; background: #19202a; border: 1px solid #252e3b; min-width: 0; }
+.fp-card.maxed { opacity: .65; }
+.fp-head { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.fp-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; flex: 0 0 26px; border-radius: 50%; font-weight: 700; font-size: 12px;
+    background: #121820; border: 2px solid #8b95a5; color: #c9d1d9; }
+.fp-badge.lv1 { border-color: #7ee787; color: #7ee787; }
+.fp-badge.lv2 { border-color: #58a6ff; color: #58a6ff; }
+.fp-badge.lv3 { border-color: #f5c76b; color: #f5c76b; background: rgba(245, 199, 107, .1); }
+.fp-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fp-name b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-name small { color: #7d8898; font-size: 10.5px; }
+.fp-gain { font-style: normal; color: #7ee787; font-weight: 700; font-size: 12px; background: rgba(126, 231, 135, .1); border-radius: 6px; padding: 1px 7px; }
+.fp-progress { display: flex; flex-direction: column; gap: 4px; }
+.fp-bar { display: block; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+.fp-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #3f9f93, #5fd4c4); }
+.fp-progress span { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.fp-progress b { font-size: 12.5px; }
+.fp-progress small { color: #7d8898; font-size: 11px; }
+.fp-done { color: #f5c76b; font-size: 12px; }
+.fp-monster { color: #aeb8c5; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-monster.unknown { color: #5f6b7c; }
+.fp-none { color: #8b95a5; font-size: 12px; text-align: center; }

@@ -200,7 +200,7 @@
     protected override void OnInitialized()
     {
         LoadList();
-        Select(null, Window.RequestedPlayer);
+        Select(Window.RequestedSession, Window.RequestedPlayer);
         Window.Requested += OnRequested;
         tick = new System.Threading.Timer(_ => InvokeAsync(() =>
         {
@@ -208,7 +208,7 @@
         }), null, 1000, 1000);
     }
 
-    private void OnRequested() => InvokeAsync(() => { LoadList(); Select(null, Window.RequestedPlayer); tab = "damage"; StateHasChanged(); });
+    private void OnRequested() => InvokeAsync(() => { LoadList(); Select(Window.RequestedSession, Window.RequestedPlayer); tab = "damage"; StateHasChanged(); });
 
     private void OnSearch(ChangeEventArgs e)
     {

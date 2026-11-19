@@ -1,73 +1,124 @@
-@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Рекорды" tab of the settings window. *@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Рекорды" tab of the settings window, in the fork's card design:
+   totals on top, search and sorting, one card per boss; a card opens its best fight in "История боёв". *@
 @using AionDpsMeter.Timers.Records
-@using AionDpsMeter.UI.ViewModels
 @using AionDpsMeter.UI.Utils
 @using System.Globalization
 @implements IDisposable
 @inject BossRecords Records
-@inject AionDpsMeter.Services.Services.Session.CombatSessionManager Sessions
-@inject AionDpsMeter.Services.Services.Settings.IAppSettingsService Settings
+@inject AionDpsMeter.UI.Services.TimerWindow.HistoryBrowserWindow History
+@inject AionDpsMeter.Services.Services.Session.Persistence.ICombatHistoryStore Store
 
 <div class="fs-label">РЕКОРДЫ ПО БОССАМ</div>
-<p class="fr-hint">Нажми на строку — откроется лучший бой с этим боссом (урон по умениям, баффы, график); на «Твой DPS» — бой с твоим лучшим DPS.</p>
-@if (message is not null)
-{
-    <p class="fr-message">@message</p>
-}
 @if (rows.Count == 0)
 {
-    <p class="fr-empty">Пока пусто. Рекорд появится после первого убийства босса.</p>
+    <div class="fr-empty">
+        <b>🏆 Пока пусто</b>
+        <span>Рекорд появится после первого убийства босса: лучшее время, DPS группы и твой DPS.</span>
+    </div>
 }
 else
 {
-    <div class="fr-table">
-        <div class="fr-row fr-head">
-            <span>Босс</span><span>Лучшее время</span><span>DPS группы</span><span>Твой DPS</span><span>Убийств</span>
+    var fastest = rows.MinBy(r => r.BestKill)!;
+    var topParty = rows.MaxBy(r => r.BestPartyDps)!;
+    <div class="fr-stats">
+        <div class="fr-stat"><small>Боссов</small><b>@rows.Count</b></div>
+        <div class="fr-stat"><small>Убийств</small><b>@rows.Sum(r => r.Kills)</b></div>
+        <div class="fr-stat"><small>Быстрее всего</small><b class="gold">@RecordText.Time(fastest.BestKill)</b><em>@fastest.Boss</em></div>
+        <div class="fr-stat"><small>Лучший DPS группы</small><b class="teal">@DamageFormatter.Format(topParty.BestPartyDps)/s</b><em>@topParty.Boss</em></div>
+    </div>
+
+    <div class="fr-tools">
+        <input class="fr-search" type="search" placeholder="Поиск босса…" value="@query" @oninput="e => query = e.Value?.ToString() ?? string.Empty" />
+        <div class="fr-seg">
+            @foreach (var (id, label) in Sorts)
+            {
+                <button type="button" class="@(sort == id ? "on" : "")" @onclick="() => sort = id">@label</button>
+            }
         </div>
-        @foreach (var r in rows)
+    </div>
+    @if (message is not null)
+    {
+        <p class="fr-message">@message</p>
+    }
+
+    <div class="fr-list">
+        @foreach (var r in Shown())
         {
-            <div class="fr-row fr-click" @onclick="() => Open(r.BestKillSession)" title="@($"HP {Hp(r.HpTotal)} · рекорд {r.BestKillAt:dd.MM HH:mm} · последний бой {RecordText.Time(r.LastKill)}")">
-                <span class="fr-boss">@r.Boss <small>@Hp(r.HpTotal)</small></span>
-                <span class="fr-best">@RecordText.Time(r.BestKill)</span>
-                <span>@DamageFormatter.Format(r.BestPartyDps)/s</span>
-                <span class="fr-link" @onclick="() => Open(r.BestMyDpsSession)" @onclick:stopPropagation="true">@(r.BestMyDps > 0 ? DamageFormatter.Format(r.BestMyDps) + "/s" : "—")</span>
-                <span>@r.Kills</span>
+            var faster = r.PreviousBestKill is { } prev && prev > r.BestKill ? prev - r.BestKill : (TimeSpan?)null;
+            <div class="fr-card" @onclick="() => Open(r.BestKillSession)" title="Открыть лучший бой">
+                <div class="fr-boss">
+                    <b>@r.Boss</b>
+                    <span><i class="fr-hp">@Hp(r.HpTotal) HP</i> последний бой @(r.LastKillAt == default ? "—" : r.LastKillAt.ToString("dd.MM HH:mm"))</span>
+                </div>
+                <div class="fr-time">
+                    <small>ЛУЧШЕЕ ВРЕМЯ</small>
+                    <b>@RecordText.Time(r.BestKill)</b>
+                    <span>@r.BestKillAt.ToString("dd.MM.yy")@if (faster is { } f) { <em>−@RecordText.Time(f) к прошлому</em> }</span>
+                </div>
+                <div class="fr-num"><small>DPS ГРУППЫ</small><b>@DamageFormatter.Format(r.BestPartyDps)/s</b></div>
+                <div class="fr-num fr-mine" @onclick="() => Open(r.BestMyDpsSession)" @onclick:stopPropagation="true" title="Открыть бой с твоим лучшим DPS">
+                    <small>ТВОЙ DPS</small><b>@(r.BestMyDps > 0 ? DamageFormatter.Format(r.BestMyDps) + "/s" : "—")</b>
+                </div>
+                <div class="fr-num"><small>УБИЙСТВ</small><b>@r.Kills</b></div>
+                <span class="fr-go">↗</span>
             </div>
         }
+        @if (!Shown().Any())
+        {
+            <p class="fr-none">Ничего не найдено.</p>
+        }
     </div>
+
     <div class="fr-actions">
         @if (confirmClear)
         {
-            <span>Удалить все рекорды?</span>
-            <button type="button" class="fs-segmented__option fs-button" @onclick="Clear">Да, удалить</button>
-            <button type="button" class="fs-segmented__option fs-button" @onclick="() => confirmClear = false">Нет</button>
+            <span>Удалить все рекорды? Это нельзя отменить.</span>
+            <button type="button" class="fr-btn danger" @onclick="Clear">Да, удалить</button>
+            <button type="button" class="fr-btn" @onclick="() => confirmClear = false">Нет</button>
         }
         else
         {
-            <button type="button" class="fs-segmented__option fs-button" @onclick="() => confirmClear = true">Сбросить рекорды</button>
+            <button type="button" class="fr-btn" @onclick="() => confirmClear = true">Сбросить рекорды</button>
         }
     </div>
 }
 
 @code {
+    private static readonly (string Id, string Label)[] Sorts =
+        [("recent", "Недавние"), ("time", "Время"), ("party", "DPS группы"), ("mine", "Мой DPS"), ("kills", "Убийства")];
+
     private IReadOnlyList<BossRecord> rows = [];
     private bool confirmClear;
     private string? message;
+    private string query = "";
+    private string sort = "recent";
 
-    /// <summary>Opens the fight in upstream's history window, the same one the history list opens.</summary>
+    private IEnumerable<BossRecord> Shown()
+    {
+        var list = rows.Where(r => query.Length == 0 || r.Boss.Contains(query, StringComparison.OrdinalIgnoreCase));
+        return sort switch
+        {
+            "time" => list.OrderBy(r => r.BestKill),
+            "party" => list.OrderByDescending(r => r.BestPartyDps),
+            "mine" => list.OrderByDescending(r => r.BestMyDps),
+            "kills" => list.OrderByDescending(r => r.Kills),
+            _ => list.OrderByDescending(r => r.LastKillAt),
+        };
+    }
+
+    /// <summary>Opens the fight in the fork's "История боёв".</summary>
     private void Open(Guid? sessionId)
     {
         message = null;
-        var fight = sessionId is { } id ? Sessions.GetHistorySession(id) : null;
-        if (fight is null)
+        var known = false;
+        try { known = sessionId is { } id && Store.GetSession(id) is not null; }
+        catch (Exception) { }
+        if (!known)
         {
             message = "Подробностей этого боя уже нет: история боёв хранится 30 дней. Следующий рекорд откроется.";
             return;
         }
-        new AionDpsMeter.UI.HistorySessionWindow(Settings)
-        {
-            DataContext = new AionDpsMeter.UI.ViewModels.History.HistorySessionViewModel(fight, Settings),
-        }.Show();
+        History.Open(session: sessionId);
     }
 
     protected override void OnInitialized()
