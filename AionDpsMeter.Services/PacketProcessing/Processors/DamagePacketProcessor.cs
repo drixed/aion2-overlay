@@ -129,17 +129,27 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                 return Fail(PacketProcessResult.SKILLCODE_ERROR);
             }
 
-            if ((mask & 0x0F) == 4) reader.ReadVarInt();
-
             int extraHitsCount = 0;
             List<int> multihitDamageList = new List<int>();
-            if ((mask & 0x20) != 0)
+            // aion2-overlay fork: some packets end before this optional tail (Nov 2026: "Need 1 bytes but only 0 remain",
+            // ~200 an evening); the hit's own damage is read already, so keep it without the extra hits instead of
+            // dropping the whole hit.
+            try
             {
-               extraHitsCount = (int)reader.ReadVarInt();
-               for (int i = 0; i < extraHitsCount; i++)
-               {
-                   multihitDamageList.Add((int)reader.ReadVarInt());
-               }
+                if ((mask & 0x0F) == 4) reader.ReadVarInt();
+                if ((mask & 0x20) != 0)
+                {
+                   extraHitsCount = (int)reader.ReadVarInt();
+                   for (int i = 0; i < extraHitsCount; i++)
+                   {
+                       multihitDamageList.Add((int)reader.ReadVarInt());
+                   }
+                }
+            }
+            catch (Shared.Exceptions.PacketParseException)
+            {
+                extraHitsCount = 0;
+                multihitDamageList.Clear();
             }
 
             var data = new DamagePacketData

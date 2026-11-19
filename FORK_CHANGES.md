@@ -65,3 +65,4 @@
 - `AionDpsMeter.Timers/Overlay/EventPanels.cs`, `AionDpsMeter.UI/Pages/EventPanelPage.*`, `ForkEventPanels.*`, `Services/TimerWindow/EventPanelsController.cs` — плавающие панели иконок событий (свои окна поверх игры, настройки в разделе таймеров)
 - `AionDpsMeter.UI/wwwroot/css/fork-settings.css`, `wwwroot/js/fork-settings.js` — новый вид окна настроек (меню разделов слева, поиск, тёмно-синий с бирюзовым акцентом); правки апстрима: `wwwroot/index.html` (подключение), `Pages/SettingsPage.razor` (поле поиска в шапке), `Services/Windowing/WindowHelper.cs` (окно 960×680 вместо 500×900)
 - `AionDpsMeter.Timers/Modes/FightLog.cs`, `AionDpsMeter.UI/Pages/FightSummaryPage.*`, `Services/TimerWindow/FightSummaryWindow.cs` — окно «Итоги боя» (кнопка 📊 в шапке главного окна)
+- `AionDpsMeter.Services/PacketProcessing/Processors/DamagePacketProcessor.cs` — необязательный хвост с доп. ударами (multihit) читается в try/catch: обрезанный хвост больше не выбрасывает весь удар
