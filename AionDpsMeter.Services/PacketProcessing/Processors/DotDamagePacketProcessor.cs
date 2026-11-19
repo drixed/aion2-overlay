@@ -48,6 +48,13 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             if (!DataValidationHelper.IsReasonableSkillCode(skillCode)) return;
 
             var damage = reader.ReadVarInt();
+            // aion2-overlay fork: a heal over time is counted (upstream dropped it, also on oneself) and logged for the healing check
+            Fork.HealProbe.Record("dot", (int)actorId, (int)targetId, skillCode, effectType, damage, entityTracker.GetPlayerEntity((int)targetId) is not null);
+            if (gameData.IsHealingSkill(skillCode))
+            {
+                Fork.CombatFeed.PublishHeal(new Fork.HealEvent((int)actorId, (int)targetId, damage, skillCode, DateTime.Now));
+                return;
+            }
 
             if (targetId == actorId) return;
             Fork.CombatFeed.PublishHit(new Fork.RawHit((int)actorId, (int)targetId, damage, skillCode, false, DateTime.Now)); // aion2-overlay fork

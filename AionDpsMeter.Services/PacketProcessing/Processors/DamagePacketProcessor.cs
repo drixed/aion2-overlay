@@ -110,9 +110,10 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             reader.ReadVarInt(); // unkown flag
             var actorId = reader.ReadVarInt();
 
-            if (actorId == targetId) return Fail(PacketProcessResult.ACTORID_EQUALS_TARGETID);
+            var self = actorId == targetId; // aion2-overlay fork: a self-heal is read on to its amount (upstream dropped it)
 
             var skillCode = reader.ReadU32();
+            if (self && !gameData.IsHealingSkill((int)skillCode)) return Fail(PacketProcessResult.ACTORID_EQUALS_TARGETID);
             // aion2-overlay fork: a monster's skill (1 000 000–9 999 999) is still read to its damage for the death recap
             var monsterSkill = skillCode is >= 1_000_000 and <= 9_999_999;
             if (!monsterSkill && !DataValidationHelper.IsReasonableSkillCode((int)skillCode)) return Fail(PacketProcessResult.SKILLCODE_ERROR);
@@ -123,6 +124,13 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             catch (PacketProcessException) when (monsterSkill) { return Fail(PacketProcessResult.SKILLCODE_ERROR); } // aion2-overlay fork: not worth an error log
             var unknownVarInt = reader.ReadVarInt(); // unknown
             var damage = reader.ReadVarInt();
+            // aion2-overlay fork: the healing check's log, and a self-heal counted as one
+            if (!monsterSkill) Fork.HealProbe.Record("hit", (int)actorId, (int)targetId, (int)skillCode, damageType, damage, entityTracker.GetPlayerEntity((int)targetId) is not null);
+            if (self)
+            {
+                Fork.CombatFeed.PublishHeal(new Fork.HealEvent((int)actorId, (int)targetId, damage, (int)skillCode, DateTime.Now));
+                return Fail(PacketProcessResult.ACTORID_EQUALS_TARGETID);
+            }
             if (monsterSkill) // aion2-overlay fork: to the death recap only; the meter itself ignores these as before
             {
                 Fork.CombatFeed.PublishHit(new Fork.RawHit((int)actorId, (int)targetId, damage, (int)skillCode, damageType == CriticalDamageType, DateTime.Now));
