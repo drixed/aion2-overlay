@@ -89,7 +89,9 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                 IsPerfect = data.IsPerfect,
                 IsDoubleDamage = data.IsDoubleDamage,
                 IsParry = data.IsParry,
-                IsFrontAttack = data.IsFrontAttack
+                IsFrontAttack = data.IsFrontAttack,
+                MultihitCunt = data.MultihitCount,
+                MultihitDamage = data.MultihitDamageArray.Sum()
             };
         }
 
@@ -102,7 +104,8 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             reader.ReadU16();    //opcode
 
             var targetId = reader.ReadVarInt();
-            var switchValue = ProcessSwitchValue((int)reader.ReadVarInt());
+            var mask =reader.ReadVarInt();
+            var switchValue = ProcessSwitchValue((int)mask);
             if (switchValue < 0) return Fail(PacketProcessResult.SWITH_VALUE_ERROR);
             reader.ReadVarInt(); // unkown flag
             var actorId = reader.ReadVarInt();
@@ -126,6 +129,19 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                 return Fail(PacketProcessResult.SKILLCODE_ERROR);
             }
 
+            if ((mask & 0x0F) == 4) reader.ReadVarInt();
+
+            int extraHitsCount = 0;
+            List<int> multihitDamageList = new List<int>();
+            if ((mask & 0x20) != 0)
+            {
+               extraHitsCount = (int)reader.ReadVarInt();
+               for (int i = 0; i < extraHitsCount; i++)
+               {
+                   multihitDamageList.Add((int)reader.ReadVarInt());
+               }
+            }
+
             var data = new DamagePacketData
             {
                 TargetId = (int)targetId,
@@ -139,7 +155,9 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
                 IsParry = specialFlags.IsParry,
                 IsPerfect = specialFlags.IsPerfect,
                 IsDoubleDamage = specialFlags.IsDoubleDamage,
-                UnknownVarInt = (int)unknownVarInt
+                UnknownVarInt = (int)unknownVarInt,
+                MultihitCount = extraHitsCount,
+                MultihitDamageArray = multihitDamageList.ToArray()
             };
 
             return new ParsedDamagePacket(data, PacketProcessResult.SUCCES);
@@ -223,6 +241,9 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             public bool IsDoubleDamage { get; init; }
             public DateTime Timestamp { get; init; } = DateTime.Now;
             public int UnknownVarInt { get; init; }
+
+            public int MultihitCount { get; init; }
+            public int[] MultihitDamageArray { get; init; } = Array.Empty<int>();
         }
     }
 }
