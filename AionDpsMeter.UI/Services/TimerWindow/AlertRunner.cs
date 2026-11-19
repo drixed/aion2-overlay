@@ -48,9 +48,15 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 var o = options.Current;
                 var items = TimersFeed.Build(now, schedule.Current, tracker.TimersFor(server.CurrentServerId), catalog)
                     .Where(o.Notifies);
-                var due = alerts.Due(items, now, o.LeadFor);
-                if (due.Count == 0) return;
-                text = string.Join(" · ", due.Select(d => $"{d.Title} {FeedText.Format(d, now, TimeZoneInfo.Local)}"));
+                var list = items.ToList();
+                var due = alerts.Due(list, now, o.LeadFor);
+                var opened = o.AlertOnOpen ? alerts.Opened(list.Where(i => i.Kind != FeedKind.Boss)) : [];
+                var closing = alerts.Closing(list.Where(i => i.Kind != FeedKind.Boss), now, o.AlertBeforeCloseSeconds);
+                if (due.Count == 0 && opened.Count == 0 && closing.Count == 0) return;
+                text = string.Join(" · ", due.Select(d => $"{d.Title} {FeedText.Format(d, now, TimeZoneInfo.Local)}")
+                    .Concat(opened.Select(d => $"{d.Title} — началось"))
+                    .Concat(closing.Select(d => $"{d.Title} — закроется через {Math.Max(1, (int)Math.Round((d.At!.Value - now).TotalSeconds))} с")));
+                due = [.. due, .. opened, .. closing];
                 until = now + ShowFor;
                 if (o.Sound) sounds.Play(o.SoundFor(due[0])); // each event (or all field bosses) can have its own sound
             }

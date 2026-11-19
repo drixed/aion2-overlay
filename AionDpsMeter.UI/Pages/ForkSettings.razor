@@ -277,6 +277,12 @@
         <SettingRow Title="Громкость оповещений" Description="@($"{O.AlertVolume}% — для своих звуков; стандартные звуки Windows играют с системной громкостью (0 — без звука)")">
             <ValueSlot><input class="fs-range" type="range" min="0" max="100" step="5" value="@O.AlertVolume" @onchange="e => SetInt(e.Value, v => Set(o => o.AlertVolume = v))" /></ValueSlot>
         </SettingRow>
+        <SettingRow Title="Сигнал при открытии" Description="Ещё одно оповещение, когда событие началось">
+            <ValueSlot><ToggleSwitch Checked="@O.AlertOnOpen" CheckedChanged="v => Set(o => o.AlertOnOpen = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Сигнал перед закрытием" Description="@(O.AlertBeforeCloseSeconds == 0 ? "Выключено" : $"За {O.AlertBeforeCloseSeconds} с до конца события")">
+            <ValueSlot><input class="fs-range" type="range" min="0" max="300" step="15" value="@O.AlertBeforeCloseSeconds" @onchange="e => SetInt(e.Value, v => Set(o => o.AlertBeforeCloseSeconds = v))" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Без звука, когда игра закрыта" Description="Оповещения по-прежнему показываются, просто без звука">
             <ValueSlot><ToggleSwitch Checked="@O.MuteWhenGameClosed" CheckedChanged="v => Set(o => o.MuteWhenGameClosed = v)" /></ValueSlot>
         </SettingRow>

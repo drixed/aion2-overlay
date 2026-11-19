@@ -65,6 +65,10 @@ public sealed class TimersOptions
     public bool EventPanelsOutOfCombatOnly { get; set; }
     /// <summary>Alert sounds' volume, 0–100 (custom sound files; Windows sounds play at the system volume unless 0).</summary>
     public int AlertVolume { get; set; } = 100;
+    /// <summary>Also alert when an event opens.</summary>
+    public bool AlertOnOpen { get; set; }
+    /// <summary>Also alert this many seconds before an open event closes; 0 is off.</summary>
+    public int AlertBeforeCloseSeconds { get; set; }
     /// <summary>No alert sounds while the game is not running (the banners still show).</summary>
     public bool MuteWhenGameClosed { get; set; }
     /// <summary>Rows in the DPS list; 0 shows everyone. The user's row always stays.</summary>

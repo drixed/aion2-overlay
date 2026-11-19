@@ -41,4 +41,24 @@ public class AlertServiceTests
             Item("c", FeedKind.Boss, Now.AddMinutes(-1), FeedStatus.Overdue),
         ], Now, Lead));
     }
+
+    [Fact]
+    public void An_event_that_opened_alerts_once()
+    {
+        var alerts = new AlertService();
+        var open = Item("rift", FeedKind.Rift, Now.AddMinutes(30), FeedStatus.Active);   // Active: At is when it ends
+        Assert.Equal([open], alerts.Opened([open]));
+        Assert.Empty(alerts.Opened([open]));
+    }
+
+    [Fact]
+    public void An_event_about_to_close_alerts_once_inside_the_set_seconds()
+    {
+        var alerts = new AlertService();
+        var open = Item("rift", FeedKind.Rift, Now.AddSeconds(90), FeedStatus.Active);
+        Assert.Empty(alerts.Closing([open], Now, 60));
+        Assert.Equal([open], alerts.Closing([open], Now.AddSeconds(31), 60));
+        Assert.Empty(alerts.Closing([open], Now.AddSeconds(40), 60));
+        Assert.Empty(alerts.Closing([open], Now.AddSeconds(40), 0));                       // off
+    }
 }
