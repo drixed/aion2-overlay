@@ -1,0 +1,154 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). "Итоги боя": who dealt, healed and took how much, deaths, the strongest hit, who opened. *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Modes
+@implements IDisposable
+@inject MeterModesService Modes
+@inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
+@inject AionDpsMeter.UI.Services.TimerWindow.FightSummaryWindow Window
+
+<div class="fsum">
+    <div class="fsum-head" @onmousedown="Window.Drag">
+        <b>Итоги боя</b>
+        @if (summary is { } s)
+        {
+            <span class="fsum-sub">@Clock(s.Duration) · урон группы @Fmt(s.TotalDamage) · @Fmt(s.GroupDps)/s</span>
+        }
+        <span class="fsum-tabs" @onmousedown:stopPropagation="true">
+            @foreach (var (id, label) in Tabs)
+            {
+                <button type="button" class="@(tab == id ? "on" : "")" @onclick="() => tab = id">@label</button>
+            }
+        </span>
+        <button type="button" class="fsum-close" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
+    </div>
+
+    @if (summary is not { } fight || fight.Players.Count == 0)
+    {
+        <p class="fsum-empty">Боя ещё не было — итоги появятся после первого удара по монстру.</p>
+    }
+    else if (tab == "summary")
+    {
+        <div class="fsum-grid">
+            @Card("💚", "Больше всего лечения", fight, p => p.HealDone, p => $"{Share(p.HealDone, fight.TotalHeal)} лечения группы", "#7ee787")
+            @Card("🩹", "Больше всего получено лечения", fight, p => p.HealReceived, p => $"Из них своё: {Fmt(p.SelfHeal)}", "#5fd4c4")
+            @Card("🛡", "Больше всего получено урона", fight, p => p.DamageTaken, p => $"{Share(p.DamageTaken, fight.TotalTaken)} урона, полученного группой", "#ff8f8f")
+            @Card("⚡", "Самый сильный удар", fight, p => p.MaxHit, p => p.MaxHitSkill, "#f2cc60")
+            <div class="fsum-card">
+                <div class="fsum-card-title">🚩 Первый удар</div>
+                @{ var openers = fight.Players.Where(p => p.FirstHit is not null).OrderBy(p => p.FirstHit).Take(5).ToList(); }
+                @if (openers.FirstOrDefault() is { } first)
+                {
+                    <div class="fsum-lead"><span>@Name(first.Id)</span><b style="color:#5fd4c4">Начало боя</b></div>
+                }
+                @for (var i = 0; i < openers.Count; i++)
+                {
+                    var p = openers[i];
+                    <div class="fsum-row @(IsMe(p.Id) ? "me" : "")">
+                        <span class="fsum-rank">@(i + 1)</span><span class="fsum-icon" style="@Icon(p.Id)"></span><span class="fsum-name">@Name(p.Id)</span>
+                        <b>@(i == 0 ? "0.0s" : $"+{p.FirstHit!.Value.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)}s")</b>
+                    </div>
+                }
+            </div>
+            <div class="fsum-card">
+                <div class="fsum-card-title">📈 Бой</div>
+                <div class="fsum-stat"><span>Длительность</span><b>@Clock(fight.Duration)</b></div>
+                <div class="fsum-stat"><span>Урон группы</span><b>@Fmt(fight.TotalDamage)</b></div>
+                <div class="fsum-stat"><span>DPS группы</span><b>@Fmt(fight.GroupDps)</b></div>
+                <div class="fsum-stat"><span>Лечение</span><b>@Fmt(fight.TotalHeal)</b></div>
+                <div class="fsum-stat"><span>Получено урона</span><b>@Fmt(fight.TotalTaken)</b></div>
+                <div class="fsum-stat"><span>Смерти</span><b>@fight.TotalDeaths</b></div>
+            </div>
+        </div>
+    }
+    else
+    {
+        var (value, color) = Metric(tab);
+        var rows = fight.Players.Where(p => value(p) > 0).OrderByDescending(value).ToList();
+        var max = rows.Count > 0 ? value(rows[0]) : 1;
+        var total = rows.Sum(value);
+        <div class="fsum-list">
+            @if (rows.Count == 0)
+            {
+                <p class="fsum-empty">В этом бою — ничего.</p>
+            }
+            @for (var i = 0; i < rows.Count; i++)
+            {
+                var p = rows[i];
+                var v = value(p);
+                <div class="fsum-row fsum-row--big @(IsMe(p.Id) ? "me" : "")">
+                    <i class="fsum-bar" style="width:@((v * 100.0 / Math.Max(1, max)).ToString("0.#", CultureInfo.InvariantCulture))%;background:@color"></i>
+                    <span class="fsum-rank">@(i + 1)</span><span class="fsum-icon" style="@Icon(p.Id)"></span><span class="fsum-name">@Name(p.Id)</span>
+                    <span class="fsum-share">@Share(v, total)</span>
+                    <b>@(tab == "deaths" ? v.ToString(CultureInfo.InvariantCulture) : Fmt(v))</b>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private static readonly (string Id, string Label)[] Tabs =
+        [("summary", "Итоги"), ("damage", "Урон"), ("heal", "Лечение"), ("taken", "Получено"), ("deaths", "Смерти")];
+
+    private string tab = "summary";
+    private FightSummary? summary;
+    private System.Threading.Timer? tick;
+
+    protected override void OnInitialized()
+    {
+        summary = Modes.Fight.Summary();
+        tick = new System.Threading.Timer(_ => InvokeAsync(() => { summary = Modes.Fight.Summary(); StateHasChanged(); }), null, 1000, 1000);
+    }
+
+    private static (Func<FightPlayer, long> Value, string Color) Metric(string tab) => tab switch
+    {
+        "heal" => (p => p.HealDone, "rgba(126, 231, 135, .28)"),
+        "taken" => (p => p.DamageTaken, "rgba(255, 143, 143, .25)"),
+        "deaths" => (p => p.Deaths, "rgba(255, 143, 143, .25)"),
+        _ => (p => p.Damage, "rgba(95, 212, 196, .25)"),
+    };
+
+    /// <summary>A card: the leader big with a note, then the top five with bars.</summary>
+    private RenderFragment Card(string icon, string title, FightSummary fight, Func<FightPlayer, long> value, Func<FightPlayer, string> note, string color) => __builder =>
+    {
+        var top = fight.Players.Where(p => value(p) > 0).OrderByDescending(value).Take(5).ToList();
+        var max = top.Count > 0 ? value(top[0]) : 1;
+        <div class="fsum-card">
+            <div class="fsum-card-title">@icon @title</div>
+            @if (top.FirstOrDefault() is { } lead)
+            {
+                <div class="fsum-lead"><span>@Name(lead.Id)</span><b style="color:@color">@Fmt(value(lead))</b></div>
+                <div class="fsum-note">@note(lead)</div>
+            }
+            else
+            {
+                <div class="fsum-note">— в этом бою не было</div>
+            }
+            @for (var i = 0; i < top.Count; i++)
+            {
+                var p = top[i];
+                <div class="fsum-row @(IsMe(p.Id) ? "me" : "")">
+                    <i class="fsum-bar" style="width:@((value(p) * 100.0 / Math.Max(1, max)).ToString("0.#", CultureInfo.InvariantCulture))%"></i>
+                    <span class="fsum-rank">@(i + 1)</span><span class="fsum-icon" style="@Icon(p.Id)"></span><span class="fsum-name">@Name(p.Id)</span>
+                    <b>@Fmt(value(p))</b>
+                </div>
+            }
+        </div>
+    };
+
+    private string Name(long id) => Entities.GetPlayerEntity((int)id)?.Name is { Length: > 0 } n ? n : $"Игрок {id}";
+
+    private bool IsMe(long id) => Entities.GetPlayerEntity((int)id)?.IsUser == true;
+
+    private string Icon(long id) =>
+        Entities.GetPlayerEntity((int)id)?.CharacterClass?.Id is { } cls ? $"background-image:url('/images/classes/{cls}.png')" : "";
+
+    private static string Fmt(double v) => AionDpsMeter.UI.Utils.DamageFormatter.Format((long)v);
+
+    private static string Share(long part, long total) =>
+        total > 0 ? $"{(part * 100.0 / total).ToString("0", CultureInfo.InvariantCulture)}%" : "";
+
+    private static string Clock(TimeSpan t) => t.TotalHours >= 1 ? t.ToString(@"h\:mm\:ss") : t.ToString(@"m\:ss");
+
+    public void Dispose() => tick?.Dispose();
+}

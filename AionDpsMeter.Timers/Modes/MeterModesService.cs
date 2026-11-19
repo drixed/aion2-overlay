@@ -12,6 +12,8 @@ public sealed class MeterModesService : IDisposable
 
     public DummyRun Dummy { get; private set; }
     public PvpLog Pvp { get; private set; }
+    /// <summary>The fight summary ("Итоги").</summary>
+    public FightLog Fight { get; private set; }
     public GrindSession Grind { get; } = new();
     public HealTally Heals { get; } = new();
     public DeathRecaps Deaths { get; } = new();
@@ -26,6 +28,7 @@ public sealed class MeterModesService : IDisposable
         Dummy = new DummyRun(TimeSpan.FromSeconds(dummySeconds));
         pvpIdle = options.Current.FightIdleSeconds;
         Pvp = new PvpLog(TimeSpan.FromSeconds(pvpIdle));
+        Fight = new FightLog(TimeSpan.FromSeconds(pvpIdle));
         options.Changed += OnOptionsChanged;
         CombatFeed.Damage += OnDamage;
         CombatFeed.Heal += OnHeal;
@@ -45,12 +48,14 @@ public sealed class MeterModesService : IDisposable
         var skill = data.GetSkillOrDefault(h.SkillCode)?.Name ?? "";
         if (skill.StartsWith("Unknown", StringComparison.OrdinalIgnoreCase)) skill = ""; // monster skills have no names in the data
         Deaths.Add(new IncomingHit(h.TargetId, source, skill, h.Damage, h.Critical, h.At));
+        Fight.AddTaken(h.TargetId, h.Damage, h.At);
     }
 
     private void OnDeath(int entityId, DateTime at)
     {
         Deaths.Died(entityId, at);
         Pvp.Died(entityId, at);
+        Fight.Died(entityId, at);
     }
 
     private void OnOptionsChanged()
@@ -59,6 +64,7 @@ public sealed class MeterModesService : IDisposable
         {
             pvpIdle = options.Current.FightIdleSeconds;
             Pvp = new PvpLog(TimeSpan.FromSeconds(pvpIdle));
+            Fight = new FightLog(TimeSpan.FromSeconds(pvpIdle));
         }
         if (options.Current.DummyRunSeconds == dummySeconds) return;
         dummySeconds = options.Current.DummyRunSeconds;
@@ -71,6 +77,9 @@ public sealed class MeterModesService : IDisposable
         var hit = new Hit(d.SourceEntity.Id, d.Damage, d.TargetEntity?.IsDummy == true, d.DateTime, d.SourceEntity.IsUser);
         Dummy.Add(hit);
         Grind.Add(hit);
+        // a hit on a monster (not a player, not a training dummy) opens or feeds the fight summary
+        if (d.TargetEntity is { IsDummy: false } mob && entities.GetPlayerEntity(mob.Id) is not ({ IsIdentified: true } or { IsUser: true }))
+            Fight.AddDamage(d.SourceEntity.Id, d.Damage, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name, d.DateTime);
         if (d.TargetEntity is { } target && entities.GetPlayerEntity(target.Id) is { } victim
             && PvpLog.IsPlayerTarget(victim, entities.GetTargetMob(target.Id), entities.IsSummon(target.Id))
             && PvpLog.IsPvpHit(entities.GetPlayerEntity(d.SourceEntity.Id) ?? d.SourceEntity, victim))
@@ -78,7 +87,11 @@ public sealed class MeterModesService : IDisposable
                 d.Damage, d.IsCritical, d.DateTime, d.SourceEntity.IsUser || victim.IsUser, d.Skill is { HasIcon: true } s ? s.Icon : null));
     }
 
-    private void OnHeal(HealEvent h) => Heals.Add(new Heal(h.CasterId, h.TargetId, h.Amount, h.At));
+    private void OnHeal(HealEvent h)
+    {
+        Heals.Add(new Heal(h.CasterId, h.TargetId, h.Amount, h.At));
+        Fight.AddHeal(h.CasterId, h.TargetId, h.Amount, h.At);
+    }
 
     public void Dispose()
     {

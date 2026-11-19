@@ -92,10 +92,12 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                     case HotkeyId.ResetFight:
                         sessions.CompleteAndPersistActiveSessions();
                         modes.Pvp.Clear();
+                        modes.Fight.Clear();
                         break;
                     case HotkeyId.ClearMeter:
                         sessions.Reset();
                         modes.Pvp.Clear();
+                        modes.Fight.Clear();
                         break;
                     case HotkeyId.CopySummary: CopySummary(); break;
                     case HotkeyId.Compact:

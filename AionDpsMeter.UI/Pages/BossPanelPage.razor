@@ -2,6 +2,7 @@
 @using System.Globalization
 @using AionDpsMeter.Timers.Feed
 @implements IDisposable
+@inject AionDpsMeter.UI.Services.TimerWindow.FightSummaryWindow SummaryWindow
 
 @if (ViewModel != null)
 {
@@ -16,6 +17,7 @@
             <span class="bp-ping" style="color:@ViewModel.PingColor">@ViewModel.PingDisplay</span>
             <div class="bp-controls">
                 <button type="button" @onclick="ViewModel.OpenHistory" @onmousedown:stopPropagation="true" title="История боёв">☰</button>
+                <button type="button" @onclick="SummaryWindow.Toggle" @onmousedown:stopPropagation="true" title="Итоги боя: лечение, полученный урон, смерти, первый удар">📊</button>
                 <button type="button" @onclick="ViewModel.OpenStatEffCalc" @onmousedown:stopPropagation="true" title="Калькулятор статов">⚔</button>
                 <button type="button" @onclick="ToggleCubeMap" @onmousedown:stopPropagation="true" title="Карта кубов">🗺</button>
                 <button type="button" @onclick="ViewModel.OpenSettings" @onmousedown:stopPropagation="true" title="Настройки">⚙</button>
