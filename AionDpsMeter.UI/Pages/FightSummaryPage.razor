@@ -9,9 +9,19 @@
 <div class="fsum">
     <div class="fsum-head" @onmousedown="Window.Drag">
         <b>Итоги боя</b>
+        @if (history.Count > 0)
+        {
+            <select class="fsum-pick" @onmousedown:stopPropagation="true" @onchange="Pick">
+                @for (var i = 0; i < history.Count; i++)
+                {
+                    var f = history[i];
+                    <option value="@i" selected="@(i == picked)">@(i == 0 ? "● " : "")@(f.Target.Length > 0 ? f.Target : "Бой") · @Clock(f.Duration) · @Fmt(f.TotalDamage) · @f.Start.ToString("HH:mm")</option>
+                }
+            </select>
+        }
         @if (summary is { } s)
         {
-            <span class="fsum-sub">@Clock(s.Duration) · урон группы @Fmt(s.TotalDamage) · @Fmt(s.GroupDps)/s</span>
+            <span class="fsum-sub">@Fmt(s.GroupDps)/s группы</span>
         }
         <span class="fsum-tabs" @onmousedown:stopPropagation="true">
             @foreach (var (id, label) in Tabs)
@@ -92,12 +102,32 @@
 
     private string tab = "summary";
     private FightSummary? summary;
+    private IReadOnlyList<FightSummary> history = [];
+    /// <summary>The chosen fight in the list; 0 is the current (or last) one and follows new fights.</summary>
+    private int picked;
+
+    private void Refresh()
+    {
+        var before = history.Count > picked && picked > 0 ? history[picked].Start : (DateTime?)null;
+        history = Modes.Fight.History();
+        picked = before is { } start ? Math.Max(0, history.ToList().FindIndex(f => f.Start == start)) : 0;
+        summary = history.Count > 0 ? history[picked] : null;
+    }
+
+    private void Pick(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var i) && i >= 0 && i < history.Count)
+        {
+            picked = i;
+            summary = history[i];
+        }
+    }
     private System.Threading.Timer? tick;
 
     protected override void OnInitialized()
     {
-        summary = Modes.Fight.Summary();
-        tick = new System.Threading.Timer(_ => InvokeAsync(() => { summary = Modes.Fight.Summary(); StateHasChanged(); }), null, 1000, 1000);
+        Refresh();
+        tick = new System.Threading.Timer(_ => InvokeAsync(() => { Refresh(); StateHasChanged(); }), null, 1000, 1000);
     }
 
     private static (Func<FightPlayer, long> Value, string Color) Metric(string tab) => tab switch

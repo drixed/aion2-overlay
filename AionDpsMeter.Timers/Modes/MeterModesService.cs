@@ -79,7 +79,8 @@ public sealed class MeterModesService : IDisposable
         Grind.Add(hit);
         // a hit on a monster (not a player, not a training dummy) opens or feeds the fight summary
         if (d.TargetEntity is { IsDummy: false } mob && entities.GetPlayerEntity(mob.Id) is not ({ IsIdentified: true } or { IsUser: true }))
-            Fight.AddDamage(d.SourceEntity.Id, d.Damage, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name, d.DateTime);
+            Fight.AddDamage(d.SourceEntity.Id, d.Damage, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name, d.DateTime,
+                mob.MobCode > 0 ? mob.Name : null);
         if (d.TargetEntity is { } target && entities.GetPlayerEntity(target.Id) is { } victim
             && PvpLog.IsPlayerTarget(victim, entities.GetTargetMob(target.Id), entities.IsSummon(target.Id))
             && PvpLog.IsPvpHit(entities.GetPlayerEntity(d.SourceEntity.Id) ?? d.SourceEntity, victim))

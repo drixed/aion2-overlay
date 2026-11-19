@@ -3,6 +3,7 @@
     border: 1px solid #2b3442; border-radius: 10px; overflow: hidden; font-family: 'Segoe UI', sans-serif; font-size: 13px; user-select: none; }
 .fsum-head { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: #121821; border-bottom: 1px solid #262e3b; cursor: move; }
 .fsum-head b { font-size: 14px; }
+.fsum-pick { max-width: 330px; background: #0f141c; color: #e6edf3; border: 1px solid #2f3846; border-radius: 7px; padding: 5px 8px; font: inherit; font-size: 12px; cursor: pointer; }
 .fsum-sub { color: #8b95a5; font-size: 12px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fsum-tabs { display: inline-flex; border: 1px solid #2f3846; border-radius: 8px; overflow: hidden; cursor: default; }
 .fsum-tabs button { background: none; border: 0; color: #c9d1d9; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }

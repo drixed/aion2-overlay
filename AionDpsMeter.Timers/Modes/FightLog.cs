@@ -6,7 +6,8 @@ namespace AionDpsMeter.Timers.Modes;
 public sealed record FightPlayer(long Id, long Damage, long HealDone, long HealReceived, long SelfHeal, long DamageTaken, int Deaths,
     long MaxHit, string MaxHitSkill, TimeSpan? FirstHit);
 
-public sealed record FightSummary(DateTime Start, TimeSpan Duration, IReadOnlyList<FightPlayer> Players)
+/// <param name="Target">The monster the group hit hardest — the fight's name in the list.</param>
+public sealed record FightSummary(DateTime Start, TimeSpan Duration, IReadOnlyList<FightPlayer> Players, string Target = "")
 {
     public long TotalDamage => Players.Sum(p => p.Damage);
     public long TotalHeal => Players.Sum(p => p.HealDone);
@@ -21,6 +22,8 @@ public sealed record FightSummary(DateTime Start, TimeSpan Duration, IReadOnlyLi
 /// </summary>
 public sealed class FightLog(TimeSpan idle)
 {
+    private const int Kept = 20;
+
     private sealed class Row
     {
         public long Damage, HealDone, HealReceived, SelfHeal, Taken, MaxHit;
@@ -29,25 +32,34 @@ public sealed class FightLog(TimeSpan idle)
         public DateTime? FirstHit;
     }
 
-    private readonly Lock gate = new();
-    private readonly Dictionary<long, Row> rows = [];
-    private DateTime? start;
-    private DateTime last;
+    private sealed class Fight(DateTime start)
+    {
+        public readonly DateTime Start = start;
+        public DateTime Last = start;
+        public readonly Dictionary<long, Row> Rows = [];
+        public readonly Dictionary<string, long> Targets = [];
+    }
 
-    public void AddDamage(long player, long damage, string skill, DateTime at)
+    private readonly Lock gate = new();
+    private readonly List<Fight> fights = [];
+
+    private Fight? Current => fights.Count > 0 ? fights[^1] : null;
+
+    public void AddDamage(long player, long damage, string skill, DateTime at, string? target = null)
     {
         lock (gate)
         {
-            if (start is null || at - last > idle)
+            if (Current is not { } f || at - f.Last > idle)
             {
-                rows.Clear();
-                start = at;
+                fights.Add(f = new Fight(at));
+                if (fights.Count > Kept) fights.RemoveAt(0);
             }
-            var r = Get(player);
+            var r = Get(f, player);
             r.Damage += damage;
             r.FirstHit ??= at;
             if (damage > r.MaxHit) (r.MaxHit, r.MaxHitSkill) = (damage, skill);
-            Touch(at);
+            if (!string.IsNullOrEmpty(target)) f.Targets[target] = f.Targets.GetValueOrDefault(target) + damage;
+            Touch(f, at);
         }
     }
 
@@ -55,12 +67,12 @@ public sealed class FightLog(TimeSpan idle)
     {
         lock (gate)
         {
-            if (!Active(at)) return;
-            Get(caster).HealDone += amount;
-            var t = Get(target);
+            if (Active(at) is not { } f) return;
+            Get(f, caster).HealDone += amount;
+            var t = Get(f, target);
             t.HealReceived += amount;
             if (caster == target) t.SelfHeal += amount;
-            Touch(at);
+            Touch(f, at);
         }
     }
 
@@ -68,9 +80,9 @@ public sealed class FightLog(TimeSpan idle)
     {
         lock (gate)
         {
-            if (!Active(at)) return;
-            Get(player).Taken += damage;
-            Touch(at);
+            if (Active(at) is not { } f) return;
+            Get(f, player).Taken += damage;
+            Touch(f, at);
         }
     }
 
@@ -78,46 +90,50 @@ public sealed class FightLog(TimeSpan idle)
     {
         lock (gate)
         {
-            if (!Active(at)) return;
-            Get(player).Deaths++;
-            Touch(at);
+            if (Active(at) is not { } f) return;
+            Get(f, player).Deaths++;
+            Touch(f, at);
         }
     }
 
-    /// <summary>The "clear meter" and "reset fight" hotkeys.</summary>
+    /// <summary>The "clear meter" and "reset fight" hotkeys: every kept fight goes.</summary>
     public void Clear()
     {
-        lock (gate)
-        {
-            rows.Clear();
-            start = null;
-        }
+        lock (gate) fights.Clear();
     }
 
     /// <summary>The current fight, or the last one; null before the first.</summary>
     public FightSummary? Summary()
     {
-        lock (gate)
-        {
-            if (start is not { } s) return null;
-            var players = rows.Select(kv => new FightPlayer(kv.Key, kv.Value.Damage, kv.Value.HealDone, kv.Value.HealReceived, kv.Value.SelfHeal,
-                    kv.Value.Taken, kv.Value.Deaths, kv.Value.MaxHit, kv.Value.MaxHitSkill, kv.Value.FirstHit - s))
-                .OrderByDescending(p => p.Damage)
-                .ToList();
-            return new FightSummary(s, last - s, players);
-        }
+        lock (gate) return Current is { } f ? Summarize(f) : null;
     }
 
-    private bool Active(DateTime at) => start is not null && at - last <= idle && at >= start;
-
-    private void Touch(DateTime at)
+    /// <summary>The kept fights (the last 20), newest first.</summary>
+    public IReadOnlyList<FightSummary> History()
     {
-        if (at > last) last = at;
+        lock (gate) return fights.AsEnumerable().Reverse().Select(Summarize).ToList();
     }
 
-    private Row Get(long id)
+    private static FightSummary Summarize(Fight f)
     {
-        if (!rows.TryGetValue(id, out var r)) rows[id] = r = new Row();
+        var players = f.Rows.Select(kv => new FightPlayer(kv.Key, kv.Value.Damage, kv.Value.HealDone, kv.Value.HealReceived, kv.Value.SelfHeal,
+                kv.Value.Taken, kv.Value.Deaths, kv.Value.MaxHit, kv.Value.MaxHitSkill, kv.Value.FirstHit - f.Start))
+            .OrderByDescending(p => p.Damage)
+            .ToList();
+        var target = f.Targets.Count > 0 ? f.Targets.MaxBy(t => t.Value).Key : "";
+        return new FightSummary(f.Start, f.Last - f.Start, players, target);
+    }
+
+    private Fight? Active(DateTime at) => Current is { } f && at - f.Last <= idle && at >= f.Start ? f : null;
+
+    private static void Touch(Fight f, DateTime at)
+    {
+        if (at > f.Last) f.Last = at;
+    }
+
+    private static Row Get(Fight f, long id)
+    {
+        if (!f.Rows.TryGetValue(id, out var r)) f.Rows[id] = r = new Row();
         return r;
     }
 }

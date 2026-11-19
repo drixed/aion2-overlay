@@ -70,4 +70,25 @@ public class FightLogTests
         log.Clear();
         Assert.Null(log.Summary());
     }
+
+    [Fact]
+    public void Past_fights_are_kept_newest_first_and_named_by_the_most_damaged_target()
+    {
+        var log = new FightLog(TimeSpan.FromSeconds(45));
+        log.AddDamage(Dps, 1_000, "Разрез", At(0), "Голем");
+        log.AddDamage(Dps, 5_000, "Разрез", At(1), "Генерал Рагта");
+        log.AddDamage(Dps, 700, "Разрез", At(300), "Вечный Гартуа");
+        var history = log.History();
+        Assert.Equal(["Вечный Гартуа", "Генерал Рагта"], history.Select(f => f.Target));
+        Assert.Equal(6_000, history[1].TotalDamage);
+    }
+
+    [Fact]
+    public void Only_the_last_twenty_fights_are_kept()
+    {
+        var log = new FightLog(TimeSpan.FromSeconds(45));
+        for (var i = 0; i < 25; i++) log.AddDamage(Dps, 100, "Разрез", At(i * 100), $"Моб {i}");
+        Assert.Equal(20, log.History().Count);
+        Assert.Equal("Моб 24", log.History()[0].Target);
+    }
 }
