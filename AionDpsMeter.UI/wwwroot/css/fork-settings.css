@@ -93,3 +93,27 @@ html:has(.settings-shell), body:has(.settings-shell) { overflow: hidden; }
 html body .settings-shell.settings-shell { box-sizing: border-box; }
 /* the whole header bar moves the window, not only the word "Настройки" */
 html body .settings-shell.settings-shell .settings-title { flex: 1; align-self: stretch; min-height: 34px; margin: -10px 0 -10px -16px; padding-left: 16px; }
+
+/* type like the rest of Windows, not the overlay's monospace */
+html body .settings-shell.settings-shell { --font-ui: 'Segoe UI Variable Text', 'Segoe UI', sans-serif; font-family: var(--font-ui); }
+html body .settings-shell.settings-shell * { font-family: inherit; }
+html body .settings-shell.settings-shell .slider-field__value, html body .settings-shell.settings-shell .hotkey-field,
+html body .settings-shell.settings-shell .number-field { font-family: 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; }
+
+/* a row: the title and the control on one line, the description across the whole width under them */
+html body .settings-shell.settings-shell .setting-row { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "title control" "desc desc";
+    column-gap: 16px; row-gap: 3px; align-items: center; }
+html body .settings-shell.settings-shell .setting-row__text { display: contents; }
+html body .settings-shell.settings-shell .setting-row__title { grid-area: title; }
+html body .settings-shell.settings-shell .setting-row__desc { grid-area: desc; max-width: 640px; }
+html body .settings-shell.settings-shell .setting-row__control { grid-area: control; justify-content: flex-end; }
+
+/* button groups on one line, the chosen one in the accent */
+html body .settings-shell.settings-shell .fs-segmented { flex-wrap: nowrap; max-width: none; border-color: var(--line-strong); border-radius: 7px; background: transparent; }
+html body .settings-shell.settings-shell .fs-segmented__option { padding: 5px 11px; font-size: 12px; color: #c9d1d9; background: transparent; white-space: nowrap; }
+html body .settings-shell.settings-shell .fs-segmented__option + .fs-segmented__option { border-left: 1px solid var(--line-strong); }
+html body .settings-shell.settings-shell .fs-segmented__option.is-selected { background: var(--accent-soft); color: var(--accent); font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(95, 212, 196, .6); }
+html body .settings-shell.settings-shell .fs-range { width: 170px; accent-color: var(--accent); }
+html body .settings-shell.settings-shell .fs-select { max-width: 200px; background: #0f141c; border-color: var(--line-strong); padding: 5px 8px; border-radius: 7px; }
+html body .settings-shell.settings-shell .fs-label { color: var(--text-dim); font-size: 10.5px; letter-spacing: .7px; }
