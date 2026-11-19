@@ -11,8 +11,10 @@
 @inject AionDpsMeter.Services.Services.Session.Persistence.ICombatHistoryStore Store
 @inject CombatSessionManager Sessions
 @inject HistoryViewWindow Window
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
 
-<div class="hv">
+<div class="hv" @onmousemove="DragMove" @onmouseup="DragEnd" @onmouseleave="DragEnd">
     <div class="hv-title" @onmousedown="() => Window.Drag(View)">
         <b>@HistoryViewWindow.Title(View)</b>
         @if (View == HistoryViewWindow.PerSkill && Build() is { } head)
@@ -181,6 +183,7 @@
                             <span class="hv-ylab" style="top:@(F(y))px">@(100 - i * 20)%</span>
                         }
                     }
+                    <div class="hv-plot" @ref="plotRef" @onwheel="e => Wheel(e, plotRef)" @onwheel:preventDefault="true" @onmousedown="e => DragStart(e, plotRef, false)">
                     @foreach (var t in Ticks(vs, ve))
                     {
                         <i class="hv-vline" style="left:@Ps((t - vs) / (ve - vs) * 100)"></i>
@@ -207,14 +210,16 @@
                                 var x2 = ((r.End - c.Start).TotalSeconds - vs) / (ve - vs) * 100;
                                 <i class="hv-channel @(dim ? "dim" : "")" style="left:@Ps(x);width:@Ps(Math.Max(0.3, x2 - x));top:@(F(y - 6))px"></i>
                             }
-                            <span class="hv-ico @(dim ? "dim" : "") @(pickedRun == run ? "on" : "")" style="left:@Ps(x);top:@(F(y))px" title="@sk?.Name · +@Sec(r.At - c.Start)" @onclick="() => pickedRun = run">
+                            <span class="hv-ico @(dim ? "dim" : "") @(pickedRun == run ? "on" : "")" style="left:@Ps(x);top:@(F(y))px" title="@sk?.Name · +@Sec(r.At - c.Start)" @onclick="() => { if (!moved) pickedRun = run; }">
                                 @if (!string.IsNullOrEmpty(sk?.Icon)) { <img src="@sk.Icon" alt="" /> } else { <i></i> }
                             </span>
                         }
                     }
+                    </div>
                 </div>
                 @Axis(vs, ve)
                 @Scrubber(c)
+                @Zoom()
                 <div class="hv-box hv-detail">
                     @if (pickedRun is { } pr && c.Skills.GetValueOrDefault(pr.Skill) is { } ps)
                     {
@@ -295,7 +300,7 @@
                 {
                     <p class="hv-empty">Баффов по этим фильтрам нет.</p>
                 }
-                <div class="hv-gantt">
+                <div class="hv-gantt" @ref="ganttRef" @onwheel="e => Wheel(e, ganttRef, GanttLabel)" @onwheel:preventDefault="true" @onmousedown="e => DragStart(e, ganttRef, false, GanttLabel)">
                     @foreach (var r in rows)
                     {
                         var dim = pickedBuffs.Count > 0 && !pickedBuffs.Contains(r.Name);
@@ -319,6 +324,7 @@
                 </div>
                 <div class="hv-gantt-axis">@Axis(vs, ve)</div>
                 <div class="hv-gantt-axis">@Scrubber(c)</div>
+                <div class="hv-gantt-axis">@Zoom()</div>
             }
         </div>
     }
@@ -442,7 +448,7 @@
     {
         if (id == (int)c.Who.PlayerId) return self ? "Себя" : c.Who.PlayerName;
         if (id == c.S.TargetId) return Target(c.S);
-        return c.S.PlayerStats.FirstOrDefault(p => (int)p.PlayerId == id)?.PlayerName ?? $"#{id}";
+        return c.S.PlayerStats.FirstOrDefault(p => (int)p.PlayerId == id)?.PlayerName ?? $"Неизвестно #{id}";
     }
 
     /// <summary>The boss's HP over the fight from the group's damage: 100% at the start, falling with every hit.</summary>
@@ -488,11 +494,89 @@
         }
         var max = Math.Max(1, bins.Max());
         var pts = string.Join(" ", bins.Select((v, i) => F(i * 1000.0 / (bins.Length - 1)) + "," + F(30 - v / max * 26)));
-        <div class="hv-scrub">
+        <div class="hv-scrub" @ref="scrubRef" @onmousedown="e => DragStart(e, scrubRef, true)">
             <svg viewBox="0 0 1000 30" preserveAspectRatio="none"><polyline points="0,30 @pts 1000,30" /></svg>
             <i class="hv-scrub-win" style="left:@(F(zFrom / 10.0))%;width:@(F((zTo - zFrom) / 10.0))%"></i>
-            <input type="range" min="0" max="1000" value="@zFrom" @oninput="SetFrom" />
-            <input type="range" min="0" max="1000" value="@zTo" @oninput="SetTo" />
+            <input type="range" min="0" max="1000" value="@zFrom" @oninput="SetFrom" @onmousedown:stopPropagation="true" />
+            <input type="range" min="0" max="1000" value="@zTo" @oninput="SetTo" @onmousedown:stopPropagation="true" />
+        </div>
+    };
+
+    private const double GanttLabel = 250;
+    private ElementReference plotRef, ganttRef, scrubRef;
+    private bool dragging, dragScrub, moved, skipRender;
+    private double dragX, dragW;
+    private int dragFrom, dragTo;
+
+    protected override bool ShouldRender()
+    {
+        if (!skipRender) return true;
+        skipRender = false;
+        return false;
+    }
+
+    private async Task<(double Left, double Width)> Rect(ElementReference el, double pad)
+    {
+        try
+        {
+            var r = await JS.InvokeAsync<double[]>("forkRect", el);
+            return (r[0] + pad, Math.Max(1, r[1] - pad));
+        }
+        catch (Exception) { return (0, 1000); }
+    }
+
+    /// <summary>The wheel zooms around the cursor; with Shift it moves along the fight.</summary>
+    private async Task Wheel(WheelEventArgs e, ElementReference el, double pad = 0)
+    {
+        var span = zTo - zFrom;
+        if (e.ShiftKey) { Pan(span * (e.DeltaY > 0 ? 0.15 : -0.15), zFrom, zTo); return; }
+        var (left, width) = await Rect(el, pad);
+        var a = Math.Clamp((e.ClientX - left) / width, 0, 1);
+        var next = Math.Clamp(span * (e.DeltaY > 0 ? 1.25 : 0.8), 20, 1000);
+        var from = Math.Clamp(zFrom + a * span - a * next, 0, 1000 - next);
+        zFrom = (int)Math.Round(from);
+        zTo = (int)Math.Min(1000, Math.Round(from + next));
+    }
+
+    private void Pan(double delta, int from, int to)
+    {
+        var span = to - from;
+        zFrom = (int)Math.Round(Math.Clamp(from + delta, 0, 1000 - span));
+        zTo = zFrom + span;
+    }
+
+    private async Task DragStart(MouseEventArgs e, ElementReference el, bool scrub, double pad = 0)
+    {
+        if (e.Button != 0) return;
+        var (_, width) = await Rect(el, pad);
+        dragging = true; dragScrub = scrub; moved = false;
+        dragX = e.ClientX; dragW = width; dragFrom = zFrom; dragTo = zTo;
+    }
+
+    /// <summary>Dragging the chart moves along the fight; dragging the zoom bar moves its window.</summary>
+    private void DragMove(MouseEventArgs e)
+    {
+        if (!dragging) { skipRender = true; return; }
+        var dx = e.ClientX - dragX;
+        if (!moved && Math.Abs(dx) <= 3) { skipRender = true; return; }
+        moved = true;
+        Pan(dragScrub ? dx * 1000 / dragW : -dx * (dragTo - dragFrom) / dragW, dragFrom, dragTo);
+    }
+
+    private void DragEnd()
+    {
+        if (!dragging) { skipRender = true; return; }
+        dragging = false;
+    }
+
+    private RenderFragment Zoom() => __builder =>
+    {
+        <div class="hv-zoom">
+            <span>Колесо мыши — масштаб · зажать и тянуть — прокрутка · Shift + колесо — сдвиг</span>
+            @if (zFrom > 0 || zTo < 1000)
+            {
+                <button type="button" @onclick="() => { zFrom = 0; zTo = 1000; }">Весь бой</button>
+            }
         </div>
     };
 

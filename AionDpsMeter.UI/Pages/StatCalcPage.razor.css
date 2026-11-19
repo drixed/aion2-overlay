@@ -48,3 +48,12 @@
 .sc ::-webkit-scrollbar { width: 6px; }
 .sc ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
 .sc ::-webkit-scrollbar-track, .sc ::-webkit-scrollbar-button { background: transparent; display: none; }
+
+.sc-hint { padding: 8px 12px; border-radius: 8px; background: rgba(95, 212, 196, .06); border: 1px solid rgba(95, 212, 196, .3); color: #b9e9e2; line-height: 1.45; }
+.sc-box { background: #19202a; border: 1px solid #252e3b; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.sc-worth { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 24px; }
+.sc-wrow { display: grid; grid-template-columns: 190px 1fr 64px; align-items: center; gap: 10px; min-height: 22px; }
+.sc-wrow span { color: #aeb8c5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-wrow b { text-align: right; color: #7ee787; font-variant-numeric: tabular-nums; }
+.sc-wbar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .05); overflow: hidden; }
+.sc-wbar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #3f9f93, #5fd4c4); }

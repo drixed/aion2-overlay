@@ -49,7 +49,7 @@
 .hv-hline { position: absolute; left: 0; right: 44px; height: 1px; background: rgba(255, 255, 255, .05); }
 .hv-vline { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, .035); }
 .hv-ylab { position: absolute; right: 6px; transform: translateY(-50%); color: #5f6b7c; font-size: 10px; }
-.hv-hp { position: absolute; left: 0; top: 10px; width: calc(100% - 44px); height: calc(100% - 20px); overflow: hidden; pointer-events: none; }
+.hv-hp { position: absolute; left: 0; top: 10px; width: 100%; height: calc(100% - 20px); overflow: hidden; pointer-events: none; }
 .hv-hp polyline { fill: none; stroke: #d65c97; stroke-width: 1.4; vector-effect: non-scaling-stroke; opacity: .9; }
 .hv-chart .hv-ico, .hv-chart .hv-channel { margin-left: 0; }
 .hv-ico { position: absolute; width: 18px; height: 18px; transform: translate(-50%, -50%); border-radius: 4px; overflow: hidden; cursor: pointer;
@@ -64,11 +64,11 @@
 .hv-chart > .hv-ico, .hv-chart > .hv-channel { }
 
 /* time axis + zoom bar */
-.hv-axis { position: relative; height: 16px; margin-right: 44px; color: #7d8898; font-size: 10.5px; }
+.hv-axis { position: relative; height: 16px; margin: 0 52px 0 12px; color: #7d8898; font-size: 10.5px; }
 .hv-axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
 .hv-axis span:first-child { transform: none; }
 .hv-axis span:last-child { transform: translateX(-100%); }
-.hv-scrub { position: relative; height: 30px; margin-right: 44px; background: #10151c; border: 1px solid #232c39; border-radius: 6px; overflow: hidden; }
+.hv-scrub { position: relative; height: 30px; margin: 0 52px 0 12px; cursor: grab; background: #10151c; border: 1px solid #232c39; border-radius: 6px; overflow: hidden; }
 .hv-scrub svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hv-scrub polyline { fill: rgba(95, 212, 196, .12); stroke: rgba(95, 212, 196, .35); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .hv-scrub-win { position: absolute; top: 0; bottom: 0; background: rgba(120, 140, 200, .16); border-left: 3px solid #8fa0d6; border-right: 3px solid #8fa0d6; box-sizing: border-box; pointer-events: none; }
@@ -93,7 +93,7 @@
 .hv-gtrack { position: relative; height: 100%; }
 .hv-gbar { position: absolute; top: 4px; height: 15px; border: 1px solid; border-radius: 2px; box-sizing: border-box; }
 .hv-gantt-axis { margin-left: 250px; }
-.hv-gantt-axis .hv-axis, .hv-gantt-axis .hv-scrub { margin-right: 0; }
+.hv-gantt-axis .hv-axis, .hv-gantt-axis .hv-scrub, .hv-gantt-axis .hv-zoom { margin: 0; }
 
 /* buffs per skill */
 .hv-ps-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
@@ -139,3 +139,10 @@
 .hv ::-webkit-scrollbar { width: 6px; height: 6px; }
 .hv ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
 .hv ::-webkit-scrollbar-track, .hv ::-webkit-scrollbar-button { background: transparent; display: none; }
+
+/* zoom and pan */
+.hv-plot { position: absolute; left: 12px; right: 52px; top: 0; bottom: 0; cursor: grab; }
+.hv-plot:active, .hv-scrub:active, .hv-gantt:active { cursor: grabbing; }
+.hv-gtrack { cursor: grab; }
+.hv-zoom { display: flex; align-items: center; gap: 10px; margin: 0 52px 0 12px; color: #5f6b7c; font-size: 10.5px; }
+.hv-zoom button { margin-left: auto; background: #121820; border: 1px solid rgba(95, 212, 196, .5); color: #5fd4c4; border-radius: 6px; padding: 2px 10px; font: inherit; font-size: 11px; cursor: pointer; }

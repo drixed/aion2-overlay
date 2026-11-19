@@ -25,6 +25,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             {
                 var stats = Parse(packet.Data);
                 sessionManager.ProcessPlayerStatsUpdate(stats, DateAndTime.Now);
+                Fork.StatsMemory.Remember(stats, DateAndTime.Now); // aion2-overlay fork: kept across resets for the calculator
             }
             catch (Exception ex)
             {

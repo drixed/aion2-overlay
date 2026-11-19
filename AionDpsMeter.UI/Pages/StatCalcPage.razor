@@ -26,22 +26,46 @@
                 <small>ПРИРОСТ УРОНА</small>
                 <b>@(vm.DamageGainPercent > 0 ? "+" : "")@vm.DamageGainPercent.ToString("0.00", CultureInfo.InvariantCulture)%</b>
             </div>
-            <div class="sc-kv"><small>Урон сейчас</small><b>@N(vm.TotalDamage)</b></div>
+            <div class="sc-kv"><small>Индекс урона сейчас</small><b>@N(vm.TotalDamage)</b></div>
             <div class="sc-arrow">→</div>
-            <div class="sc-kv"><small>С опцией</small><b class="teal">@N(vm.TotalDamage2)</b></div>
+            <div class="sc-kv"><small>С новой опцией</small><b class="teal">@N(vm.TotalDamage2)</b></div>
             <div class="sc-kv sc-kv--wide"><small>Эффективная атака</small><b>@N(vm.EffectiveAttack) <span class="mute">→</span> @N(vm.EffectiveAttack2)</b></div>
         </div>
+        @if (hasSnapshot && OptionAttack.Concat(OptionMultipliers).All(f => f.Get(vm) == 0))
+        {
+            <div class="sc-hint">Индекс — условный урон по вашим статам, сам по себе он ничего не значит. Впишите прибавку новой вещи или опции в «Симулятор опции» справа (например, +120 к атаке или +2 к усилению урона) — сверху покажется, на сколько процентов вырастет урон. Ниже — что выгоднее качать прямо сейчас.</div>
+        }
+        @if (hasSnapshot)
+        {
+            var worth = Worth();
+            var best = Math.Max(0.0001, worth.Max(w => Math.Abs(w.Gain)));
+            <div class="sc-box">
+                <div class="sc-cap">ЧТО ДАСТ БОЛЬШЕ УРОНА <span>прирост от одной прибавки при ваших статах и настройке боя</span></div>
+                <div class="sc-worth">
+                    @foreach (var w in worth)
+                    {
+                        <div class="sc-wrow">
+                            <span>@w.Label</span>
+                            <i class="sc-wbar"><i style="width:@((Math.Abs(w.Gain) / best * 100).ToString("0.#", CultureInfo.InvariantCulture))%"></i></i>
+                            <b>@(w.Gain >= 0 ? "+" : "")@w.Gain.ToString("0.00", CultureInfo.InvariantCulture)%</b>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
         @if (!hasSnapshot)
         {
-            <div class="sc-warn">Характеристики персонажа ещё не получены. Откройте окно характеристик в игре (или смените экипировку) и нажмите «⟳ Взять из игры».</div>
+            <div class="sc-warn">Характеристики персонажа ещё не получены. Игра присылает их при входе в игру и когда они меняются — перезайдите на персонажа или смените предмет экипировки, затем нажмите «⟳ Взять из игры». Метр запомнит их и после перезапуска.</div>
         }
 
         <div class="sc-cols">
             <div class="sc-col">
-                <div class="sc-cap">ХАРАКТЕРИСТИКИ ИЗ ИГРЫ <span>только чтение</span></div>
-                @Group("Атака", Attack, true)
-                @Group("Множители урона", Multipliers, true)
-                @Group("Итог", Derived, true)
+                <div class="sc-cap">ХАРАКТЕРИСТИКИ ИЗ ИГРЫ <span>@(capturedAt is { } at ? $"получены {at:dd.MM HH:mm}" : "")@(edited ? " · изменены вручную" : "")</span>
+                    @if (edited) { <button type="button" class="sc-link" @onclick="Reload">Вернуть из игры</button> }
+                </div>
+                @Group("Атака", Attack, false)
+                @Group("Множители урона", Multipliers, false)
+                @Group("Итог", Derived, false)
             </div>
             <div class="sc-col">
                 <div class="sc-cap">НАСТРОЙКА БОЯ <span>сохраняется</span></div>
@@ -76,22 +100,30 @@
 
     private static readonly Field[] Attack =
     [
-        Ro("Бонус атаки", v => v.BaseAttack), Ro("Атака", v => v.GearAttack), Ro("Мин. атака", v => v.MinAttack), Ro("Макс. атака", v => v.MaxAttack),
-        Ro("Атака PvE", v => v.PveAttack), Ro("Атака по боссам", v => v.BossAttack), Ro("Увеличение атаки", v => v.AttackIncreasePercent, true),
+        Rw("Бонус атаки", v => v.BaseAttack, (v, x) => v.BaseAttack = x, false), Rw("Атака", v => v.GearAttack, (v, x) => v.GearAttack = x, false),
+        Rw("Мин. атака", v => v.MinAttack, (v, x) => v.MinAttack = x, false), Rw("Макс. атака", v => v.MaxAttack, (v, x) => v.MaxAttack = x, false),
+        Rw("Атака PvE", v => v.PveAttack, (v, x) => v.PveAttack = x, false), Rw("Атака по боссам", v => v.BossAttack, (v, x) => v.BossAttack = x, false),
+        Rw("Увеличение атаки", v => v.AttackIncreasePercent, (v, x) => v.AttackIncreasePercent = x),
     ];
 
     private static readonly Field[] Multipliers =
     [
-        Ro("Усиление урона", v => v.DamageBoostPercent, true), Ro("Усиление урона оружием", v => v.WeaponDamageBoostPercent, true),
-        Ro("Усиление урона PvE", v => v.PveDamageBoostPercent, true), Ro("Усиление урона по боссам", v => v.BossDamageBoostPercent, true),
-        Ro("Усиление крит. урона", v => v.CriticalDamageBoostPercent, true), Ro("Идеальный удар", v => v.PerfectPercent, true),
-        Ro("Двойной удар", v => v.SmitePercent, true), Ro("Урон спереди", v => v.FrontDamageBoostPercent, true),
-        Ro("Урон сзади", v => v.BackDamageBoostPercent, true), Ro("Урон по расам", v => v.RaceDamageBoostPercent, true),
+        Rw("Усиление урона", v => v.DamageBoostPercent, (v, x) => v.DamageBoostPercent = x),
+        Rw("Усиление урона оружием", v => v.WeaponDamageBoostPercent, (v, x) => v.WeaponDamageBoostPercent = x),
+        Rw("Усиление урона PvE", v => v.PveDamageBoostPercent, (v, x) => v.PveDamageBoostPercent = x),
+        Rw("Усиление урона по боссам", v => v.BossDamageBoostPercent, (v, x) => v.BossDamageBoostPercent = x),
+        Rw("Усиление крит. урона", v => v.CriticalDamageBoostPercent, (v, x) => v.CriticalDamageBoostPercent = x),
+        Rw("Идеальный удар", v => v.PerfectPercent, (v, x) => v.PerfectPercent = x),
+        Rw("Двойной удар", v => v.SmitePercent, (v, x) => v.SmitePercent = x),
+        Rw("Урон спереди", v => v.FrontDamageBoostPercent, (v, x) => v.FrontDamageBoostPercent = x),
+        Rw("Урон сзади", v => v.BackDamageBoostPercent, (v, x) => v.BackDamageBoostPercent = x),
+        Rw("Урон по расам", v => v.RaceDamageBoostPercent, (v, x) => v.RaceDamageBoostPercent = x),
     ];
 
     private static readonly Field[] Derived =
     [
-        Ro("Скорость боя", v => v.CombatSpeedPercent, true), Ro("Атака в окне персонажа", v => v.StatWindowAttack), Ro("Эффективная атака", v => v.EffectiveAttack),
+        Rw("Скорость боя", v => v.CombatSpeedPercent, (v, x) => v.CombatSpeedPercent = x),
+        Ro("Атака в окне персонажа", v => v.StatWindowAttack), Ro("Эффективная атака", v => v.EffectiveAttack),
     ];
 
     private static readonly Field[] Buffs =
@@ -137,8 +169,34 @@
         Rw("Урон сзади", v => v.OptionBackDamageBoostPercent, (v, x) => v.OptionBackDamageBoostPercent = x),
     ];
 
+    private static readonly (string Label, Field Field, double Step)[] Steps =
+    [
+        ("+100 атаки", OptionAttack[1], 100), ("+10 бонуса атаки", OptionAttack[0], 10), ("+100 атаки по боссам", OptionAttack[5], 100),
+        ("+100 атаки PvE", OptionAttack[4], 100), ("+1% увеличения атаки", OptionAttack[6], 1), ("+1% усиления урона", OptionMultipliers[0], 1),
+        ("+1% усиления урона оружием", OptionMultipliers[1], 1), ("+1% усиления крит. урона", OptionMultipliers[2], 1),
+        ("+1% идеального удара", OptionMultipliers[3], 1), ("+1% двойного удара", OptionMultipliers[4], 1), ("+1% урона сзади", OptionMultipliers[6], 1),
+    ];
+
+    /// <summary>Each step alone on top of the current stats, the options typed in put back afterwards.</summary>
+    private List<(string Label, double Gain)> Worth()
+    {
+        var all = OptionAttack.Concat(OptionMultipliers).ToArray();
+        var saved = all.Select(f => f.Get(vm)).ToArray();
+        foreach (var f in all) f.Set!(vm, 0);
+        var result = new List<(string Label, double Gain)>();
+        foreach (var (label, field, step) in Steps)
+        {
+            field.Set!(vm, step);
+            result.Add((label, vm.DamageGainPercent));
+            field.Set!(vm, 0);
+        }
+        for (var i = 0; i < all.Length; i++) all[i].Set!(vm, saved[i]);
+        return result.OrderByDescending(x => x.Gain).ToList();
+    }
+
     private StatEfficiencyCalculatorViewModel vm = null!;
-    private bool hasSnapshot;
+    private bool hasSnapshot, edited;
+    private DateTime? capturedAt;
 
     protected override void OnInitialized()
     {
@@ -151,8 +209,10 @@
 
     private void Reload()
     {
-        var snapshot = Sessions.GetCurrentPlayerStatSnapshot();
+        var snapshot = Sessions.GetCurrentPlayerStatSnapshot() ?? AionDpsMeter.Services.PacketProcessing.Fork.StatsMemory.Last;
         hasSnapshot = snapshot?.Stats is not null;
+        capturedAt = snapshot?.CapturedAt;
+        edited = false;
         vm.LoadFromSnapshot(snapshot);
     }
 
@@ -187,6 +247,7 @@
     {
         var text = (e.Value?.ToString() ?? "").Replace(',', '.').Trim();
         f.Set!(vm, double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0);
+        if (Attack.Contains(f) || Multipliers.Contains(f) || Derived.Contains(f)) edited = true;
     }
 
     private static string Raw(double v) => v.ToString("0.####", CultureInfo.InvariantCulture);

@@ -34,3 +34,9 @@
         if (tab && box && box.value) { box.value = ''; query = ''; apply(); }
     });
 })();
+
+// aion2-overlay fork: an element's left edge and width, for the history views' wheel zoom and drag
+window.forkRect = function (el) {
+    const r = el.getBoundingClientRect();
+    return [r.left, r.width];
+};
