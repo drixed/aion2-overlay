@@ -68,23 +68,24 @@ public class TimersFeedTests
     }
 
     [Fact]
-    public void Unnamed_bosses_collapse_into_one_row_per_map()
+    public void Unnamed_places_get_a_row_each_with_their_own_time()
     {
         var items = TimersFeed.BuildBosses(Now, Data(), [
             new BossTimer(1, -101001, 1010, 101001, true, null, null, null, null),
-            new BossTimer(1, -101002, 1010, 101002, true, null, null, null, null),
             new BossTimer(1, -101003, 1010, 101003, false, null, Now.AddMinutes(7), null, null),
             new BossTimer(1, 2400800, 1110, 111021, false, null, Now.AddMinutes(20), null, null),
         ], Catalog);
 
-        Assert.Equal(2, items.Count);
-        var group = items.Single(i => i.Id == "map:1010");
-        Assert.Equal("Карта 1010: живы 2 из 3", group.Title);
-        Assert.Equal(FeedStatus.Upcoming, group.Status);
-        Assert.Equal(Now.AddMinutes(7), group.At);
-        Assert.Null(group.BossKey);
-        Assert.Equal("Альтгард: живы 1 из 1", TimersFeed.BuildBosses(Now, Data(),
-            [new BossTimer(1, -111001, 1110, 111001, true, null, null, null, null)], Catalog).Single().Title);
+        Assert.Equal(3, items.Count);
+        var place = items.Single(i => i.Id == "boss:-101003");
+        Assert.Equal("Место 3", place.Title);
+        Assert.Equal("Карта 1010", place.Zone);
+        Assert.Equal(FeedStatus.Upcoming, place.Status);
+        Assert.Equal(Now.AddMinutes(7), place.At);
+        Assert.Equal(-101003, place.BossKey); // "убит" works on it too
+        Assert.Equal(FeedStatus.Alive, items.Single(i => i.Id == "boss:-101001").Status);
+        Assert.Equal("Альтгард", TimersFeed.BuildBosses(Now, Data(),
+            [new BossTimer(1, -111001, 1110, 111001, true, null, null, null, null)], Catalog).Single().Zone);
     }
 
     [Fact]

@@ -47,7 +47,8 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 var now = time.GetUtcNow();
                 var o = options.Current;
                 var items = TimersFeed.Build(now, schedule.Current, tracker.TimersFor(server.CurrentServerId), catalog)
-                    .Where(o.Notifies);
+                    .Where(o.Notifies)
+                    .Where(i => i.Kind != FeedKind.Boss || i.BossKey is > 0); // an unnamed map place says nothing in an alert
                 var list = items.ToList();
                 var due = alerts.Due(list, now, o.LeadFor);
                 var opened = o.AlertOnOpen ? alerts.Opened(list.Where(i => i.Kind != FeedKind.Boss)) : [];

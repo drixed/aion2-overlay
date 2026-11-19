@@ -95,6 +95,44 @@ namespace AionDpsMeter.UI.Pages
             _ => "★",
         };
 
+        private static readonly (string Id, string Label)[] Tabs = [("all", "Все"), ("alive", "Живые"), ("soon", "Скоро")];
+        private string tab = "all";
+        private int naming;
+
+        private IReadOnlyList<(int Code, string Name)> BossNames => catalog.Bosses();
+
+        /// <summary>Spawns within half an hour, or already late.</summary>
+        private bool Soon(FeedItem i) =>
+            i.Status == FeedStatus.Overdue || (i.Status == FeedStatus.Upcoming && i.At is { } at && at - now <= TimeSpan.FromMinutes(30));
+
+        private IEnumerable<FeedItem> Shown() => tab switch
+        {
+            "alive" => visible.Where(i => i.Status == FeedStatus.Alive),
+            "soon" => visible.Where(Soon),
+            _ => visible,
+        };
+
+        private string TimeText(FeedItem i) => i.Status switch
+        {
+            FeedStatus.Alive => "жив",
+            FeedStatus.Upcoming when i.At is { } at => FeedText.Span(at - now),
+            FeedStatus.Overdue => "скоро",
+            _ => "—",
+        };
+
+        /// <summary>"Name (code)" from the list, or a name only one boss has.</summary>
+        private void Assign(int place, string? text)
+        {
+            naming = 0;
+            if (string.IsNullOrWhiteSpace(text)) return;
+            var m = System.Text.RegularExpressions.Regex.Match(text, @"\((\d+)\)\s*$");
+            var code = m.Success ? int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+            if (code == 0 && catalog.Bosses().Where(b => b.Name.Equals(text.Trim(), StringComparison.CurrentCultureIgnoreCase)).ToList() is { Count: 1 } one)
+                code = one[0].Code;
+            if (code > 0) tracker.AssignSlot(place, code);
+            Recompute();
+        }
+
         public void Dispose()
         {
             controller.EditingChanged -= OnEditingChanged;

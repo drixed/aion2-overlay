@@ -354,11 +354,17 @@
         </SettingRow>
         @if (O.HiddenIds.Count > 0)
         {
-            <SettingRow Title="Скрытые строки" Description="Строки, скрытые крестиком в окне таймеров" IsLast="true">
+            <SettingRow Title="Убранные из окна таймеров" Description="Боссы и события, которые вы убрали крестиком «×» в окне таймеров боссов. Верните нужные — они снова появятся в окне">
                 <ValueSlot>
-                    <button type="button" class="fs-segmented__option fs-button" @onclick="ShowHidden">Вернуть (@O.HiddenIds.Count)</button>
+                    <button type="button" class="fs-segmented__option fs-button" @onclick="ShowHidden">Вернуть все (@O.HiddenIds.Count)</button>
                 </ValueSlot>
             </SettingRow>
+            <div class="fs-hidden-list">
+                @foreach (var id in O.HiddenIds.ToList())
+                {
+                    <span class="fs-hidden-item">@HiddenName(id)<button type="button" title="Вернуть в окно" @onclick="() => Set(o => o.HiddenIds.Remove(id))">вернуть</button></span>
+                }
+            </div>
         }
         break;
 }

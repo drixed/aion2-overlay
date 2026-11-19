@@ -1,49 +1,74 @@
-@* aion2-overlay fork: new file (see FORK_CHANGES.md). *@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The field boss timers window in the fork's card design: counts in
+   the header, tabs, one row per boss or unnamed map place with its own time; an unnamed place can be named in place. *@
 @using AionDpsMeter.Timers.Feed
 @implements IDisposable
 
-<div class="timers" style="zoom:@(Options.UiScale)%">
-    <div class="timers__header" @onmousedown="Drag">
-        <span class="timers__title">☠ @(Collapsed && toast is not null ? toast : "Таймеры боссов")</span>
+<div class="tb" style="zoom:@(Options.UiScale)%">
+    <div class="tb-head" @onmousedown="Drag">
+        <span class="tb-title">Таймеры боссов</span>
+        <span class="tb-count alive" title="Живы">● @visible.Count(i => i.Status == FeedStatus.Alive)</span>
+        <span class="tb-count soon" title="Появятся в ближайшие 30 минут">◷ @visible.Count(Soon)</span>
+        <span class="tb-grow"></span>
         <button type="button" title="@(Collapsed ? "Развернуть" : "Свернуть")" @onclick="ToggleCollapsed" @onmousedown:stopPropagation="true">@(Collapsed ? "▸" : "▾")</button>
-        <button type="button" title="Скрыть окно (вернуть — в ⚙ Настройки)" @onclick="HideWindow" @onmousedown:stopPropagation="true">✕</button>
+        <button type="button" title="Скрыть окно (вернуть — в ⚙ Настройки → Таймеры)" @onclick="HideWindow" @onmousedown:stopPropagation="true">✕</button>
     </div>
+    @if (toast is not null)
+    {
+        <div class="tb-toast">@toast</div>
+    }
     @if (!Collapsed)
     {
-        @if (toast is not null)
-        {
-            <div class="timers__toast">@toast</div>
-        }
-        <div class="timers__list">
-            @foreach (var item in visible)
+        <div class="tb-tabs">
+            @foreach (var (id, label) in Tabs)
             {
-                <div class="timers__row timers__row--@item.Status.ToString().ToLowerInvariant()">
-                    <span class="timers__icon">@KindIcon(item.Kind)</span>
-                    <span class="timers__name">
-                        @item.Title
-                        @if (!item.Verified)
+                <button type="button" class="@(tab == id ? "on" : "")" @onclick="() => tab = id">@label</button>
+            }
+        </div>
+        <div class="tb-list">
+            @foreach (var item in Shown())
+            {
+                var place = item.BossKey is < 0 ? -item.BossKey!.Value : 0;
+                <div class="tb-row @item.Status.ToString().ToLowerInvariant()">
+                    <i class="tb-mark"></i>
+                    <span class="tb-name">
+                        <b>@item.Title</b>
+                        @if (item.Zone is not null) { <small>@item.Zone</small> }
+                        @if (place > 0)
                         {
-                            <em> (не проверено)</em>
-                        }
-                        @if (item.Zone is not null)
-                        {
-                            <small>@item.Zone</small>
+                            @if (naming == place)
+                            {
+                                <input class="tb-who" list="tb-boss-names" placeholder="Кто здесь? — имя босса"
+                                       @onchange="e => Assign(place, e.Value?.ToString())" />
+                            }
+                            else
+                            {
+                                <button type="button" class="tb-link" @onclick="() => naming = place">кто здесь?</button>
+                            }
                         }
                     </span>
-                    <span class="timers__time">@FeedText.Format(item, now, TimeZoneInfo.Local)</span>
-                    <span class="timers__actions">
+                    <span class="tb-time">@TimeText(item)</span>
+                    <span class="tb-actions">
                         @if (item.BossKey is not null)
                         {
-                            <button title="Отметить убитым" @onclick="() => MarkKilled(item)">убит</button>
+                            <button type="button" title="Отметить убитым — таймер пойдёт от сейчас" @onclick="() => MarkKilled(item)">убит</button>
                         }
-                        <button title="Скрыть строку" @onclick="() => Hide(item)">×</button>
+                        <button type="button" title="Убрать строку (вернуть — в ⚙ Настройки → Таймеры)" @onclick="() => Hide(item)">×</button>
                     </span>
                 </div>
             }
-            @if (visible.Count == 0)
+            @if (!Shown().Any())
             {
-                <div class="timers__empty">Боссов пока нет. Открой карту в игре — появятся полевые боссы.</div>
+                <div class="tb-empty">@(visible.Count == 0 ? "Боссов пока нет. Откройте карту в игре — метр увидит боссов этой зоны и их время." : "В этой вкладке пусто.")</div>
             }
         </div>
+        @if (naming > 0)
+        {
+            <datalist id="tb-boss-names">
+                @foreach (var (code, name) in BossNames)
+                {
+                    <option value="@($"{name} ({code})")"></option>
+                }
+            </datalist>
+        }
     }
 </div>

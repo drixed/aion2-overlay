@@ -20,3 +20,8 @@
 .fs-class-color { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 6px; border: 1px solid var(--line-strong); border-radius: 7px; font-size: 12px; cursor: pointer; }
 .fs-class-icon { width: 16px; height: 16px; border-radius: 4px; background-size: cover; }
 .fs-class-color input[type=color] { width: 24px; height: 18px; border: 0; padding: 0; background: none; cursor: pointer; }
+
+/* rows removed from the boss timers window, each with its own "вернуть" */
+.fs-hidden-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 2px 12px; }
+.fs-hidden-item { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 7px; background: #19202a; border: 1px solid #2b3442; font-size: 12px; color: #c9d1d9; }
+.fs-hidden-item button { background: #121820; border: 1px solid #2f3846; color: #5fd4c4; border-radius: 5px; padding: 1px 8px; font: inherit; font-size: 11px; cursor: pointer; }

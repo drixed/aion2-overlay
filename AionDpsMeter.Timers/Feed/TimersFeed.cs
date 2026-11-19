@@ -25,12 +25,11 @@ public static class TimersFeed
         return Sort(items);
     }
 
-    /// <summary>Named bosses one row each; bosses of a map not in the tables (unknown names) one summary row per map.</summary>
+    /// <summary>One row per boss; a map place whose boss is not known yet shows as "Место N" with its own time.</summary>
     public static IReadOnlyList<FeedItem> BuildBosses(DateTimeOffset now, ScheduleData data, IEnumerable<BossTimer> bosses, BossCatalog catalog)
     {
         var items = new List<FeedItem>();
-        var list = bosses.ToList();
-        foreach (var b in list.Where(b => b.Key > 0))
+        foreach (var b in bosses)
         {
             var (status, at) = b switch
             {
@@ -39,17 +38,9 @@ public static class TimersFeed
                 { NextSpawn: { } next } when now - next < OverdueWindow => (FeedStatus.Overdue, (DateTimeOffset?)next),
                 _ => (FeedStatus.Unknown, (DateTimeOffset?)null),
             };
-            items.Add(new FeedItem($"boss:{b.Key}", $"boss:{b.Key}@{at:O}", FeedKind.Boss, catalog.Name(b.Key),
-                ZoneOf(data, b.MapId), status, at, true, b.Key));
-        }
-        foreach (var map in list.Where(b => b.Key < 0).GroupBy(b => b.MapId))
-        {
-            var alive = map.Count(b => b.Alive);
-            var upcoming = map.Where(b => !b.Alive && b.NextSpawn > now).Select(b => b.NextSpawn!.Value).ToList();
-            DateTimeOffset? next = upcoming.Count > 0 ? upcoming.Min() : null;
-            var status = next is not null ? FeedStatus.Upcoming : alive > 0 ? FeedStatus.Alive : FeedStatus.Unknown;
-            var title = $"{ZoneOf(data, map.Key) ?? $"Карта {map.Key}"}: живы {alive} из {map.Count()}";
-            items.Add(new FeedItem($"map:{map.Key}", $"map:{map.Key}@{next:O}", FeedKind.Boss, title, null, status, next, true, null));
+            var title = b.Key > 0 ? catalog.Name(b.Key) : $"Место {b.SlotId % 100}";
+            var zone = ZoneOf(data, b.MapId) ?? (b.Key > 0 ? null : $"Карта {b.MapId}");
+            items.Add(new FeedItem($"boss:{b.Key}", $"boss:{b.Key}@{at:O}", FeedKind.Boss, title, zone, status, at, true, b.Key));
         }
         return Sort(items);
     }

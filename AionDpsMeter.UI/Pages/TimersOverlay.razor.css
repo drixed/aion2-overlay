@@ -1,31 +1,41 @@
-/* aion2-overlay fork: new file (see FORK_CHANGES.md). */
-.timers { display: flex; flex-direction: column; height: 100%; font-size: 13px; color: #e6edf3; user-select: none; box-sizing: border-box;
-    background: rgba(18, 16, 24, .82); border-radius: 10px; overflow: hidden; }
-.timers__header { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 10px; cursor: move; flex: 0 0 auto; }
-.timers__title { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.timers__header button { background: none; border: 0; color: #9aa4b2; cursor: pointer; padding: 2px 5px; font-size: 13px; }
-.timers__header button:hover, .timers__header button.is-on { color: #fff; }
-.timers__settings { margin: 0 8px 6px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, .06); font-size: 12px; }
-.timers__filters, .timers__leads { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
-.timers__leads input { width: 42px; margin-left: 4px; background: rgba(0, 0, 0, .4); color: inherit; border: 1px solid rgba(255, 255, 255, .2); border-radius: 3px; }
-.timers__setting { display: block; margin-bottom: 4px; }
-.timers__toast { background: rgba(255, 170, 0, .9); color: #111; padding: 4px 8px; margin: 0 8px 4px; border-radius: 4px; font-weight: 700; }
-.timers__list { flex: 1; min-height: 0; overflow: auto; padding: 0 6px 6px; }
-.timers__row { display: flex; align-items: center; gap: 6px; padding: 3px 6px; margin-bottom: 2px; background: rgba(255, 255, 255, .04); border-radius: 4px; }
-.timers__icon { width: 16px; text-align: center; }
-.timers__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.timers__name small { opacity: .6; margin-left: 6px; }
-.timers__name em { opacity: .6; font-size: 11px; font-style: normal; }
-.timers__time { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.timers__row--active .timers__time, .timers__row--alive .timers__time { color: #7ee787; }
-.timers__row--overdue .timers__time { color: #ffa657; }
-.timers__row--unknown { opacity: .55; }
-.timers__row button, .timers__showall { background: rgba(255, 255, 255, .12); color: inherit; border: 0; border-radius: 3px; padding: 1px 6px; cursor: pointer; }
-.timers__empty { opacity: .7; padding: 6px; font-size: 12px; }
-.timers__list::-webkit-scrollbar { width: 6px; }
-.timers__list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .18); border-radius: 3px; }
-.timers__list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .3); }
-.timers__list::-webkit-scrollbar-track { background: transparent; }
-.timers__list::-webkit-scrollbar-button { display: none; }
-.timers__actions { display: none; gap: 3px; }
-.timers__row:hover .timers__actions { display: inline-flex; }
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). The boss timers window in the fork's dark navy + teal design. */
+.tb { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; background: rgba(20, 26, 35, .94); color: #dfe6ee;
+    border: 1px solid #2a3340; border-radius: 10px; overflow: hidden; font-family: 'Segoe UI', sans-serif; font-size: 12.5px; user-select: none; }
+.tb-head { display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 12px; background: rgba(17, 22, 30, .9); border-bottom: 1px solid #222a36; cursor: move; flex: 0 0 auto; }
+.tb-title { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.tb-count { font-size: 11px; font-variant-numeric: tabular-nums; border-radius: 6px; padding: 0 6px; }
+.tb-count.alive { color: #7ee787; background: rgba(126, 231, 135, .1); }
+.tb-count.soon { color: #f5c76b; background: rgba(245, 199, 107, .1); }
+.tb-grow { flex: 1; }
+.tb-head button { background: none; border: 0; color: #8b95a5; cursor: pointer; padding: 2px 5px; font-size: 12px; }
+.tb-head button:hover { color: #fff; }
+.tb-toast { background: rgba(245, 199, 107, .95); color: #111; padding: 4px 10px; font-weight: 700; flex: 0 0 auto; }
+.tb-tabs { display: flex; gap: 4px; padding: 6px 8px 4px; flex: 0 0 auto; }
+.tb-tabs button { background: #121820; border: 1px solid #2b3442; color: #c9d1d9; border-radius: 6px; padding: 2px 10px; font: inherit; font-size: 11.5px; cursor: pointer; }
+.tb-tabs button.on { background: rgba(95, 212, 196, .14); color: #5fd4c4; border-color: rgba(95, 212, 196, .6); font-weight: 600; }
+.tb-list { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 8px 8px; display: flex; flex-direction: column; gap: 3px; }
+.tb-row { position: relative; display: grid; grid-template-columns: 4px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; min-height: 30px; padding: 3px 6px 3px 0;
+    border-radius: 7px; background: rgba(255, 255, 255, .03); border: 1px solid transparent; overflow: hidden; }
+.tb-row:hover { border-color: #2f3846; }
+.tb-mark { align-self: stretch; border-radius: 3px; background: #3a4352; }
+.tb-row.alive .tb-mark { background: #7ee787; }
+.tb-row.upcoming .tb-mark { background: #58a6ff; }
+.tb-row.overdue .tb-mark { background: #f5c76b; }
+.tb-name { display: flex; flex-direction: column; min-width: 0; }
+.tb-name b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-name small { color: #7d8898; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-link { align-self: flex-start; background: none; border: 0; padding: 0; color: #5fd4c4; font: inherit; font-size: 10.5px; cursor: pointer; text-decoration: underline dotted; }
+.tb-who { margin-top: 2px; width: 100%; box-sizing: border-box; background: #0f141b; color: #e6edf3; border: 1px solid #5fd4c4; border-radius: 5px; padding: 2px 6px; font: inherit; font-size: 11px; outline: none; user-select: text; }
+.tb-time { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; color: #c9d1d9; }
+.tb-row.alive .tb-time { color: #7ee787; }
+.tb-row.upcoming .tb-time { color: #dfe6ee; }
+.tb-row.overdue .tb-time { color: #f5c76b; }
+.tb-row.unknown .tb-time { color: #5f6b7c; font-weight: 400; }
+.tb-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .12s; }
+.tb-row:hover .tb-actions { opacity: 1; }
+.tb-actions button { background: #121820; border: 1px solid #2b3442; color: #8b95a5; border-radius: 5px; padding: 0 6px; font: inherit; font-size: 10.5px; cursor: pointer; }
+.tb-actions button:hover { color: #fff; border-color: #3d4858; }
+.tb-empty { color: #8b95a5; font-size: 12px; padding: 14px 8px; text-align: center; line-height: 1.4; }
+.tb ::-webkit-scrollbar { width: 5px; }
+.tb ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
+.tb ::-webkit-scrollbar-track, .tb ::-webkit-scrollbar-button { background: transparent; display: none; }

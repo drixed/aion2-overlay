@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Components.Web;
 namespace AionDpsMeter.UI.Pages
 {
     /// <summary>The fork's settings as blocks of RATmeter's settings window: "appearance", "tracking", "hotkeys", "timers".</summary>
-    public partial class ForkSettings(TimersOptionsStore store, AionDpsMeter.Timers.Schedule.ScheduleSource schedule, AionDpsMeter.UI.Services.TimerWindow.AlertSoundPlayer soundPlayer) : ComponentBase
+    public partial class ForkSettings(TimersOptionsStore store, AionDpsMeter.Timers.Schedule.ScheduleSource schedule, AionDpsMeter.UI.Services.TimerWindow.AlertSoundPlayer soundPlayer, AionDpsMeter.Timers.Bosses.BossCatalog catalog) : ComponentBase
     {
         private static readonly (BarStyle Style, string Label)[] BarStyles =
             [(BarStyle.Classic, "Классика"), (BarStyle.Thick, "Толстые"), (BarStyle.Slim, "Тонкие"), (BarStyle.Gauge, "Шкала"), (BarStyle.Table, "Таблица")];
@@ -147,6 +147,15 @@ namespace AionDpsMeter.UI.Pages
         });
 
         private void ShowHidden() => Set(o => o.HiddenIds.Clear());
+
+        /// <summary>A hidden row's name: a boss, an unnamed map place, a map summary or a schedule event.</summary>
+        private string HiddenName(string id)
+        {
+            if (id.StartsWith("boss:", StringComparison.Ordinal) && int.TryParse(id[5..], out var key))
+                return key > 0 ? catalog.Name(key) : $"Место {-key % 100} · карта {-key / 100}";
+            if (id.StartsWith("map:", StringComparison.Ordinal)) return $"Карта {id[4..]} (все места)";
+            return schedule.Current.Events.FirstOrDefault(e => e.Id == id)?.Name ?? id;
+        }
 
         /// <summary>Per event: shown unless hidden by id; field bosses all at once by their kind.</summary>
         private bool Shown(AlertRow row) => row.Kind == FeedKind.Boss
