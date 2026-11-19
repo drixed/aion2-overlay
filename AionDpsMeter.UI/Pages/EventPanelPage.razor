@@ -1,0 +1,67 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). One floating panel of event icons (its own window). *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Overlay
+@implements IDisposable
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore Store
+@inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
+@inject AionDpsMeter.UI.Services.TimerWindow.EventPanelsController Panels
+
+@if (Panel is { } p)
+{
+    <div class="ep @(p.Vertical ? "ep--vertical" : "") @(p.Look == "bars" ? "ep--bars" : "ep--cards") @(p.Shape == "circle" ? "ep--circle" : "") @(Panels.Editing ? "ep--editing" : "")"
+         style="--ep-icon:@(p.IconSize)px;--ep-gap:@(p.Spacing)px"
+         @onmousedown="() => Panels.Drag(p.Id)">
+        @if (Panels.Editing)
+        {
+            <span class="ep-label">✥ @p.Name</span>
+        }
+        @foreach (var tile in Tiles)
+        {
+            var color = EventIcons.Color(tile.Icon);
+            <div class="ep-tile ep-tile--@tile.State.ToString().ToLowerInvariant()" style="--ev:@color" title="@tile.Name">
+                <span class="ep-icon">@((MarkupString)EventIcons.Svg(tile.Icon))</span>
+                @if (p.Look == "bars")
+                {
+                    <span class="ep-name">@tile.Name</span>
+                    <b class="ep-time">@tile.Countdown</b>
+                    <i class="ep-progress" style="width:@((tile.Progress * 100).ToString("0.#", CultureInfo.InvariantCulture))%"></i>
+                }
+                else
+                {
+                    <b class="ep-time">@tile.Countdown</b>
+                    <span class="ep-name">@tile.Name</span>
+                }
+            </div>
+        }
+        @if (Tiles.Count == 0)
+        {
+            <span class="ep-empty">Добавь события в настройках</span>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string PanelId { get; set; } = "";
+
+    private System.Threading.Timer? tick;
+
+    private EventPanel? Panel => Store.Current.EventPanels.FirstOrDefault(x => x.Id == PanelId);
+
+    private IReadOnlyList<EventTile> Tiles => Panel is { } p ? EventPanels.Tiles(DateTimeOffset.Now, Schedule.Current, p) : [];
+
+    protected override void OnInitialized()
+    {
+        tick = new System.Threading.Timer(_ => InvokeAsync(StateHasChanged), null, 1000, 1000);
+        Panels.EditingChanged += OnEditing;
+        Store.Changed += OnEditing;
+    }
+
+    private void OnEditing() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        tick?.Dispose();
+        Panels.EditingChanged -= OnEditing;
+        Store.Changed -= OnEditing;
+    }
+}

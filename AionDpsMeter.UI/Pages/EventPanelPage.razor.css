@@ -1,0 +1,32 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). A floating panel of event icons. */
+.ep { display: flex; gap: var(--ep-gap); padding: 6px; box-sizing: border-box; width: 100vw; height: 100vh; align-items: flex-start;
+    font-family: 'Segoe UI', sans-serif; color: #e6edf3; user-select: none; position: relative; overflow: hidden; }
+.ep--vertical { flex-direction: column; }
+.ep--editing { outline: 1px dashed rgba(95, 212, 196, .8); outline-offset: -1px; border-radius: 8px; background: rgba(95, 212, 196, .06); cursor: move; }
+.ep-label { position: absolute; top: 0; left: 6px; font-size: 10px; color: #5fd4c4; z-index: 2; }
+.ep-empty { font-size: 11px; color: #9aa4b2; padding: 4px; }
+
+/* cards: an icon, the time under it, the name under the time (like the game's own timers) */
+.ep--cards .ep-tile { display: flex; flex-direction: column; align-items: center; width: max(calc(var(--ep-icon) + 16px), 92px); text-align: center; }
+.ep-icon { display: flex; align-items: center; justify-content: center; width: var(--ep-icon); height: var(--ep-icon); flex: 0 0 auto;
+    border-radius: 8px; background: rgba(22, 28, 38, .92); border: 1px solid rgba(255, 255, 255, .16); color: var(--ev);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .5); box-sizing: border-box; }
+.ep--circle .ep-icon { border-radius: 50%; }
+.ep-icon ::deep svg { width: 62%; height: 62%; }
+.ep--cards .ep-time { margin-top: 3px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 3px #000, 0 0 6px rgba(0, 0, 0, .8); }
+.ep--cards .ep-name { font-size: 11px; line-height: 1.2; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, .9);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* bars: one row each, a progress line while the event is open */
+.ep--bars .ep-tile { position: relative; display: flex; align-items: center; gap: 8px; width: calc(170px + var(--ep-icon)); height: calc(var(--ep-icon) + 10px);
+    padding: 0 10px 0 5px; box-sizing: border-box; border-radius: 8px; background: rgba(18, 22, 30, .88); border: 1px solid rgba(255, 255, 255, .1); overflow: hidden; }
+.ep--bars .ep-name { flex: 1; min-width: 0; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep--bars .ep-time { font-size: 13px; font-variant-numeric: tabular-nums; }
+.ep-progress { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--ev); }
+
+/* about to start: the icon glows; open: lit with its colour */
+.ep-tile--soon .ep-icon { border-color: var(--ev); animation: ep-pulse .9s ease-in-out infinite alternate; }
+.ep-tile--open .ep-icon { background: color-mix(in srgb, var(--ev) 28%, rgba(22, 28, 38, .92)); border-color: var(--ev); box-shadow: 0 0 10px var(--ev); }
+.ep-tile--open .ep-time { color: var(--ev); }
+@keyframes ep-pulse { from { box-shadow: 0 0 0 0 var(--ev); } to { box-shadow: 0 0 12px 2px var(--ev); } }

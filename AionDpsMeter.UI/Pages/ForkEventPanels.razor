@@ -1,0 +1,176 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). Settings of the floating event panels. *@
+@using AionDpsMeter.Timers.Overlay
+@implements IDisposable
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore Store
+@inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
+@inject AionDpsMeter.UI.Services.TimerWindow.EventPanelsController Controller
+
+<div class="pe">
+    <div class="pe-label">ПЛАВАЮЩИЕ ПАНЕЛИ СОБЫТИЙ</div>
+    <p class="pe-hint">Иконки событий с отсчётом в любом месте экрана поверх игры — как таймеры в самой игре. Каждая панель — своё окно со своими событиями и видом.</p>
+
+    <div class="pe-row">
+        <span class="pe-row-title">Показывать панели</span>
+        <span class="pe-seg">
+            <button type="button" class="@(!O.EventPanelsOutOfCombatOnly ? "on" : "")" @onclick="() => Set(o => o.EventPanelsOutOfCombatOnly = false)">Всегда</button>
+            <button type="button" class="@(O.EventPanelsOutOfCombatOnly ? "on" : "")" @onclick="() => Set(o => o.EventPanelsOutOfCombatOnly = true)">Вне боя</button>
+        </span>
+    </div>
+
+    <div class="pe-tabs">
+        @foreach (var p in O.EventPanels)
+        {
+            <button type="button" class="pe-tab @(p.Id == selected?.Id ? "on" : "")" @onclick="() => selectedId = p.Id">
+                @p.Name <small>@p.EventIds.Count</small> @if (!p.Visible) { <span title="Скрыта">🚫</span> }
+            </button>
+        }
+        <button type="button" class="pe-add" @onclick="AddPanel">＋ Новая панель</button>
+        @if (O.EventPanels.Count > 0)
+        {
+            <button type="button" class="pe-place @(Controller.Editing ? "on" : "")" @onclick="Controller.ToggleEditing">
+                @(Controller.Editing ? "✓ Готово" : "✥ Расставить панели на экране")
+            </button>
+        }
+    </div>
+    @if (Controller.Editing)
+    {
+        <p class="pe-hint pe-hint--accent">Перетащи панели мышью в нужное место над игрой, потом нажми «Готово» — они снова пропустят клики в игру.</p>
+    }
+
+    @if (selected is { } panel)
+    {
+        <div class="pe-card">
+            <div class="pe-card-head">
+                <input class="pe-name" value="@panel.Name" @onchange="e => Edit(panel, x => x.Name = string.IsNullOrWhiteSpace(e.Value?.ToString()) ? x.Name : e.Value!.ToString()!.Trim())" />
+                <label class="pe-switch" title="Показывать панель">
+                    <input type="checkbox" checked="@panel.Visible" @onchange="e => Edit(panel, x => x.Visible = e.Value is true)" /><i></i> Видна
+                </label>
+                <button type="button" class="pe-del" title="Удалить панель" @onclick="() => Remove(panel)">🗑</button>
+            </div>
+
+            <div class="pe-sub">НА ЭТОЙ ПАНЕЛИ</div>
+            <div class="pe-chips">
+                @foreach (var id in panel.EventIds)
+                {
+                    var name = Schedule.Current.Events.FirstOrDefault(e => e.Id == id)?.Name ?? id;
+                    <span class="pe-chip on">
+                        <button type="button" title="Левее" @onclick="() => Move(panel, id, -1)">‹</button>
+                        @name
+                        <button type="button" title="Правее" @onclick="() => Move(panel, id, 1)">›</button>
+                        <button type="button" title="Убрать" @onclick="() => Toggle(panel, id)">✕</button>
+                    </span>
+                }
+                @if (panel.EventIds.Count == 0)
+                {
+                    <span class="pe-hint">Пусто — выбери события ниже.</span>
+                }
+            </div>
+
+            <div class="pe-cols">
+                <div class="pe-box">
+                    <div class="pe-sub">СОБЫТИЯ</div>
+                    <div class="pe-chips">
+                        @foreach (var e in Schedule.Current.Events)
+                        {
+                            <button type="button" class="pe-chip @(panel.EventIds.Contains(e.Id) ? "on" : "")" style="--ev:@EventIcons.Color(e.Icon ?? "event")"
+                                    @onclick="() => Toggle(panel, e.Id)">
+                                <span class="pe-chip-icon">@((MarkupString)EventIcons.Svg(e.Icon ?? "event"))</span>@e.Name
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="pe-box">
+                    <div class="pe-sub">СТИЛЬ</div>
+                    <div class="pe-row">
+                        <span class="pe-row-title">Вид</span>
+                        <span class="pe-seg">
+                            <button type="button" class="@(panel.Look != "bars" ? "on" : "")" @onclick='() => Edit(panel, x => x.Look = "cards")'>Карточки</button>
+                            <button type="button" class="@(panel.Look == "bars" ? "on" : "")" @onclick='() => Edit(panel, x => x.Look = "bars")'>Полосы</button>
+                        </span>
+                    </div>
+                    <div class="pe-row">
+                        <span class="pe-row-title">Форма</span>
+                        <span class="pe-seg">
+                            <button type="button" class="@(panel.Shape != "circle" ? "on" : "")" @onclick='() => Edit(panel, x => x.Shape = "square")'>Квадрат</button>
+                            <button type="button" class="@(panel.Shape == "circle" ? "on" : "")" @onclick='() => Edit(panel, x => x.Shape = "circle")'>Круг</button>
+                        </span>
+                    </div>
+                    <div class="pe-row">
+                        <span class="pe-row-title">Вертикально</span>
+                        <label class="pe-switch"><input type="checkbox" checked="@panel.Vertical" @onchange="e => Edit(panel, x => x.Vertical = e.Value is true)" /><i></i></label>
+                    </div>
+                    <div class="pe-row">
+                        <span class="pe-row-title">Размер значка</span>
+                        <input class="pe-range" type="range" min="24" max="64" step="2" value="@panel.IconSize" @onchange="e => EditInt(panel, e.Value, (x, v) => x.IconSize = v)" />
+                        <b class="pe-val">@(panel.IconSize)px</b>
+                    </div>
+                    <div class="pe-row">
+                        <span class="pe-row-title">Отступ</span>
+                        <input class="pe-range" type="range" min="0" max="16" step="1" value="@panel.Spacing" @onchange="e => EditInt(panel, e.Value, (x, v) => x.Spacing = v)" />
+                        <b class="pe-val">@(panel.Spacing)px</b>
+                    </div>
+                    <div class="pe-row">
+                        <span class="pe-row-title">Непрозрачность</span>
+                        <input class="pe-range" type="range" min="20" max="100" step="5" value="@panel.Opacity" @onchange="e => EditInt(panel, e.Value, (x, v) => x.Opacity = v)" />
+                        <b class="pe-val">@(panel.Opacity)%</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string? selectedId;
+
+    private AionDpsMeter.Timers.Feed.TimersOptions O => Store.Current;
+
+    private EventPanel? selected => O.EventPanels.FirstOrDefault(p => p.Id == selectedId) ?? O.EventPanels.FirstOrDefault();
+
+    protected override void OnInitialized() => Controller.EditingChanged += Refresh;
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    private void Set(Action<AionDpsMeter.Timers.Feed.TimersOptions> change)
+    {
+        change(O);
+        Store.Save();
+    }
+
+    private void Edit(EventPanel panel, Action<EventPanel> change) => Set(_ => change(panel));
+
+    private void EditInt(EventPanel panel, object? value, Action<EventPanel, int> change)
+    {
+        if (int.TryParse(value?.ToString(), out var v)) Edit(panel, x => change(x, v));
+    }
+
+    private void AddPanel()
+    {
+        // the first panel starts with the hourly events, the way the game shows them
+        var first = O.EventPanels.Count == 0;
+        var ids = first ? Schedule.Current.Events.Where(e => e.Id is "shugo-festival" or "rift").Select(e => e.Id) : [];
+        var panel = EventPanel.Create($"Панель {O.EventPanels.Count + 1}", ids);
+        Set(o => o.EventPanels.Add(panel));
+        selectedId = panel.Id;
+    }
+
+    private void Remove(EventPanel panel)
+    {
+        Set(o => o.EventPanels.Remove(panel));
+        selectedId = null;
+    }
+
+    private void Toggle(EventPanel panel, string id) =>
+        Edit(panel, x => { if (!x.EventIds.Remove(id)) x.EventIds.Add(id); });
+
+    private void Move(EventPanel panel, string id, int by) => Edit(panel, x =>
+    {
+        var i = x.EventIds.IndexOf(id);
+        var j = Math.Clamp(i + by, 0, x.EventIds.Count - 1);
+        if (i < 0 || i == j) return;
+        x.EventIds.RemoveAt(i);
+        x.EventIds.Insert(j, id);
+    });
+
+    public void Dispose() => Controller.EditingChanged -= Refresh;
+}

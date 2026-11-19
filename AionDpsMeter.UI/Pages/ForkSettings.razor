@@ -219,6 +219,8 @@
             <ValueSlot><ToggleSwitch Checked="@O.EventTimesAlways" CheckedChanged="v => Set(o => o.EventTimesAlways = v)" /></ValueSlot>
         </SettingRow>
 
+        <ForkEventPanels />
+
         <div class="fs-label fs-label--spaced">УВЕДОМЛЕНИЯ</div>
         <SettingRow Title="Звук оповещений" Description="Сигнал, когда до события остаётся заданное время">
             <ValueSlot><ToggleSwitch Checked="@O.Sound" CheckedChanged="v => Set(o => o.Sound = v)" /></ValueSlot>

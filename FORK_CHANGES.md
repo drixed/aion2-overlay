@@ -62,3 +62,4 @@
 `01 91`: удалить `FieldBossListForwarder.cs` и подписаться на их обработчик.
 
 - `site/` и `docs/index.html`, `docs/assets/` — сайт на GitHub Pages (лендинг). Окно метра на нём собрано из настоящих стилей метра (`site/build.py` берёт `BossPanelPage.razor.css` и `app.css`); после изменения вида метра: `python site/build.py`
+- `AionDpsMeter.Timers/Overlay/EventPanels.cs`, `AionDpsMeter.UI/Pages/EventPanelPage.*`, `ForkEventPanels.*`, `Services/TimerWindow/EventPanelsController.cs` — плавающие панели иконок событий (свои окна поверх игры, настройки в разделе таймеров)

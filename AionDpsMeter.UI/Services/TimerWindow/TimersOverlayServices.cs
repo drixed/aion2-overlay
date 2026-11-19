@@ -13,6 +13,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             services.AddSingleton<TimersWindowController>();
             services.AddSingleton<OverlayRuntime>();
             services.AddSingleton<CubeMapWindow>();
+            services.AddSingleton<EventPanelsController>();
             services.AddSingleton<AlertRunner>();
             services.AddSingleton<WindowBoundsKeeper>();
             services.AddSingleton<AlertSoundPlayer>();

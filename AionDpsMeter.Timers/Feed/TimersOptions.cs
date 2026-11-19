@@ -59,6 +59,10 @@ public sealed class TimersOptions
     public bool AutoDummy { get; set; } = true;
     /// <summary>A PvP hit dealt or taken by the user shows the PvP mode (from DPS or Damage mode).</summary>
     public bool AutoPvp { get; set; } = true;
+    /// <summary>Floating panels of event icons, each its own window over the game.</summary>
+    public List<AionDpsMeter.Timers.Overlay.EventPanel> EventPanels { get; set; } = [];
+    /// <summary>The floating panels hide during a fight.</summary>
+    public bool EventPanelsOutOfCombatOnly { get; set; }
     /// <summary>Rows in the PvP mode (a mass fight lists dozens); the user's row always stays.</summary>
     public int PvpMaxRows { get; set; } = 10;
     /// <summary>Length of a dummy run, seconds.</summary>

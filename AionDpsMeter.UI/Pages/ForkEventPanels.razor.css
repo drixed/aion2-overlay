@@ -1,0 +1,50 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). Floating event panels settings: dark navy with a teal accent. */
+.pe { --pe-accent: #5fd4c4; --pe-line: rgba(255, 255, 255, .09); color: #e6edf3; font-size: 13px; margin-top: 18px; }
+.pe-label, .pe-sub { font-size: 10px; font-weight: 600; letter-spacing: .6px; color: #8b95a5; text-transform: uppercase; }
+.pe-sub { margin: 12px 0 6px; }
+.pe-hint { font-size: 11px; color: #8b95a5; margin: 4px 0 10px; line-height: 1.4; }
+.pe-hint--accent { color: var(--pe-accent); }
+.pe-row { display: flex; align-items: center; gap: 10px; min-height: 32px; }
+.pe-row-title { flex: 1; min-width: 0; }
+
+.pe-seg { display: inline-flex; border: 1px solid var(--pe-line); border-radius: 7px; overflow: hidden; }
+.pe-seg button { background: none; border: 0; color: #c9d1d9; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+.pe-seg button + button { border-left: 1px solid var(--pe-line); }
+.pe-seg button.on { background: rgba(95, 212, 196, .14); color: var(--pe-accent); font-weight: 600; box-shadow: inset 0 0 0 1px rgba(95, 212, 196, .55); }
+
+.pe-tabs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0 4px; }
+.pe-tab, .pe-add, .pe-place { background: rgba(255, 255, 255, .04); border: 1px solid var(--pe-line); color: #c9d1d9; border-radius: 8px;
+    padding: 5px 12px; font-size: 12px; cursor: pointer; }
+.pe-tab small { opacity: .6; margin-left: 4px; }
+.pe-tab.on { background: rgba(95, 212, 196, .14); color: var(--pe-accent); border-color: rgba(95, 212, 196, .55); font-weight: 600; }
+.pe-add { border-style: dashed; }
+.pe-place { margin-left: auto; color: var(--pe-accent); border-color: rgba(95, 212, 196, .4); }
+.pe-place.on { background: var(--pe-accent); color: #0e1a1a; font-weight: 700; }
+
+.pe-card { margin-top: 10px; padding: 12px; border-radius: 10px; background: rgba(255, 255, 255, .03); border: 1px solid var(--pe-line); }
+.pe-card-head { display: flex; align-items: center; gap: 10px; }
+.pe-name { flex: 1; min-width: 0; background: rgba(0, 0, 0, .25); border: 1px solid var(--pe-line); color: #e6edf3; border-radius: 6px; padding: 5px 9px; font-size: 13px; }
+.pe-del { background: none; border: 0; cursor: pointer; font-size: 14px; color: #ff8f8f; }
+
+.pe-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pe-chip { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, .04); border: 1px solid var(--pe-line); color: #c9d1d9;
+    border-radius: 7px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.pe-chip.on { background: rgba(95, 212, 196, .12); border-color: rgba(95, 212, 196, .5); color: #e6fffb; }
+.pe-chip button { background: none; border: 0; color: #8b95a5; cursor: pointer; padding: 0 2px; font-size: 12px; }
+.pe-chip button:hover { color: #fff; }
+.pe-chip-icon { display: inline-flex; color: var(--ev); }
+.pe-chip-icon ::deep svg { width: 15px; height: 15px; }
+
+.pe-cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-top: 4px; }
+.pe-box { padding: 4px 12px 10px; border-radius: 9px; border: 1px solid var(--pe-line); background: rgba(0, 0, 0, .15); }
+@media (max-width: 760px) { .pe-cols { grid-template-columns: 1fr; } }
+
+.pe-range { flex: 0 0 45%; accent-color: var(--pe-accent); }
+.pe-val { min-width: 42px; text-align: right; color: var(--pe-accent); font-weight: 600; font-variant-numeric: tabular-nums; font-size: 12px; }
+
+.pe-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: #c9d1d9; }
+.pe-switch input { display: none; }
+.pe-switch i { position: relative; width: 32px; height: 18px; border-radius: 9px; background: #3a4352; transition: background .15s; }
+.pe-switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #c9d1d9; transition: left .15s; }
+.pe-switch input:checked + i { background: var(--pe-accent); }
+.pe-switch input:checked + i::after { left: 16px; background: #fff; }
