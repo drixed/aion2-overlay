@@ -2,7 +2,7 @@
 @using System.Globalization
 @using AionDpsMeter.Timers.Feed
 @implements IDisposable
-@inject AionDpsMeter.UI.Services.TimerWindow.FightSummaryWindow SummaryWindow
+@inject AionDpsMeter.UI.Services.TimerWindow.HistoryBrowserWindow HistoryWindow
 
 @if (ViewModel != null)
 {
@@ -16,8 +16,7 @@
             <span class="bp-time">@ViewModel.CombatDuration</span>
             <span class="bp-ping" style="color:@ViewModel.PingColor">@ViewModel.PingDisplay</span>
             <div class="bp-controls">
-                <button type="button" @onclick="ViewModel.OpenHistory" @onmousedown:stopPropagation="true" title="История боёв">☰</button>
-                <button type="button" @onclick="SummaryWindow.Toggle" @onmousedown:stopPropagation="true" title="Итоги боя: лечение, полученный урон, смерти, первый удар">📊</button>
+                <button type="button" @onclick="() => HistoryWindow.Open()" @onmousedown:stopPropagation="true" title="История боёв: урон по умениям, итоги, лечение, полученный урон, смерти">☰</button>
                 <button type="button" @onclick="ViewModel.OpenStatEffCalc" @onmousedown:stopPropagation="true" title="Калькулятор статов">⚔</button>
                 <button type="button" @onclick="ToggleCubeMap" @onmousedown:stopPropagation="true" title="Карта кубов">🗺</button>
                 <button type="button" @onclick="ViewModel.OpenSettings" @onmousedown:stopPropagation="true" title="Настройки">⚙</button>
@@ -245,7 +244,7 @@
             {
             @foreach (var (player, share, bar, rank) in OrderedRows())
             {
-                <div class="bp-row @ViewModel.GetIsUserClass(player)" @onclick="() => ViewModel.OpenPlayerDetails(player)">
+                <div class="bp-row @ViewModel.GetIsUserClass(player)" @onclick="() => HistoryWindow.Open(player.PlayerId)">
                     <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%@ClassBar(player.ClassId)"></div>
                     @if (Options.RankNumbers)
                     {

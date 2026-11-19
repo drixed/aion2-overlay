@@ -204,7 +204,7 @@ namespace AionDpsMeter.UI.Pages
                 pvpPlayer = pvpPlayer == r.PlayerId ? null : r.PlayerId;
                 return;
             }
-            if (ViewModel!.Players.FirstOrDefault(p => p.PlayerId == r.PlayerId) is { } player) ViewModel.OpenPlayerDetails(player);
+            HistoryWindow.Open(r.PlayerId);
         }
 
         private string AltRowClass(AltRow r) => ViewModel!.GetPlayerRowClass(new PlayerRenderState { ClassId = r.ClassId, IsUser = r.IsUser });

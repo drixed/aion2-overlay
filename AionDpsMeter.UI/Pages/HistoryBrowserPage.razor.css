@@ -1,0 +1,64 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). "История боёв": dark navy with a teal accent. */
+.hb { box-sizing: border-box; width: 100vw; height: 100vh; display: flex; flex-direction: column; background: #161c26; color: #e6edf3;
+    border: 1px solid #2b3442; border-radius: 10px; overflow: hidden; font-family: 'Segoe UI', sans-serif; font-size: 13px; user-select: none; }
+.hb-head { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: #121821; border-bottom: 1px solid #262e3b; cursor: move; }
+.hb-head b { font-size: 14px; }
+.hb-sub { flex: 1; min-width: 0; color: #8b95a5; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hb-tabs { display: inline-flex; border: 1px solid #2f3846; border-radius: 8px; overflow: hidden; cursor: default; }
+.hb-tabs button { background: none; border: 0; color: #c9d1d9; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }
+.hb-tabs button + button { border-left: 1px solid #2f3846; }
+.hb-tabs button.on { background: rgba(95, 212, 196, .14); color: #5fd4c4; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(95, 212, 196, .6); }
+.hb-close { background: none; border: 0; color: #8b95a5; font-size: 14px; cursor: pointer; }
+.hb-close:hover { color: #ff8f8f; }
+
+.hb-main { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px 1fr; }
+.hb-list { border-right: 1px solid #262e3b; background: #121821; overflow-y: auto; padding: 10px 8px; display: flex; flex-direction: column; gap: 4px; }
+.hb-search { box-sizing: border-box; width: 100%; background: #0f141c; color: #e6edf3; border: 1px solid #2f3846; border-radius: 7px; padding: 6px 9px; font: inherit; font-size: 12px; margin-bottom: 4px; outline: none; }
+.hb-search:focus { border-color: #5fd4c4; }
+.hb-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid transparent; background: none; color: #e6edf3; cursor: pointer; font-family: inherit; }
+.hb-item:hover { background: rgba(255, 255, 255, .04); }
+.hb-item.on { background: rgba(95, 212, 196, .12); border-color: rgba(95, 212, 196, .55); }
+.hb-item-name { font-weight: 600; font-size: 13px; }
+.hb-item-meta { color: #8b95a5; font-size: 11px; }
+
+.hb-body { overflow-y: auto; padding: 12px 14px; min-width: 0; }
+.hb-empty { color: #8b95a5; padding: 24px; text-align: center; }
+.hb-sub2 { margin: 14px 0 6px; color: #8b95a5; font-size: 12px; }
+
+.hb-table { display: flex; flex-direction: column; gap: 2px; }
+.hb-tr { position: relative; display: grid; align-items: center; gap: 8px; height: 26px; padding: 0 8px; border-radius: 6px; font-size: 12px;
+    font-variant-numeric: tabular-nums; overflow: hidden; border: 1px solid transparent; }
+.hb-tr > :not(.hb-fill) { position: relative; z-index: 1; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hb-tr > .hb-name { text-align: left; display: flex; align-items: center; gap: 7px; }
+.hb-players .hb-tr { grid-template-columns: minmax(0, 1.8fr) .7fr .9fr .6fr .8fr .6fr .6fr .6fr .5fr; cursor: pointer; }
+.hb-skills .hb-tr { grid-template-columns: minmax(0, 2fr) .6fr .8fr .6fr .6fr .6fr .6fr .8fr .8fr .6fr; }
+.hb-th { height: 22px; color: #8b95a5; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; cursor: default !important; }
+.hb-tr:not(.hb-th):hover { background: rgba(255, 255, 255, .03); }
+.hb-tr.on { border-color: rgba(95, 212, 196, .55); }
+.hb-tr.me .hb-name { color: #5fd4c4; }
+.hb-fill { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(95, 212, 196, .12); }
+.hb-fill.heal { background: rgba(126, 231, 135, .18); }
+.hb-fill.taken { background: rgba(255, 143, 143, .16); }
+.hb-icon { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 4px; background-size: cover; }
+.hb-skill-icon { width: 18px; height: 18px; border-radius: 4px; }
+.hb-spec { display: inline-flex; gap: 2px; justify-content: center; }
+.hb-spec i { width: 5px; height: 5px; border-radius: 50%; background: #3a4352; }
+.hb-spec i.on { background: #5fd4c4; }
+
+.hb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hb-card { background: rgba(255, 255, 255, .03); border: 1px solid #262e3b; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 5px; }
+.hb-card-title { font-size: 12px; color: #8b95a5; margin-bottom: 4px; }
+.hb-stat { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #c9d1d9; }
+.hb-row { position: relative; display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 2px 8px; border-radius: 6px; overflow: hidden;
+    background: rgba(255, 255, 255, .025); border: 1px solid transparent; font-size: 12px; }
+.hb-row > :not(.hb-fill) { position: relative; z-index: 1; }
+.hb-row.me { border-color: rgba(95, 212, 196, .55); }
+.hb-row--big { min-height: 32px; font-size: 13px; }
+.hb-row-name { flex: 1; min-width: 0; font-weight: 600; display: flex; flex-direction: column; overflow: hidden; }
+.hb-row-name small { font-weight: 400; color: #8b95a5; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hb-row b { font-variant-numeric: tabular-nums; }
+
+.hb ::-webkit-scrollbar { width: 6px; }
+.hb ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
+.hb ::-webkit-scrollbar-track, .hb ::-webkit-scrollbar-button { background: transparent; display: none; }

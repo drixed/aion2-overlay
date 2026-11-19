@@ -1,0 +1,234 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). "История боёв": fights on the left, the chosen fight's tabs on the right. *@
+@using System.Globalization
+@using AionDpsMeter.Services.Models
+@using AionDpsMeter.Services.Services.Session
+@using AionDpsMeter.Timers.Modes
+@implements IDisposable
+@inject AionDpsMeter.Services.Services.Session.Persistence.ICombatHistoryStore Store
+@inject CombatSessionManager Sessions
+@inject MeterModesService Modes
+@inject AionDpsMeter.UI.Services.TimerWindow.HistoryBrowserWindow Window
+
+<div class="hb">
+    <div class="hb-head" @onmousedown="Window.Drag">
+        <b>История боёв</b>
+        @if (snap is { } h)
+        {
+            <span class="hb-sub">@Title(h) · @h.SessionStart.ToString("dd.MM HH:mm") · @Clock(h.Duration) · @Fmt(h.PlayerStats.Sum(p => p.TotalDamage)) урона</span>
+        }
+        <span class="hb-tabs" @onmousedown:stopPropagation="true">
+            @foreach (var (id, label) in Tabs)
+            {
+                <button type="button" class="@(tab == id ? "on" : "")" @onclick="() => tab = id">@label</button>
+            }
+        </span>
+        <button type="button" class="hb-close" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
+    </div>
+    <div class="hb-main">
+        <aside class="hb-list">
+            <input class="hb-search" placeholder="Поиск по боссу…" value="@query" @oninput="OnSearch" />
+            <button type="button" class="hb-item @(selected is null ? "on" : "")" @onclick="() => Select(null)">
+                <span class="hb-item-name">● Текущий бой</span>
+                <span class="hb-item-meta">@(Sessions.GetActiveTargetSession() is null ? "нет боя" : "идёт сейчас")</span>
+            </button>
+            @foreach (var item in items)
+            {
+                <button type="button" class="hb-item @(selected == item.SessionId ? "on" : "")" @onclick="() => Select(item.SessionId)">
+                    <span class="hb-item-name">@(string.IsNullOrWhiteSpace(item.TargetName) ? "Бой" : item.TargetName)</span>
+                    <span class="hb-item-meta">@item.SessionStart.ToString("dd.MM HH:mm") · @Clock(item.Duration) · @Fmt(item.TotalDamage) · @item.PlayerCount игр.</span>
+                </button>
+            }
+        </aside>
+        <section class="hb-body">
+            @if (snap is not { } s || s.PlayerStats.Count == 0)
+            {
+                <p class="hb-empty">Выбери бой слева. Текущий бой появится после первого удара.</p>
+            }
+            else if (tab == "damage")
+            {
+                var players = s.PlayerStats.OrderByDescending(p => p.TotalDamage).ToList();
+                var max = Math.Max(1, players.Max(p => p.TotalDamage));
+                <div class="hb-table hb-players">
+                    <div class="hb-tr hb-th"><span>Игрок</span><span>ГС</span><span>Урон</span><span>%</span><span>DPS</span><span>Крит</span><span>Спина</span><span>Идеал</span><span>Смерти</span></div>
+                    @foreach (var p in players)
+                    {
+                        <div class="hb-tr @(p.PlayerId == player ? "on" : "") @(p.IsUser ? "me" : "")" @onclick="() => player = p.PlayerId">
+                            <i class="hb-fill" style="width:@Pct(p.TotalDamage, max)"></i>
+                            <span class="hb-name"><span class="hb-icon" style="background-image:url('/images/classes/@(p.ClassId).png')"></span>@p.PlayerName</span>
+                            <span>@(p.CombatPower > 0 ? p.CombatPower.ToString("N0", CultureInfo.InvariantCulture) : "—")</span>
+                            <b>@Fmt(p.TotalDamage)</b><span>@P(p.DamagePercentage)</span><span>@Fmt(p.DamagePerSecond)</span>
+                            <span>@P(p.CriticalRate)</span><span>@P(p.BackAttackRate)</span><span>@P(p.PerfectRate)</span><span>@p.PlayerDeaths</span>
+                        </div>
+                    }
+                </div>
+                @if (players.FirstOrDefault(p => p.PlayerId == player) is { } who && s.SkillStatsByPlayer.TryGetValue(who.PlayerId, out var skillSet))
+                {
+                    var skills = skillSet.OrderByDescending(k => k.TotalDamage).ToList();
+                    <div class="hb-sub2">Умения · @who.PlayerName · крит @P(who.CriticalRate) · парир. @P(who.ParryRate) · спина @P(who.BackAttackRate) · фронт @P(who.FrontAttackRate) · идеал @P(who.PerfectRate) · двойн. @P(who.DoubleDamageRate)</div>
+                    <div class="hb-table hb-skills">
+                        <div class="hb-tr hb-th"><span>Умение</span><span>Спец.</span><span>Урон</span><span>%</span><span>Примен.</span><span>Мульти</span><span>Крит</span><span>Макс</span><span>Сред</span><span>Парир.</span></div>
+                        @foreach (var k in skills)
+                        {
+                            <div class="hb-tr">
+                                <i class="hb-fill" style="width:@Pct(k.TotalDamage, skills[0].TotalDamage)"></i>
+                                <span class="hb-name">@if (!string.IsNullOrEmpty(k.SkillIcon)) { <img class="hb-skill-icon" src="@k.SkillIcon" alt="" /> }@k.SkillName</span>
+                                <span class="hb-spec">@foreach (var f in k.SpecializationFlags) { <i class="@(f ? "on" : "")"></i> }</span>
+                                <b>@Fmt(k.TotalDamage)</b><span>@P(k.DamagePercentage)</span><span>@(k.HitCount)×</span>
+                                <span>@(k.MultihitHits > 0 ? P(k.MultihitRate) : "—")</span><span>@P(k.CriticalRate)</span>
+                                <span>@Fmt(k.MaxHit)</span><span>@Fmt(k.AverageDamage)</span><span>@P(k.ParryRate)</span>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                var fight = Match(s);
+                @if (tab == "summary")
+                {
+                    var players = s.PlayerStats.ToList();
+                    var hits = players.Select(p => (p, Top: s.SkillStatsByPlayer.TryGetValue(p.PlayerId, out var ks) ? ks.OrderByDescending(k => k.MaxHit).FirstOrDefault() : null))
+                        .Where(x => x.Top is not null).OrderByDescending(x => x.Top!.MaxHit).Take(5).ToList();
+                    var openers = players.Where(p => p.FirstHit > DateTime.MinValue).OrderBy(p => p.FirstHit).Take(5).ToList();
+                    <div class="hb-grid">
+                        <div class="hb-card">
+                            <div class="hb-card-title">📈 Бой</div>
+                            <div class="hb-stat"><span>Длительность</span><b>@Clock(s.Duration)</b></div>
+                            <div class="hb-stat"><span>Урон группы</span><b>@Fmt(players.Sum(p => p.TotalDamage))</b></div>
+                            <div class="hb-stat"><span>DPS группы</span><b>@Fmt(players.Sum(p => p.DamagePerSecond))</b></div>
+                            <div class="hb-stat"><span>Игроков</span><b>@players.Count</b></div>
+                            <div class="hb-stat"><span>Смерти</span><b>@players.Sum(p => p.PlayerDeaths)</b></div>
+                            @if (fight is { } f)
+                            {
+                                <div class="hb-stat"><span>Лечение</span><b>@Fmt(f.TotalHeal)</b></div>
+                                <div class="hb-stat"><span>Получено урона</span><b>@Fmt(f.TotalTaken)</b></div>
+                            }
+                        </div>
+                        <div class="hb-card">
+                            <div class="hb-card-title">⚡ Самый сильный удар</div>
+                            @foreach (var (p, top) in hits)
+                            {
+                                <div class="hb-row @(p.IsUser ? "me" : "")"><span class="hb-icon" style="background-image:url('/images/classes/@(p.ClassId).png')"></span><span class="hb-row-name">@p.PlayerName<small>@top!.SkillName</small></span><b>@Fmt(top.MaxHit)</b></div>
+                            }
+                        </div>
+                        <div class="hb-card">
+                            <div class="hb-card-title">🚩 Первый удар</div>
+                            @for (var i = 0; i < openers.Count; i++)
+                            {
+                                var p = openers[i];
+                                <div class="hb-row @(p.IsUser ? "me" : "")"><span class="hb-icon" style="background-image:url('/images/classes/@(p.ClassId).png')"></span><span class="hb-row-name">@p.PlayerName</span><b>@(i == 0 ? "0.0s" : $"+{(p.FirstHit - openers[0].FirstHit).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)}s")</b></div>
+                            }
+                        </div>
+                    </div>
+                }
+                else if (tab == "deaths")
+                {
+                    var dead = s.PlayerStats.Where(p => p.PlayerDeaths > 0).OrderByDescending(p => p.PlayerDeaths).ToList();
+                    <div class="hb-table">
+                        @if (dead.Count == 0) { <p class="hb-empty">В этом бою никто не умер.</p> }
+                        @foreach (var p in dead)
+                        {
+                            <div class="hb-row hb-row--big @(p.IsUser ? "me" : "")"><span class="hb-icon" style="background-image:url('/images/classes/@(p.ClassId).png')"></span><span class="hb-row-name">@p.PlayerName</span><b>💀 @p.PlayerDeaths</b></div>
+                        }
+                    </div>
+                }
+                else if (fight is null)
+                {
+                    <p class="hb-empty">Лечение и полученный урон метр собирает с версии с «Итогами боя» и до перезапуска — для этого боя их нет.</p>
+                }
+                else
+                {
+                    Func<FightPlayer, long> value = tab == "heal" ? p => p.HealDone : p => p.DamageTaken;
+                    var rows = fight.Players.Where(p => value(p) > 0).OrderByDescending(value).ToList();
+                    var max = rows.Count > 0 ? value(rows[0]) : 1;
+                    var names = s.PlayerStats.ToDictionary(p => p.PlayerId);
+                    <div class="hb-table">
+                        @if (rows.Count == 0) { <p class="hb-empty">В этом бою — ничего.</p> }
+                        @foreach (var p in rows)
+                        {
+                            names.TryGetValue(p.Id, out var ps);
+                            <div class="hb-row hb-row--big @(ps?.IsUser == true ? "me" : "")">
+                                <i class="hb-fill @(tab == "heal" ? "heal" : "taken")" style="width:@Pct(value(p), max)"></i>
+                                <span class="hb-icon" style="background-image:url('/images/classes/@(ps?.ClassId ?? 0).png')"></span>
+                                <span class="hb-row-name">@(ps?.PlayerName ?? $"Игрок {p.Id}")@if (tab == "heal" && p.HealReceived > 0) { <small>получил @Fmt(p.HealReceived), своё @Fmt(p.SelfHeal)</small> }</span>
+                                <b>@Fmt(value(p))</b>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </section>
+    </div>
+</div>
+
+@code {
+    private static readonly (string Id, string Label)[] Tabs =
+        [("damage", "Урон"), ("summary", "Итоги"), ("heal", "Лечение"), ("taken", "Получено"), ("deaths", "Смерти")];
+
+    private string tab = "damage";
+    private string query = "";
+    private IReadOnlyList<HistorySessionListItem> items = [];
+    private Guid? selected;
+    private HistorySessionSnapshot? snap;
+    private long? player;
+    private System.Threading.Timer? tick;
+
+    protected override void OnInitialized()
+    {
+        LoadList();
+        Select(null, Window.RequestedPlayer);
+        Window.Requested += OnRequested;
+        tick = new System.Threading.Timer(_ => InvokeAsync(() =>
+        {
+            if (selected is null) { RefreshCurrent(); StateHasChanged(); }
+        }), null, 1000, 1000);
+    }
+
+    private void OnRequested() => InvokeAsync(() => { LoadList(); Select(null, Window.RequestedPlayer); tab = "damage"; StateHasChanged(); });
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        query = e.Value?.ToString() ?? "";
+        LoadList();
+    }
+
+    private void LoadList()
+    {
+        try { items = Store.GetSessionPage(null, null, query.Length > 0 ? query : null, 0, 150); }
+        catch (Exception) { items = []; }
+    }
+
+    private void Select(Guid? id, long? playerId = null)
+    {
+        selected = id;
+        snap = id is { } g ? Store.GetSession(g) : null;
+        if (id is null) RefreshCurrent();
+        player = playerId ?? snap?.PlayerStats.FirstOrDefault(p => p.IsUser)?.PlayerId ?? snap?.PlayerStats.OrderByDescending(p => p.TotalDamage).FirstOrDefault()?.PlayerId;
+    }
+
+    private void RefreshCurrent()
+    {
+        if (Sessions.GetActiveTargetSession() is { } live) snap = HistorySessionSnapshot.From(live);
+        player ??= snap?.PlayerStats.FirstOrDefault(p => p.IsUser)?.PlayerId;
+    }
+
+    /// <summary>The fork's fight summary (healing, damage taken) for this fight, when the meter saw it.</summary>
+    private FightSummary? Match(HistorySessionSnapshot s) =>
+        Modes.Fight.History().FirstOrDefault(f => f.Start <= s.SessionEnd.AddSeconds(30) && f.Start + f.Duration >= s.SessionStart.AddSeconds(-30));
+
+    private static string Title(HistorySessionSnapshot s) => string.IsNullOrWhiteSpace(s.TargetName) ? "Бой" : s.TargetName;
+
+    private static string Fmt(double v) => AionDpsMeter.UI.Utils.DamageFormatter.Format((long)v);
+
+    private static string P(double v) => v.ToString("0.0", CultureInfo.InvariantCulture) + "%";
+
+    private static string Pct(double part, double max) => (part * 100.0 / Math.Max(1, max)).ToString("0.#", CultureInfo.InvariantCulture) + "%";
+
+    private static string Clock(TimeSpan t) => t.TotalHours >= 1 ? t.ToString(@"h\:mm\:ss") : t.ToString(@"m\:ss");
+
+    public void Dispose()
+    {
+        tick?.Dispose();
+        Window.Requested -= OnRequested;
+    }
+}
