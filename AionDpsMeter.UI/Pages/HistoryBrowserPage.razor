@@ -136,6 +136,28 @@
                     </div>
                 }
                 <div class="hb-tl-axis"><span>0:00</span><span>@Clock((end - start) / 2)</span><span>@Clock(end - start)</span></div>
+                @if (buffs.Count > 0 && casts.Count > 0)
+                {
+                    var spansByBuff = buffs.GroupBy(b => b.BuffName)
+                        .Select(g => (Name: g.Key, Icon: g.First().BuffIcon, Spans: Timeline.Merge(g.Select(e => (e.AppliedAt, e.AppliedAt.AddMilliseconds(e.DurationMs))), start, end)))
+                        .ToList();
+                    var topSkills = s.SkillStatsByPlayer.TryGetValue(who.PlayerId, out var ks2) ? ks2.OrderByDescending(k => k.TotalDamage).Take(6).ToList() : [];
+                    <div class="hb-tl-label">БАФФЫ ПО УМЕНИЯМ — доля применений, во время которых действовал бафф</div>
+                    <div class="hb-grid">
+                        @foreach (var k in topSkills)
+                        {
+                            var times = casts.Where(c => c.Skill == k.SkillId).Select(c => c.At).ToList();
+                            <div class="hb-card">
+                                <div class="hb-card-title">@if (!string.IsNullOrEmpty(k.SkillIcon)) { <img class="hb-skill-icon" src="@k.SkillIcon" alt="" /> } @k.SkillName · @P(k.DamagePercentage) урона · @times.Count прим.</div>
+                                @foreach (var b in spansByBuff.Select(b => (b.Name, b.Icon, Share: Timeline.ActiveShare(times, b.Spans))).Where(b => b.Share > 0).OrderByDescending(b => b.Share).Take(6))
+                                {
+                                    <div class="hb-row"><i class="hb-fill heal" style="width:@((b.Share * 100).ToString("0.#", CultureInfo.InvariantCulture))%"></i>
+                                        @if (!string.IsNullOrEmpty(b.Icon)) { <img class="hb-skill-icon" src="@b.Icon" alt="" /> }<span class="hb-row-name">@b.Name</span><b>@((b.Share * 100).ToString("0", CultureInfo.InvariantCulture))%</b></div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
             }
             else
             {

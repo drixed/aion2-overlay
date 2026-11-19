@@ -22,4 +22,12 @@ public class TimelineTests
         Assert.Equal([(At(0), At(20)), (At(50), At(60))], merged);
         Assert.Equal(0.5, Timeline.Uptime(merged, At(0), At(60)), 3);
     }
+
+    [Fact]
+    public void Share_of_casts_made_while_a_buff_was_on()
+    {
+        var spans = new[] { (At(0), At(10)), (At(20), At(30)) };
+        Assert.Equal(0.5, Timeline.ActiveShare([At(1), At(15), At(25), At(40)], spans), 3);
+        Assert.Equal(0, Timeline.ActiveShare([], spans));
+    }
 }

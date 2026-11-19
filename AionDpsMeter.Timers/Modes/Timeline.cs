@@ -37,6 +37,10 @@ public static class Timeline
         return merged;
     }
 
+    /// <summary>The share of the casts made while one of the spans was on, 0–1 ("Баффы по умениям").</summary>
+    public static double ActiveShare(IReadOnlyCollection<DateTime> casts, IReadOnlyList<(DateTime From, DateTime To)> spans) =>
+        casts.Count == 0 ? 0 : casts.Count(c => spans.Any(s => c >= s.From && c < s.To)) / (double)casts.Count;
+
     /// <summary>The share of the fight the merged intervals cover, 0–1.</summary>
     public static double Uptime(IEnumerable<(DateTime From, DateTime To)> merged, DateTime start, DateTime end) =>
         end > start ? merged.Sum(i => (i.To - i.From).TotalSeconds) / (end - start).TotalSeconds : 0;
