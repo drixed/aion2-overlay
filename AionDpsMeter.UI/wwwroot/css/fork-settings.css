@@ -87,3 +87,9 @@ html body .settings-shell.settings-shell .settings-tab.is-active .settings-tab__
 html body .settings-shell.settings-shell ::-webkit-scrollbar { width: 6px; height: 6px; }
 html body .settings-shell.settings-shell ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
 html body .settings-shell.settings-shell ::-webkit-scrollbar-track, html body .settings-shell.settings-shell ::-webkit-scrollbar-button { background: transparent; display: none; }
+
+/* the shell fills the window exactly (border included), so the window itself never scrolls */
+html:has(.settings-shell), body:has(.settings-shell) { overflow: hidden; }
+html body .settings-shell.settings-shell { box-sizing: border-box; }
+/* the whole header bar moves the window, not only the word "Настройки" */
+html body .settings-shell.settings-shell .settings-title { flex: 1; align-self: stretch; min-height: 34px; margin: -10px 0 -10px -16px; padding-left: 16px; }
