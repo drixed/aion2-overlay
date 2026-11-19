@@ -46,7 +46,7 @@
                             }
                         }
                     </span>
-                    <span class="tb-time">@TimeText(item)</span>
+                    <span class="tb-time">@TimeText(item)@if (AliveSince(item) is { } since) { <small>@since</small> }</span>
                     <span class="tb-actions">
                         @if (item.BossKey is not null)
                         {

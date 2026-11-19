@@ -105,12 +105,19 @@ namespace AionDpsMeter.UI.Pages
         private bool Soon(FeedItem i) =>
             i.Status == FeedStatus.Overdue || (i.Status == FeedStatus.Upcoming && i.At is { } at && at - now <= TimeSpan.FromMinutes(30));
 
-        private IEnumerable<FeedItem> Shown() => tab switch
+        /// <summary>The ones with a countdown first (soonest on top), then late ones, then the living, then unknown.</summary>
+        private IEnumerable<FeedItem> Shown() => (tab switch
         {
             "alive" => visible.Where(i => i.Status == FeedStatus.Alive),
             "soon" => visible.Where(Soon),
             _ => visible,
-        };
+        }).OrderBy(i => i.Status switch { FeedStatus.Overdue => 0, FeedStatus.Upcoming => 1, FeedStatus.Alive => 2, _ => 3 })
+          .ThenBy(i => i.Status == FeedStatus.Alive ? DateTimeOffset.MaxValue - (i.At ?? DateTimeOffset.MinValue) : TimeSpan.Zero)
+          .ThenBy(i => i.Status == FeedStatus.Upcoming ? i.At ?? DateTimeOffset.MaxValue : DateTimeOffset.MaxValue);
+
+        /// <summary>"с 01:32" under a living boss: when it appeared.</summary>
+        private static string? AliveSince(FeedItem i) =>
+            i.Status == FeedStatus.Alive && i.At is { } since ? "с " + TimeZoneInfo.ConvertTime(since, TimeZoneInfo.Local).ToString("HH:mm") : null;
 
         private string TimeText(FeedItem i) => i.Status switch
         {
