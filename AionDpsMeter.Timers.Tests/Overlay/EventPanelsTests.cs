@@ -130,7 +130,7 @@ public class EventPanelsTests
         var panel = new EventPanel { EventIds = ["boss:-101016"] };
         var unnamed = new AionDpsMeter.Timers.Bosses.BossTimer(1, -101016, 1010, 101016, false, null, spawn, null, null);
         var tile = EventPanels.Tiles(At, Data, panel, [unnamed], k => "Глава армии Рагт").Single();
-        Assert.Equal("Место 16", tile.Name);
+        Assert.Equal("Место 16 (1010)", tile.Name);
         Assert.Equal("10:00", tile.Countdown);
 
         var named = unnamed with { Key = 2101131 };

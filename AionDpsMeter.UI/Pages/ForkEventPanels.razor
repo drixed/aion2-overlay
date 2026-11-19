@@ -244,7 +244,7 @@
 
     private string ItemName(string id) =>
         id.StartsWith(EventPanels.BossPrefix, StringComparison.Ordinal) && int.TryParse(id[EventPanels.BossPrefix.Length..], out var key)
-            ? (key > 0 ? Catalog.Name(key) : $"Место {-key % 100}")
+            ? (key > 0 ? Catalog.Name(key) : EventPanels.PlaceName(-key))
             : Schedule.Current.Events.FirstOrDefault(e => e.Id == id)?.Name ?? id;
 
     private AionDpsMeter.Timers.Feed.TimersOptions O => Store.Current;

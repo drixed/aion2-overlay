@@ -59,7 +59,7 @@ public static class EventPanels
                 // An unnamed map place is kept as "boss:-{place}"; once named, the same place is found by its slot.
                 if (int.TryParse(id[BossPrefix.Length..], out var key)
                     && (bosses?.FirstOrDefault(b => b.Key == key) ?? (key < 0 ? bosses?.FirstOrDefault(b => b.SlotId == -key) : null)) is { } boss)
-                    tiles.Add(BossTile(now, id, boss.Key > 0 ? bossName?.Invoke(boss.Key) ?? $"Босс {boss.Key}" : $"Место {boss.SlotId % 100}", boss));
+                    tiles.Add(BossTile(now, id, boss.Key > 0 ? bossName?.Invoke(boss.Key) ?? $"Босс {boss.Key}" : PlaceName(boss.SlotId), boss));
                 continue;
             }
             if (data.Events.FirstOrDefault(e => e.Id == id) is not { } e || ScheduleCalculator.Next(e, now) is not { } o) continue;
@@ -79,6 +79,9 @@ public static class EventPanels
         }
         return tiles;
     }
+
+    /// <summary>"Место 16 (1010)": the place number on the map list and the map, so places of two maps differ.</summary>
+    public static string PlaceName(int slotId) => $"Место {slotId % 100} ({slotId / 100})";
 
     /// <summary>Up: "жив". Waiting: the respawn countdown, glowing in its last 5 minutes. Past its time with no news from
     /// the game yet: "скоро". Never seen on the map: "—".</summary>
