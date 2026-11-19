@@ -5,6 +5,9 @@
 @inject AionDpsMeter.Timers.Feed.TimersOptionsStore Store
 @inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
 @inject AionDpsMeter.UI.Services.TimerWindow.EventPanelsController Panels
+@inject AionDpsMeter.Timers.Bosses.FieldBossTracker Tracker
+@inject AionDpsMeter.Timers.Bosses.BossCatalog Catalog
+@inject AionDpsMeter.Timers.Runtime.IServerContext Server
 
 @if (Panel is { } p)
 {
@@ -55,7 +58,9 @@
 
     private EventPanel? Panel => Store.Current.EventPanels.FirstOrDefault(x => x.Id == PanelId);
 
-    private IReadOnlyList<EventTile> Tiles => Panel is { } p ? EventPanels.Tiles(DateTimeOffset.Now, Schedule.Current, p) : [];
+    private IReadOnlyList<EventTile> Tiles => Panel is { } p
+        ? EventPanels.Tiles(DateTimeOffset.Now, Schedule.Current, p, Tracker.TimersFor(Server.CurrentServerId).ToList(), Catalog.Name)
+        : [];
 
     protected override void OnInitialized()
     {

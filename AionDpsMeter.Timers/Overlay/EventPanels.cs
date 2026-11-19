@@ -39,12 +39,27 @@ public sealed record EventTile(string Id, string Name, string Icon, ChipState St
 
 public static class EventPanels
 {
-    /// <summary>The panel's tiles in its own order; events the schedule no longer has are left out.</summary>
-    public static IReadOnlyList<EventTile> Tiles(DateTimeOffset now, ScheduleData data, EventPanel panel)
+    public const string BossPrefix = "boss:";
+
+    /// <summary>A field boss on a panel is kept as "boss:{key}" among the event ids.</summary>
+    public static string BossId(int key) => BossPrefix + key;
+
+    private static readonly TimeSpan BossSoon = TimeSpan.FromMinutes(5);
+
+    /// <summary>The panel's tiles in its own order; events the schedule no longer has, and bosses the meter does not know
+    /// on this server, are left out.</summary>
+    public static IReadOnlyList<EventTile> Tiles(DateTimeOffset now, ScheduleData data, EventPanel panel,
+        IReadOnlyCollection<AionDpsMeter.Timers.Bosses.BossTimer>? bosses = null, Func<int, string>? bossName = null)
     {
         var tiles = new List<EventTile>();
         foreach (var id in panel.EventIds)
         {
+            if (id.StartsWith(BossPrefix, StringComparison.Ordinal))
+            {
+                if (int.TryParse(id[BossPrefix.Length..], out var key) && bosses?.FirstOrDefault(b => b.Key == key) is { } boss)
+                    tiles.Add(BossTile(now, id, bossName?.Invoke(key) ?? $"Босс {key}", boss));
+                continue;
+            }
             if (data.Events.FirstOrDefault(e => e.Id == id) is not { } e || ScheduleCalculator.Next(e, now) is not { } o) continue;
             var open = o.IsActive(now) && o.End > o.Start;
             var toStart = o.Start - now;
@@ -55,6 +70,18 @@ public static class EventPanels
             tiles.Add(new EventTile(e.Id, e.Name, e.Icon ?? "event", state, Clock(open ? o.End - now : toStart), progress));
         }
         return tiles;
+    }
+
+    /// <summary>Up: "жив". Waiting: the respawn countdown, glowing in its last 5 minutes. Past its time with no news from
+    /// the game yet: "скоро". Never seen on the map: "—".</summary>
+    private static EventTile BossTile(DateTimeOffset now, string id, string name, AionDpsMeter.Timers.Bosses.BossTimer b)
+    {
+        if (b.Alive) return new EventTile(id, name, "boss", ChipState.Open, "жив", 0);
+        if (b.NextSpawn is { } next && next > now)
+            return new EventTile(id, name, "boss", next - now <= BossSoon ? ChipState.Soon : ChipState.Idle, Clock(next - now), 0);
+        if (b.NextSpawn is { } passed && now - passed < AionDpsMeter.Timers.Feed.TimersFeed.OverdueWindow)
+            return new EventTile(id, name, "boss", ChipState.Soon, "скоро", 0);
+        return new EventTile(id, name, "boss", ChipState.Idle, "—", 0);
     }
 
     /// <summary>The panel window's size for its tiles: a card is an icon with the time and a two-line name under it, a

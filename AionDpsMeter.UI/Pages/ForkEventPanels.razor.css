@@ -36,6 +36,9 @@
 .pe-chip-icon ::deep svg { width: 15px; height: 15px; }
 
 .pe-cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-top: 4px; }
+.pe-bosses { grid-column: 1 / -1; grid-row: 2; }
+.pe-zone { font-size: 11px; color: #c9d1d9; font-weight: 600; margin: 8px 0 4px; }
+.pe-filter { width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, .25); border: 1px solid var(--pe-line); color: #e6edf3; border-radius: 6px; padding: 5px 9px; font-size: 12px; margin-bottom: 4px; }
 .pe-box { padding: 4px 12px 10px; border-radius: 9px; border: 1px solid var(--pe-line); background: rgba(0, 0, 0, .15); }
 @media (max-width: 760px) { .pe-cols { grid-template-columns: 1fr; } }
 

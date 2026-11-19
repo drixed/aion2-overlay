@@ -86,4 +86,23 @@ public class EventPanelsTests
     [Fact]
     public void A_new_panel_uses_the_system_font_at_11px() =>
         Assert.Equal(("system", 11), (EventPanel.Create("x", []).Font, EventPanel.Create("x", []).TextSize));
+
+    private static AionDpsMeter.Timers.Bosses.BossTimer Boss(int key, bool alive, DateTimeOffset? next) =>
+        new(1, key, 100, 1, alive, alive ? At.AddMinutes(-3) : null, next, null, At);
+
+    [Fact]
+    public void A_field_boss_counts_down_to_its_respawn_and_shows_when_it_is_up()
+    {
+        var panel = new EventPanel { EventIds = ["boss:7", "boss:8", "boss:9", "boss:10"] };
+        var bosses = new[] { Boss(7, false, At.AddMinutes(30)), Boss(8, true, null), Boss(9, false, At.AddMinutes(-2)), Boss(10, false, null) };
+        var tiles = EventPanels.Tiles(At, Data, panel, bosses, key => $"Босс {key}");
+        Assert.Equal(new EventTile("boss:7", "Босс 7", "boss", ChipState.Idle, "30:00", 0), tiles[0]);
+        Assert.Equal((ChipState.Open, "жив"), (tiles[1].State, tiles[1].Countdown));
+        Assert.Equal((ChipState.Soon, "скоро"), (tiles[2].State, tiles[2].Countdown));   // respawn time passed, no news yet
+        Assert.Equal((ChipState.Idle, "—"), (tiles[3].State, tiles[3].Countdown));        // never seen on the map
+    }
+
+    [Fact]
+    public void A_boss_the_meter_does_not_know_on_this_server_is_left_out() =>
+        Assert.Empty(EventPanels.Tiles(At, Data, new EventPanel { EventIds = ["boss:99"] }, [], k => "x"));
 }

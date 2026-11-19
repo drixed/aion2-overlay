@@ -4,6 +4,9 @@
 @inject AionDpsMeter.Timers.Feed.TimersOptionsStore Store
 @inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
 @inject AionDpsMeter.UI.Services.TimerWindow.EventPanelsController Controller
+@inject AionDpsMeter.Timers.Bosses.FieldBossTracker Tracker
+@inject AionDpsMeter.Timers.Bosses.BossCatalog Catalog
+@inject AionDpsMeter.Timers.Runtime.IServerContext Server
 
 <div class="pe">
     <div class="pe-label">ПЛАВАЮЩИЕ ПАНЕЛИ СОБЫТИЙ</div>
@@ -52,7 +55,7 @@
             <div class="pe-chips">
                 @foreach (var id in panel.EventIds)
                 {
-                    var name = Schedule.Current.Events.FirstOrDefault(e => e.Id == id)?.Name ?? id;
+                    var name = ItemName(id);
                     <span class="pe-chip on">
                         <button type="button" title="Левее" @onclick="() => Move(panel, id, -1)">‹</button>
                         @name
@@ -78,6 +81,34 @@
                             </button>
                         }
                     </div>
+                </div>
+                <div class="pe-box pe-bosses">
+                    <div class="pe-sub">ПОЛЕВЫЕ БОССЫ</div>
+                    @{ var zones = BossZones(); }
+                    @if (zones.Count == 0)
+                    {
+                        <p class="pe-hint">Пока пусто: открой карту в игре — метр узнает боссов этой зоны и время их появления.</p>
+                    }
+                    else
+                    {
+                        <input class="pe-filter" placeholder="Найти босса…" value="@bossFilter" @oninput="e => bossFilter = e.Value?.ToString() ?? string.Empty" />
+                    }
+                    @foreach (var (zone, bosses) in zones)
+                    {
+                        var shown = bosses.Where(b => bossFilter.Length == 0 || b.Name.Contains(bossFilter, StringComparison.CurrentCultureIgnoreCase)).ToList();
+                        if (shown.Count == 0) continue;
+                        <div class="pe-zone">@zone</div>
+                        <div class="pe-chips">
+                            @foreach (var b in shown)
+                            {
+                                var bossId = EventPanels.BossId(b.Key);
+                                <button type="button" class="pe-chip @(panel.EventIds.Contains(bossId) ? "on" : "")" style="--ev:@EventIcons.Color("boss")"
+                                        @onclick="() => Toggle(panel, bossId)">
+                                    <span class="pe-chip-icon">@((MarkupString)EventIcons.Svg("boss"))</span>@b.Name
+                                </button>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="pe-box">
                     <div class="pe-sub">СТИЛЬ</div>
@@ -136,6 +167,21 @@
 
 @code {
     private string? selectedId;
+    private string bossFilter = string.Empty;
+
+    /// <summary>The field bosses the meter knows on this server, by zone (it learns them when the map is opened in game).</summary>
+    private List<(string Zone, List<(int Key, string Name)> Bosses)> BossZones() =>
+        Tracker.TimersFor(Server.CurrentServerId)
+            .Where(b => b.Key > 0)
+            .GroupBy(b => Schedule.Current.FieldBossMaps.TryGetValue(b.MapId, out var map) && map.Name.Length > 0 ? map.Name : $"Карта {b.MapId}")
+            .OrderBy(g => g.Key, StringComparer.CurrentCulture)
+            .Select(g => (g.Key, g.Select(b => (b.Key, Catalog.Name(b.Key))).DistinctBy(b => b.Key).OrderBy(b => b.Item2, StringComparer.CurrentCulture).ToList()))
+            .ToList();
+
+    private string ItemName(string id) =>
+        id.StartsWith(EventPanels.BossPrefix, StringComparison.Ordinal) && int.TryParse(id[EventPanels.BossPrefix.Length..], out var key)
+            ? Catalog.Name(key)
+            : Schedule.Current.Events.FirstOrDefault(e => e.Id == id)?.Name ?? id;
 
     private AionDpsMeter.Timers.Feed.TimersOptions O => Store.Current;
 
