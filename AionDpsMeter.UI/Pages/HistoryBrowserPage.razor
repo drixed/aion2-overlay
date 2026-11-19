@@ -81,6 +81,62 @@
                     </div>
                 }
             }
+            else if (tab == "timeline")
+            {
+                var start = s.SessionStart;
+                var end = s.SessionEnd > start ? s.SessionEnd : start.AddSeconds(1);
+                var who = s.PlayerStats.FirstOrDefault(p => p.PlayerId == player) ?? s.PlayerStats.OrderByDescending(p => p.TotalDamage).First();
+                var hitList = s.HitsByPlayer.TryGetValue(who.PlayerId, out var hl) ? hl : [];
+                var skillOf = hitList.Where(h => h.Skill is not null).GroupBy(h => h.Skill.Id).ToDictionary(g => g.Key, g => g.First().Skill);
+                var casts = Timeline.Casts(hitList.Where(h => h.Skill is not null).Select(h => (h.DateTime, h.Skill.Id)));
+                <div class="hb-sub2">Хронология · @who.PlayerName — другой игрок выбирается на вкладке «Урон»</div>
+                @if (casts.Count == 0)
+                {
+                    <p class="hb-empty">Для этого боя ударов игрока не сохранено.</p>
+                }
+                else
+                {
+                    <div class="hb-tl-label">ОТКРЫТИЕ</div>
+                    <div class="hb-opening">
+                        @foreach (var c in casts.Take(30))
+                        {
+                            var sk = skillOf.GetValueOrDefault(c.Skill);
+                            <span class="hb-cast" title="@sk?.Name · +@((c.At - start).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture))s">
+                                @if (!string.IsNullOrEmpty(sk?.Icon)) { <img src="@sk.Icon" alt="" /> } else { @(sk?.Name ?? "?") }
+                            </span>
+                        }
+                    </div>
+                    <div class="hb-tl-label">УМЕНИЯ</div>
+                    <div class="hb-tl">
+                        @foreach (var g in casts.GroupBy(c => c.Skill).OrderByDescending(g => g.Count()).Take(16))
+                        {
+                            var sk = skillOf.GetValueOrDefault(g.Key);
+                            <div class="hb-tl-row">
+                                <span class="hb-tl-name">@if (!string.IsNullOrEmpty(sk?.Icon)) { <img src="@sk.Icon" alt="" /> }@(sk?.Name ?? "?") <small>@g.Count()×</small></span>
+                                <span class="hb-tl-track">@foreach (var c in g) { <i class="hb-tl-dot" style="left:@At(c.At, start, end)"></i> }</span>
+                            </div>
+                        }
+                    </div>
+                }
+                var buffs = s.BuffEventsByPlayer.TryGetValue(who.PlayerId, out var bl) ? bl : [];
+                @if (buffs.Count > 0)
+                {
+                    <div class="hb-tl-label">БАФФЫ НА ИГРОКЕ</div>
+                    <div class="hb-tl">
+                        @foreach (var b in buffs.GroupBy(b => b.BuffName)
+                            .Select(g => (Name: g.Key, Icon: g.First().BuffIcon, Spans: Timeline.Merge(g.Select(e => (e.AppliedAt, e.AppliedAt.AddMilliseconds(e.DurationMs))), start, end)))
+                            .Select(x => (x.Name, x.Icon, x.Spans, Up: Timeline.Uptime(x.Spans, start, end)))
+                            .Where(x => x.Up > 0).OrderByDescending(x => x.Up).Take(24))
+                        {
+                            <div class="hb-tl-row">
+                                <span class="hb-tl-name">@if (!string.IsNullOrEmpty(b.Icon)) { <img src="@b.Icon" alt="" /> }@b.Name <small>@((b.Up * 100).ToString("0", CultureInfo.InvariantCulture))%</small></span>
+                                <span class="hb-tl-track">@foreach (var (f, t) in b.Spans) { <i class="hb-tl-bar" style="left:@At(f, start, end);width:calc(@At(t, start, end) - @At(f, start, end))"></i> }</span>
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="hb-tl-axis"><span>0:00</span><span>@Clock((end - start) / 2)</span><span>@Clock(end - start)</span></div>
+            }
             else
             {
                 var fight = Match(s);
@@ -163,7 +219,10 @@
 
 @code {
     private static readonly (string Id, string Label)[] Tabs =
-        [("damage", "Урон"), ("summary", "Итоги"), ("heal", "Лечение"), ("taken", "Получено"), ("deaths", "Смерти")];
+        [("damage", "Урон"), ("timeline", "Хронология"), ("summary", "Итоги"), ("heal", "Лечение"), ("taken", "Получено"), ("deaths", "Смерти")];
+
+    private static string At(DateTime t, DateTime start, DateTime end) =>
+        Math.Clamp((t - start).TotalSeconds * 100.0 / Math.Max(0.001, (end - start).TotalSeconds), 0, 100).ToString("0.##", CultureInfo.InvariantCulture) + "%";
 
     private string tab = "damage";
     private string query = "";
