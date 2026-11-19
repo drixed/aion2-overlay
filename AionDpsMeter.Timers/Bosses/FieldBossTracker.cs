@@ -14,10 +14,12 @@ public sealed record BossTimer(
     DateTimeOffset? LastKill,
     DateTimeOffset? ListedAt);
 
+/// <param name="LearnedSlots">List place (map × 100 + place) → NPC code, for maps whose bosses are not one block.</param>
 public sealed record TrackerState(
     List<BossTimer> Timers,
     Dictionary<int, int> LearnedBlocks,
-    Dictionary<int, int> LearnedRespawnMinutes);
+    Dictionary<int, int> LearnedRespawnMinutes,
+    Dictionary<int, int>? LearnedSlots = null);
 
 /// <summary>
 /// Field boss respawn timers, per server. Sources, newest wins: the in-game map list (the server's own times),
@@ -34,6 +36,8 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
     private readonly Dictionary<int, int> learnedBlocks = new();   // map → NPC code block
     private readonly Dictionary<int, int> respawnMinutes = new();  // NPC code → learned interval
     private readonly Dictionary<(int Server, int Map), (FieldBossList List, DateTimeOffset At)> lastLists = new();
+    private readonly Dictionary<int, int> learnedSlots = new();     // list place → NPC code
+    private readonly Dictionary<int, List<(int Code, DateTimeOffset At)>> unplacedKills = new(); // server → kills not yet placed
 
     public event Action? Changed;
 
@@ -50,7 +54,7 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
     /// <summary>A boss of a field map (known from schedule.json or learned): it respawns and has no enrage timer.</summary>
     public bool IsFieldBoss(int code)
     {
-        lock (gate) return IsFieldBlock(code / 1000);
+        lock (gate) return IsFieldBlock(code / 1000) || learnedSlots.ContainsValue(code);
     }
 
     public void OnList(int serverId, FieldBossList list)
@@ -74,7 +78,14 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
         lock (gate)
         {
             var now = time.GetUtcNow();
-            if (!timers.ContainsKey((serverId, code)) && !IsFieldBlock(code / 1000) && !TryLearnBlock(serverId, code, now)) return;
+            if (!timers.ContainsKey((serverId, code)) && !IsFieldBlock(code / 1000) && !TryLearnBlock(serverId, code, now))
+            {
+                // Maybe a boss of a map whose places are not one block: the next list shows which place went down.
+                var kills = unplacedKills.TryGetValue(serverId, out var k) ? k : unplacedKills[serverId] = [];
+                kills.RemoveAll(x => now - x.At > ListMemory || x.Code == code);
+                kills.Add((code, now));
+                return;
+            }
             if (!RecordKill(serverId, code, now, manual: false)) return;
         }
         Changed?.Invoke();
@@ -93,7 +104,7 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
 
     public TrackerState Export()
     {
-        lock (gate) return new TrackerState(timers.Values.ToList(), new(learnedBlocks), new(respawnMinutes));
+        lock (gate) return new TrackerState(timers.Values.ToList(), new(learnedBlocks), new(respawnMinutes), new(learnedSlots));
     }
 
     public void Import(TrackerState? state)
@@ -104,6 +115,7 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
             foreach (var t in state.Timers ?? []) if (t is not null) timers[(t.ServerId, t.Key)] = t; // hand-edited files
             foreach (var (map, block) in state.LearnedBlocks ?? new()) learnedBlocks[map] = block;
             foreach (var (code, minutes) in state.LearnedRespawnMinutes ?? new()) respawnMinutes[code] = minutes;
+            foreach (var (slot, code) in state.LearnedSlots ?? new()) learnedSlots[slot] = code;
         }
         Changed?.Invoke();
     }
@@ -111,9 +123,10 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
     private void Apply(int serverId, FieldBossList list, DateTimeOffset now)
     {
         var block = BlockOf(list.MapId);
+        if (block == 0) LearnSlot(serverId, list, now);
         foreach (var slot in list.Slots)
         {
-            var code = block != 0 ? catalog.BossInSlot(block, list.MapId, slot.SlotId, list.Count) : 0;
+            var code = block != 0 ? catalog.BossInSlot(block, list.MapId, slot.SlotId, list.Count) : learnedSlots.GetValueOrDefault(slot.SlotId);
             var key = code != 0 ? code : -slot.SlotId;
             if (code != 0 && timers.Remove((serverId, -slot.SlotId), out var unnamed) && !timers.ContainsKey((serverId, key)))
                 timers[(serverId, key)] = unnamed with { Key = key }; // listed before its boss was known
@@ -126,6 +139,26 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
                 LastKill: old?.LastKill,
                 ListedAt: now);
         }
+    }
+
+    /// <summary>A boss seen dying and exactly one unnamed place of this map gone from alive to down since: that place is
+    /// the boss's. Two places going down together, or two kills waiting, teach nothing.</summary>
+    private void LearnSlot(int serverId, FieldBossList list, DateTimeOffset now)
+    {
+        if (!unplacedKills.TryGetValue(serverId, out var kills)) return;
+        kills.RemoveAll(x => now - x.At > ListMemory);
+        if (kills.Count != 1) return;
+        var downed = list.Slots
+            .Where(s => !s.Alive && !learnedSlots.ContainsKey(s.SlotId)
+                        && timers.TryGetValue((serverId, -s.SlotId), out var old) && old.Alive)
+            .ToList();
+        if (downed.Count != 1) return;
+        var (code, at) = kills[0];
+        if (learnedSlots.ContainsValue(code)) { kills.Clear(); return; }
+        learnedSlots[downed[0].SlotId] = code;
+        kills.Clear();
+        if (timers.Remove((serverId, -downed[0].SlotId), out var unnamed))
+            timers[(serverId, code)] = unnamed with { Key = code, LastKill = at };
     }
 
     /// <summary>A boss that just went down shows its comeback time: with a fresh death that gives the interval.</summary>

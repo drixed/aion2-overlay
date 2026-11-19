@@ -201,4 +201,51 @@ public class FieldBossTrackerTests
         File.WriteAllText(dir.File("timers-state.json"), "{ nope");
         Assert.Null(store.Load());
     }
+    // Map 88 lists three places: no block has three bosses, so its places are learned one kill at a time.
+    [Fact]
+    public void A_kill_and_then_one_place_going_down_names_that_place()
+    {
+        var t = Tracker();
+        var now = time.GetUtcNow();
+        t.OnList(1, List(88, 3, Slot(88, 1, true, now), Slot(88, 2, true, now), Slot(88, 3, true, now)));
+        time.Advance(TimeSpan.FromMinutes(1));
+        t.OnKill(1, 2500002);
+        var back = time.GetUtcNow().AddHours(2);
+        t.OnList(1, List(88, 3, Slot(88, 1, true, now), Slot(88, 2, false, back), Slot(88, 3, true, now)));
+
+        var named = t.TimersFor(1).Single(x => x.SlotId == 8802);
+        Assert.Equal(2500002, named.Key);
+        Assert.Equal(back, named.NextSpawn);
+        Assert.DoesNotContain(t.TimersFor(1), x => x.Key == -8802);
+
+        time.Advance(TimeSpan.FromHours(3));
+        t.OnList(1, List(88, 3, Slot(88, 2, true, time.GetUtcNow())));
+        Assert.True(t.TimersFor(1).Single(x => x.SlotId == 8802 && x.Key == 2500002).Alive);
+    }
+
+    [Fact]
+    public void Two_places_going_down_after_one_kill_teach_nothing()
+    {
+        var t = Tracker();
+        var now = time.GetUtcNow();
+        t.OnList(1, List(88, 3, Slot(88, 1, true, now), Slot(88, 2, true, now), Slot(88, 3, true, now)));
+        t.OnKill(1, 2500002);
+        t.OnList(1, List(88, 3, Slot(88, 1, false, now.AddHours(1)), Slot(88, 2, false, now.AddHours(2)), Slot(88, 3, true, now)));
+        Assert.All(t.TimersFor(1), x => Assert.True(x.Key < 0));
+    }
+
+    [Fact]
+    public void Learned_places_survive_a_restart()
+    {
+        var t = Tracker();
+        var now = time.GetUtcNow();
+        t.OnList(1, List(88, 3, Slot(88, 1, true, now), Slot(88, 2, true, now), Slot(88, 3, true, now)));
+        t.OnKill(1, 2500002);
+        t.OnList(1, List(88, 3, Slot(88, 2, false, now.AddHours(2))));
+
+        var restored = Tracker();
+        restored.Import(t.Export());
+        restored.OnList(2, List(88, 3, Slot(88, 2, true, now)));
+        Assert.Equal(2500002, Assert.Single(restored.TimersFor(2)).Key);
+    }
 }
