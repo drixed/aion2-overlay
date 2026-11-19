@@ -1,0 +1,73 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md).
+   The settings window, restyled: dark navy, a teal accent, sections in a sidebar on the left, a search box in the
+   header, a grey description under each option. Loaded after upstream's styles; "html body" beats their scoped CSS. */
+
+html body .settings-shell {
+    --bg: #161c26;
+    --panel: #121821;
+    --panel-raised: #1b2230;
+    --line: #262e3b;
+    --line-strong: #2f3846;
+    --text: #e6edf3;
+    --text-dim: #8b95a5;
+    --accent: #5fd4c4;
+    --accent-soft: rgba(95, 212, 196, .14);
+    display: grid;
+    grid-template-columns: 196px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "header header" "nav body";
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 10px;
+    border-color: #2b3442;
+}
+
+/* header: the title on the left, search and close on the right */
+html body .settings-shell .settings-header { grid-area: header; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 12px 10px 16px; }
+html body .settings-shell .settings-title h1 { font-size: 14px; font-weight: 700; }
+html body .settings-shell .settings-title__mark { display: none; }
+html body .settings-shell .settings-version { display: none; }
+html body .settings-shell .fork-search { width: 230px; padding: 6px 10px 6px 30px; border-radius: 8px; border: 1px solid var(--line-strong);
+    background: #0f141c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238b95a5' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 10px 50%;
+    color: var(--text); font-size: 12px; outline: none; }
+html body .settings-shell .fork-search:focus { border-color: var(--accent); }
+
+/* sidebar */
+html body .settings-shell .settings-tabs { grid-area: nav; flex-direction: column; gap: 2px; padding: 10px 8px; overflow-y: auto; overflow-x: hidden;
+    border-bottom: 0; border-right: 1px solid var(--line); background: var(--panel); }
+html body .settings-shell .settings-tab { width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px; color: #c9d1d9; gap: 10px;
+    border: 1px solid transparent; text-align: left; white-space: normal; line-height: 1.2; }
+html body .settings-shell .settings-tab:hover { background: rgba(255, 255, 255, .04); color: #fff; }
+html body .settings-shell .settings-tab.is-active { background: var(--accent-soft); border-color: rgba(95, 212, 196, .6); color: #fff; font-weight: 600; }
+html body .settings-shell .settings-tab.is-active::after { display: none; }
+html body .settings-shell .settings-tab__icon { width: 18px; justify-content: center; opacity: .85; filter: grayscale(1) brightness(1.4); font-size: 14px; }
+html body .settings-shell .settings-tab.is-active .settings-tab__icon { filter: none; }
+
+/* body */
+html body .settings-shell .settings-body { grid-area: body; background: var(--bg); padding: 14px 20px 20px; }
+html body .settings-shell .settings-section-label { color: var(--text-dim); font-size: 10.5px; letter-spacing: .7px; text-transform: uppercase;
+    padding-bottom: 6px; margin-top: 4px; }
+html body .settings-shell .settings-section-label--spaced { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+/* rows: the title, a grey description under it, the control on the right */
+html body .settings-shell .setting-row { padding: 9px 0; border-bottom: 0; align-items: flex-start; gap: 16px; }
+html body .settings-shell .setting-row__title { font-size: 13px; font-weight: 500; color: var(--text); }
+html body .settings-shell .setting-row__desc { font-size: 11.5px; color: var(--text-dim); line-height: 1.45; margin-top: 2px; }
+html body .settings-shell .setting-row__control { padding-top: 1px; }
+
+/* controls in the accent colour */
+html body .settings-shell .toggle-switch { background: #3a4352; border-color: transparent; }
+html body .settings-shell .toggle-switch.is-on { background: var(--accent); border-color: var(--accent); }
+html body .settings-shell .toggle-switch.is-on .toggle-switch__thumb { background: #fff; }
+html body .settings-shell .segmented { border-color: var(--line-strong); background: transparent; }
+html body .settings-shell .segmented__option.is-selected { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px rgba(95, 212, 196, .6); }
+html body .settings-shell .slider-field input[type="range"] { accent-color: var(--accent); }
+html body .settings-shell .slider-field input[type="range"]::-webkit-slider-thumb { background: var(--accent); }
+html body .settings-shell .slider-field__value { color: var(--accent); }
+html body .settings-shell .select-field, html body .settings-shell .number-field-wrap, html body .settings-shell .hotkey-field { background: #0f141c; border-color: var(--line-strong); }
+
+/* search: every section shows, rows that do not match hide */
+html body .settings-shell.is-searching .settings-group.is-hidden { display: flex; }
+html body .settings-shell.is-searching .settings-tab.is-active { background: transparent; border-color: transparent; }
+html body .settings-shell .fork-search-miss { display: none !important; }

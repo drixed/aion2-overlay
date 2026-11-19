@@ -75,8 +75,8 @@ namespace AionDpsMeter.UI.Services.Windowing
             WindowStateUpdated?.Invoke(this, EventArgs.Empty);
             var win = new BlazorWindow(App.AppHost.Services, typeof(SettingsPage))
             {
-                Width = 500,
-                Height = 900,
+                Width = 960, // aion2-overlay fork: sections in a sidebar (wwwroot/css/fork-settings.css); was 500×900
+                Height = 680,
             };
             windowManager.Open(WindowKey.Settings, win, isSingleton: true, owner: MainWindow);
         }
