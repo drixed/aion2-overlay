@@ -9,6 +9,9 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         public static IServiceCollection AddTimersOverlay(this IServiceCollection services)
         {
             ForkCulture.Apply(); // runs during host setup, before any window renders a number
+            // upstream reads appsettings.user.json from the current folder; a shortcut, the updater or Windows' autostart
+            // may start the meter elsewhere, so it always works in its own folder
+            try { System.IO.Directory.SetCurrentDirectory(AppContext.BaseDirectory); } catch (System.IO.IOException) { }
             services.AddTimers();
             services.AddSingleton<TimersWindowController>();
             services.AddSingleton<OverlayRuntime>();

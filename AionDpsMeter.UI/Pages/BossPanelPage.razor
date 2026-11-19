@@ -228,7 +228,7 @@
                 @foreach (var (r, altRank) in OrderedAltRows())
                 {
                     <div class="bp-row @(r.IsUser ? "bp-row--me" : "")" @onclick="() => OpenAltDetails(r)">
-                        <div class="bp-row-bar @AltRowClass(r)" style="width:@(r.Bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                        <div class="bp-row-bar @AltRowClass(r)" style="width:@(r.Bar.ToString("0.##", CultureInfo.InvariantCulture))%@ClassBar(r.ClassId)"></div>
                         @if (Options.RankNumbers)
                         {
                             <span class="bp-row-rank">@altRank</span>
@@ -246,7 +246,7 @@
             @foreach (var (player, share, bar, rank) in OrderedRows())
             {
                 <div class="bp-row @ViewModel.GetIsUserClass(player)" @onclick="() => ViewModel.OpenPlayerDetails(player)">
-                    <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                    <div class="bp-row-bar @ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%@ClassBar(player.ClassId)"></div>
                     @if (Options.RankNumbers)
                     {
                         <span class="bp-row-rank">@rank</span>

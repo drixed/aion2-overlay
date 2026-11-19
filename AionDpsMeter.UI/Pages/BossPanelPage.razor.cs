@@ -39,6 +39,13 @@ namespace AionDpsMeter.UI.Pages
         public MainDpsViewModel? ViewModel { get; set; }
 
         private BossFightView? Fight;
+        /// <summary>When the last fight was seen: the idle fade counts from it.</summary>
+        private DateTime? lastFightAt;
+
+        /// <summary>The user's own colour for a class (Settings → Вид), as an inline bar style; empty keeps the built-in one.</summary>
+        private string ClassBar(string? classId) =>
+            classId is { } id && Options.ClassColors.TryGetValue(id, out var c) && IsColor(c)
+                ? $";background:linear-gradient(90deg, {c}6b 0%, {c}dc 100%)" : "";
         private AionDpsMeter.Timers.Records.BossRecord? FightRecord;
         private static readonly TimeSpan RecordNewsFor = TimeSpan.FromSeconds(30);
 
@@ -256,6 +263,8 @@ namespace AionDpsMeter.UI.Pages
                             $"--bp-rh:{(Math.Clamp(Options.BarHeight, 60, 160) / 100.0).ToString(System.Globalization.CultureInfo.InvariantCulture)};";
                 if (IsColor(Options.AccentColor)) style += $"--bp-accent:{Options.AccentColor};";
                 if (IsColor(Options.BackgroundColor)) style += $"--bp-bg:{Options.BackgroundColor}d9;"; // 85% so the game shows through
+                var idle = AionDpsMeter.Timers.Overlay.Display.IdleOpacity(lastFightAt, DateTime.Now, Options.IdleFadeSeconds, Options.IdleFadePercent);
+                style += $"--bp-idle:{idle.ToString(System.Globalization.CultureInfo.InvariantCulture)};";
                 return style;
             }
         }
@@ -264,7 +273,9 @@ namespace AionDpsMeter.UI.Pages
 
         /// <summary>Rows in display order (my row on top, first place at the bottom — as set) with their rank by damage.</summary>
         private IReadOnlyList<(PlayerRenderState Player, double Share, double Bar, int Rank)> OrderedRows() =>
-            AionDpsMeter.Timers.Overlay.RowOrder.Apply(Rows().ToList(), r => r.Player.IsUser, Options.KeepMeOnTop, Options.FirstPlaceAtBottom)
+            AionDpsMeter.Timers.Overlay.RowOrder.Apply(
+                    Options.MaxRows > 0 ? AionDpsMeter.Timers.Overlay.RowOrder.Limit(Rows().ToList(), r => r.Player.IsUser, Math.Clamp(Options.MaxRows, 3, 40)) : Rows().ToList(),
+                    r => r.Player.IsUser, Options.KeepMeOnTop, Options.FirstPlaceAtBottom)
                 .Select(x => (x.Row.Player, x.Row.Share, x.Row.Bar, x.Rank)).ToList();
 
         private IReadOnlyList<(AltRow Row, int Rank)> OrderedAltRows() =>
@@ -410,6 +421,7 @@ namespace AionDpsMeter.UI.Pages
                 fightIsBoss = target is { IsBoss: true, IsDummy: false };
                 targetIsDummy = target?.IsDummy == true;
                 PetLine = Options.ShowPets ? pets.Current() : null;
+                if (target is not null || ViewModel?.HasActiveTarget == true) lastFightAt = DateTime.Now;
                 Fight = target is { HpTotal: > 0, HpCurrent: > 0 } && (fightIsBoss || options.Current.CardForAllTargets)
                     ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),
                         sessions.GetCombatDuration(),
@@ -418,7 +430,7 @@ namespace AionDpsMeter.UI.Pages
                 FightRecord = Fight is not null && fightIsBoss && Options.ShowRecords ? records.For(target!.Name, target.HpTotal) : null;
                 // One icon per event (rift, shugo, air raid, arena, reset), minus the ones hidden in settings.
                 var shown = TimersFeed.BuildSchedule(now, schedule.Current).Where(options.Current.Shows).Select(i => i.Id).ToHashSet();
-                Chips = EventChips.Build(now, schedule.Current, alwaysTime: options.Current.EventTimesAlways).Where(c => shown.Contains(c.Id)).ToList();
+                Chips = EventChips.Build(now, schedule.Current, alwaysTime: options.Current.EventTimesAlways, use12h: options.Current.Use12h).Where(c => shown.Contains(c.Id)).ToList();
             }
             catch (Exception ex)
             {

@@ -16,3 +16,7 @@
 .fs-select { max-width: 130px; background: var(--panel-raised, #1b1d22); color: inherit; border: 1px solid var(--line, #2a2d33); border-radius: 6px; padding: 3px 6px; font: inherit; font-size: 12px; }
 .fs-range { width: 150px; accent-color: var(--accent, #5b8cff); }
 .fs-color { width: 34px; height: 24px; padding: 0; border: 1px solid var(--line-strong, #333); border-radius: 5px; background: none; cursor: pointer; }
+.fs-class-colors { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 520px; }
+.fs-class-color { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 6px; border: 1px solid var(--line-strong); border-radius: 7px; font-size: 12px; cursor: pointer; }
+.fs-class-icon { width: 16px; height: 16px; border-radius: 4px; background-size: cover; }
+.fs-class-color input[type=color] { width: 24px; height: 18px; border: 0; padding: 0; background: none; cursor: pointer; }

@@ -164,3 +164,6 @@
 .bp-pvp-kill.is-death { background: rgba(255, 90, 90, .1); color: #ffb3b3; }
 .bp-pvp-kill b { color: #fff; overflow: hidden; text-overflow: ellipsis; }
 .bp-pvp-kill-sk { min-width: 0; overflow: hidden; text-overflow: ellipsis; opacity: .8; }
+/* idle fade (Settings → Вид): dims after a while without a fight, comes back on hover */
+.boss-panel { opacity: var(--bp-idle, 1); transition: opacity .6s ease; }
+.boss-panel:hover { opacity: 1; }

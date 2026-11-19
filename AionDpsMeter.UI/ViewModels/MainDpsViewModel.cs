@@ -73,6 +73,8 @@ namespace AionDpsMeter.UI.ViewModels
                 while (await _refreshTimer!.WaitForNextTickAsync(_cts.Token))
                 {
                     UpdateData();
+                    if (_refreshTimer.Period != AionDpsMeter.UI.Services.TimerWindow.ForkRuntime.RefreshInterval) // aion2-overlay fork: "Частота обновления"
+                        _refreshTimer.Period = AionDpsMeter.UI.Services.TimerWindow.ForkRuntime.RefreshInterval;
                 }
             }
             catch (OperationCanceledException) { }

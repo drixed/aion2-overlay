@@ -14,7 +14,8 @@ public sealed record EventChip(string Id, string Name, string Icon, ChipState St
 public static class EventChips
 {
     /// <param name="alwaysTime">Show the countdown next to a waiting event too, not only shortly before it.</param>
-    public static IReadOnlyList<EventChip> Build(DateTimeOffset now, ScheduleData data, TimeZoneInfo? local = null, bool alwaysTime = false)
+    /// <param name="use12h">Tooltip times as "1:05 PM".</param>
+    public static IReadOnlyList<EventChip> Build(DateTimeOffset now, ScheduleData data, TimeZoneInfo? local = null, bool alwaysTime = false, bool use12h = false)
     {
         local ??= TimeZoneInfo.Local;
         var chips = new List<(EventChip Chip, TimeSpan ToStart)>();
@@ -35,7 +36,7 @@ public static class EventChips
             var unverified = e.Verified ? "" : " (не проверено)";
             var tooltip = open
                 ? $"{e.Name}{unverified} — идёт, ещё {FeedText.Span(o.End - now)}"
-                : $"{e.Name}{unverified} — через {FeedText.Span(toStart)} (в {TimeZoneInfo.ConvertTime(o.Start, local):HH:mm})";
+                : $"{e.Name}{unverified} — через {FeedText.Span(toStart)} (в {Display.Time(TimeZoneInfo.ConvertTime(o.Start, local).DateTime, use12h)})";
             chips.Add((new EventChip(e.Id, e.Name, e.Icon ?? DefaultIcon(e), state, text, tooltip), toStart));
         }
 

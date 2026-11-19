@@ -63,6 +63,24 @@ public sealed class TimersOptions
     public List<AionDpsMeter.Timers.Overlay.EventPanel> EventPanels { get; set; } = [];
     /// <summary>The floating panels hide during a fight.</summary>
     public bool EventPanelsOutOfCombatOnly { get; set; }
+    /// <summary>Alert sounds' volume, 0–100 (custom sound files; Windows sounds play at the system volume unless 0).</summary>
+    public int AlertVolume { get; set; } = 100;
+    /// <summary>No alert sounds while the game is not running (the banners still show).</summary>
+    public bool MuteWhenGameClosed { get; set; }
+    /// <summary>Rows in the DPS list; 0 shows everyone. The user's row always stays.</summary>
+    public int MaxRows { get; set; }
+    /// <summary>Seconds without a fight before the main window fades; 0 never fades. Hovering brings it back.</summary>
+    public int IdleFadeSeconds { get; set; }
+    /// <summary>The faded window's opacity, %.</summary>
+    public int IdleFadePercent { get; set; } = 40;
+    /// <summary>How often the DPS list refreshes, ms (upstream's 33; more is lighter on the CPU).</summary>
+    public int RefreshMs { get; set; } = 33;
+    /// <summary>Clock times as "1:05 PM" instead of "13:05".</summary>
+    public bool Use12h { get; set; }
+    /// <summary>Start the meter when Windows starts.</summary>
+    public bool StartWithWindows { get; set; }
+    /// <summary>Class id → "#rrggbb": the class's own bar colour instead of the built-in one.</summary>
+    public Dictionary<string, string> ClassColors { get; set; } = [];
     /// <summary>Rows in the PvP mode (a mass fight lists dozens); the user's row always stays.</summary>
     public int PvpMaxRows { get; set; } = 10;
     /// <summary>Length of a dummy run, seconds.</summary>

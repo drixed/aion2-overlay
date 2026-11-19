@@ -90,7 +90,56 @@
             <ValueSlot><ToggleSwitch Checked="@O.HideTotalDamage" CheckedChanged="v => Set(o => o.HideTotalDamage = v)" /></ValueSlot>
         </SettingRow>
 
+        <SettingRow Title="Макс. число полос" Description="Сколько игроков видно в списке; твоя строка остаётся всегда">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    @foreach (var n in new[] { 0, 3, 4, 5, 6, 7, 8, 10 })
+                    {
+                        <button type="button" class="fs-segmented__option @(O.MaxRows == n ? "is-selected" : "")" @onclick="() => Set(o => o.MaxRows = n)">@(n == 0 ? "Все" : n.ToString())</button>
+                    }
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Цвета классов" Description="Свой цвет полосы для каждого класса; «Сброс» возвращает обычный">
+            <ValueSlot>
+                <div class="fs-class-colors">
+                    @foreach (var (classId, className) in new[] { ("11", "Гладиатор"), ("12", "Страж"), ("13", "Убийца"), ("14", "Стрелок"), ("15", "Волшебник"), ("16", "Заклинатель"), ("17", "Целитель"), ("18", "Чародей"), ("19", "Мастер кулака") })
+                    {
+                        <label class="fs-class-color" title="@className">
+                            <span class="fs-class-icon" style="background-image:url('/images/classes/@(classId).png')"></span>
+                            <span>@className</span>
+                            <input type="color" value="@(O.ClassColors.TryGetValue(classId, out var cc) ? cc : "#5fd4c4")" @onchange="e => Set(o => o.ClassColors[classId] = e.Value?.ToString() ?? string.Empty)" />
+                        </label>
+                    }
+                    <button type="button" class="fs-segmented__option fs-button" @onclick="() => Set(o => o.ClassColors.Clear())">Сброс</button>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+
         <div class="fs-label fs-label--spaced">ОКНО</div>
+        <SettingRow Title="Затухание в простое" Description="@(O.IdleFadeSeconds == 0 ? "Выключено — окно всегда яркое" : $"Через {O.IdleFadeSeconds} с без боя окно тускнеет до {O.IdleFadePercent}%; наведи мышь — вернётся")">
+            <ValueSlot><input class="fs-range" type="range" min="0" max="120" step="5" value="@O.IdleFadeSeconds" @onchange="e => SetInt(e.Value, v => Set(o => o.IdleFadeSeconds = v))" /></ValueSlot>
+        </SettingRow>
+        @if (O.IdleFadeSeconds > 0)
+        {
+            <SettingRow Title="Яркость в простое" Description="@($"{O.IdleFadePercent}%")">
+                <ValueSlot><input class="fs-range" type="range" min="10" max="90" step="5" value="@O.IdleFadePercent" @onchange="e => SetInt(e.Value, v => Set(o => o.IdleFadePercent = v))" /></ValueSlot>
+            </SettingRow>
+        }
+        <SettingRow Title="Частота обновления" Description="@($"{O.RefreshMs} мс — как часто обновляются полосы. Меньше — быстрее отклик, больше — меньше нагрузка на процессор")">
+            <ValueSlot><input class="fs-range" type="range" min="33" max="500" step="1" value="@O.RefreshMs" @onchange="e => SetInt(e.Value, v => Set(o => o.RefreshMs = v))" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Формат времени" Description="Время начала событий в подсказках">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    <button type="button" class="fs-segmented__option @(!O.Use12h ? "is-selected" : "")" @onclick="() => Set(o => o.Use12h = false)">24 часа</button>
+                    <button type="button" class="fs-segmented__option @(O.Use12h ? "is-selected" : "")" @onclick="() => Set(o => o.Use12h = true)">12 часов</button>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Запускать вместе с Windows" Description="Метр стартует сам при входе в Windows">
+            <ValueSlot><ToggleSwitch Checked="@O.StartWithWindows" CheckedChanged="v => Set(o => o.StartWithWindows = v)" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Компактная полоса" Description="Главное окно — только шапка и твоя строка">
             <ValueSlot><ToggleSwitch Checked="@O.Compact" CheckedChanged="v => Set(o => o.Compact = v)" /></ValueSlot>
         </SettingRow>
@@ -224,6 +273,12 @@
         <div class="fs-label fs-label--spaced">УВЕДОМЛЕНИЯ</div>
         <SettingRow Title="Звук оповещений" Description="Сигнал, когда до события остаётся заданное время">
             <ValueSlot><ToggleSwitch Checked="@O.Sound" CheckedChanged="v => Set(o => o.Sound = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Громкость оповещений" Description="@($"{O.AlertVolume}% — для своих звуков; стандартные звуки Windows играют с системной громкостью (0 — без звука)")">
+            <ValueSlot><input class="fs-range" type="range" min="0" max="100" step="5" value="@O.AlertVolume" @onchange="e => SetInt(e.Value, v => Set(o => o.AlertVolume = v))" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Без звука, когда игра закрыта" Description="Оповещения по-прежнему показываются, просто без звука">
+            <ValueSlot><ToggleSwitch Checked="@O.MuteWhenGameClosed" CheckedChanged="v => Set(o => o.MuteWhenGameClosed = v)" /></ValueSlot>
         </SettingRow>
         @foreach (var alert in AlertRows)
         {

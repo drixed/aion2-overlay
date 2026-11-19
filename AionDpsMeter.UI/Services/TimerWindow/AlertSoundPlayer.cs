@@ -9,13 +9,15 @@ namespace AionDpsMeter.UI.Services.TimerWindow
 {
     /// <summary>Plays an alert's sound on the UI thread: a Windows sound or the user's .wav/.mp3. A file that is gone
     /// or cannot be played falls back to the standard sound, so an alert is never silent by mistake.</summary>
-    public sealed class AlertSoundPlayer(ILogger<AlertSoundPlayer> logger)
+    public sealed class AlertSoundPlayer(ILogger<AlertSoundPlayer> logger, AionDpsMeter.Timers.Feed.TimersOptionsStore options)
     {
         /// <summary>Kept in a field: a MediaPlayer that is collected stops mid-sound.</summary>
         private MediaPlayer? media;
 
         public void Play(AlertSound sound)
         {
+            var volume = Math.Clamp(options.Current.AlertVolume, 0, 100);
+            if (volume == 0 || options.Current.MuteWhenGameClosed && !ForkRuntime.GameRunning()) return;
             try
             {
                 if (sound.File is { } file)
@@ -29,6 +31,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                             logger.LogWarning(e.ErrorException, "Alert sound {File} could not be played", file);
                             SystemSounds.Exclamation.Play();
                         };
+                        media.Volume = volume / 100.0;
                         media.Open(new Uri(file, UriKind.Absolute));
                         media.Play();
                         return;

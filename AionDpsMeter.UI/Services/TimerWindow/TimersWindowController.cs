@@ -63,8 +63,12 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         }
 
         /// <summary>Seconds without hits before a fight ends (upstream's fixed 45 s, now a setting).</summary>
-        private void ApplyFightTimeout() =>
+        private void ApplyFightTimeout()
+        {
             AionDpsMeter.Services.Services.Session.TargetEntry.IdleTimeout = TimeSpan.FromSeconds(Math.Clamp(options.Current.FightIdleSeconds, 10, 120));
+            ForkRuntime.RefreshInterval = TimeSpan.FromMilliseconds(Math.Clamp(options.Current.RefreshMs, 33, 1000));
+            ForkRuntime.ApplyAutostart(options.Current.StartWithWindows, logger);
+        }
 
         private void FollowSetting()
         {
