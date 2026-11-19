@@ -82,3 +82,31 @@
 .hb-sumbox { padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, .03); border: 1px solid #262e3b; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
 .hb-rates { color: #8b95a5; }
 .hb-rates b { color: #e6edf3; margin-right: 10px; }
+
+/* "Итоги" like the reference: six cards, a leader with a note, the top five with bars, my row outlined */
+.hb-sum .hb-card { padding: 12px 12px 10px; gap: 4px; }
+.hb-card-title { display: flex; align-items: center; gap: 7px; }
+.hb-ct { font-style: normal; width: 14px; text-align: center; color: #8b95a5; }
+.hb-lead { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.hb-lead b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-lead em { font-style: normal; font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+.hb-lead-note { color: #8b95a5; font-size: 11.5px; margin-bottom: 6px; }
+.hb-ranks { display: flex; flex-direction: column; gap: 4px; }
+.hb-rank { position: relative; display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; border-radius: 6px; background: rgba(255, 255, 255, .025);
+    border: 1px solid transparent; overflow: hidden; font-size: 12px; }
+.hb-rank > :not(.hb-fill) { position: relative; z-index: 1; }
+.hb-rank .hb-row-name { font-weight: 600; flex-direction: row; }
+.hb-rank b { font-variant-numeric: tabular-nums; }
+.hb-rank.me { border-color: rgba(95, 212, 196, .7); }
+.hb-rank-n { width: 12px; color: #8b95a5; font-size: 11px; text-align: right; }
+.hb-rank .hb-fill { background: rgba(255, 255, 255, .06); }
+.hb-rank-card.heal .hb-lead em, .hb-rank-card.heal .hb-ct { color: #7ee787; }
+.hb-rank-card.heal .hb-rank:first-child .hb-fill { background: rgba(126, 231, 135, .16); }
+.hb-rank-card.rheal .hb-lead em, .hb-rank-card.rheal .hb-ct { color: #5fd4c4; }
+.hb-rank-card.rheal .hb-fill { background: rgba(95, 212, 196, .1); }
+.hb-rank-card.taken .hb-lead em, .hb-rank-card.taken .hb-ct { color: #ff8f8f; }
+.hb-rank-card.taken .hb-fill { background: rgba(255, 143, 143, .12); }
+.hb-rank-card.hit .hb-lead em, .hb-rank-card.hit .hb-ct { color: #f5c76b; }
+.hb-rank-card.first .hb-lead em { color: #5fd4c4; }
+.hb-rank-card.first .hb-fill { background: transparent; }
+.hb-sum .hb-stat { padding: 5px 0; }

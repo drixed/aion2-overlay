@@ -102,6 +102,12 @@ namespace AionDpsMeter.UI.Services.Windowing
 
         public void OpenStatEff()
         {
+            // aion2-overlay fork: the calculator in the fork's design (see FORK_CHANGES.md).
+            if (Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<TimerWindow.StatCalcWindow>(App.AppHost.Services) is { } forkCalc)
+            {
+                forkCalc.Open();
+                return;
+            }
             var statEfficiencyCalculatorViewModel  =new StatEfficiencyCalculatorViewModel(settingsService);
             statEfficiencyCalculatorViewModel.LoadFromSnapshot(sessionManager.GetCurrentPlayerStatSnapshot());
             var statEfficiencyCalculatorWindow = new StatEfficiencyCalculatorWindow

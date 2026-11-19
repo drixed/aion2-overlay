@@ -112,37 +112,36 @@
                 @if (tab == "summary")
                 {
                     var players = s.PlayerStats.ToList();
+                    var byId = players.ToDictionary(p => p.PlayerId);
+                    var me = players.FirstOrDefault(p => p.IsUser)?.PlayerId;
+                    RankRow Row(long id, double v, string text) =>
+                        new(id, byId.TryGetValue(id, out var ps) ? ps.PlayerName : $"Игрок {id}", byId.TryGetValue(id, out var pc) ? pc.ClassId : 0, v, text);
+                    var fp = fight?.Players ?? [];
+                    var heal = fp.Where(p => p.HealDone > 0).OrderByDescending(p => p.HealDone).Select(p => Row(p.Id, p.HealDone, Fmt(p.HealDone))).ToList();
+                    var got = fp.Where(p => p.HealReceived > 0).OrderByDescending(p => p.HealReceived).Select(p => Row(p.Id, p.HealReceived, Fmt(p.HealReceived))).ToList();
+                    var taken = fp.Where(p => p.DamageTaken > 0).OrderByDescending(p => p.DamageTaken).Select(p => Row(p.Id, p.DamageTaken, Fmt(p.DamageTaken))).ToList();
                     var hits = players.Select(p => (p, Top: s.SkillStatsByPlayer.TryGetValue(p.PlayerId, out var ks) ? ks.OrderByDescending(k => k.MaxHit).FirstOrDefault() : null))
-                        .Where(x => x.Top is not null).OrderByDescending(x => x.Top!.MaxHit).Take(5).ToList();
-                    var openers = players.Where(p => p.FirstHit > DateTime.MinValue).OrderBy(p => p.FirstHit).Take(5).ToList();
-                    <div class="hb-grid">
+                        .Where(x => x.Top is { MaxHit: > 0 }).OrderByDescending(x => x.Top!.MaxHit).ToList();
+                    var strong = hits.Select(x => Row(x.p.PlayerId, x.Top!.MaxHit, Fmt(x.Top.MaxHit))).ToList();
+                    var openers = players.Where(p => p.FirstHit > DateTime.MinValue).OrderBy(p => p.FirstHit).ToList();
+                    var first = openers.Select(p => Row(p.PlayerId, 1, p == openers[0] ? "0.0s" : "+" + (p.FirstHit - openers[0].FirstHit).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + "s")).ToList();
+                    var healTotal = fp.Sum(p => p.HealDone);
+                    var takenTotal = fp.Sum(p => p.DamageTaken);
+                    var lead2 = got.Count > 0 ? fp.First(p => p.Id == got[0].Id) : null;
+                    <div class="hb-grid hb-sum">
+                        @RankCard("♥", "Больше всего лечения", "heal", heal, heal.Count > 0 ? $"{Share(heal[0].Value, healTotal)} лечения группы" : null, me, fight is null)
+                        @RankCard("✚", "Больше всего получено лечения", "rheal", got, lead2 is null ? null : $"Из них своё: {Fmt(lead2.SelfHeal)}", me, fight is null)
+                        @RankCard("⛉", "Больше всего получено урона", "taken", taken, taken.Count > 0 ? $"{Share(taken[0].Value, takenTotal)} урона, полученного группой" : null, me, fight is null)
+                        @RankCard("ϟ", "Самый сильный удар", "hit", strong, hits.Count > 0 ? hits[0].Top!.SkillName : null, me, false)
+                        @RankCard("⚑", "Первый удар", "first", first, first.Count > 0 ? "Начало боя" : null, me, false)
                         <div class="hb-card">
-                            <div class="hb-card-title">📈 Бой</div>
+                            <div class="hb-card-title"><i class="hb-ct">∿</i>Бой</div>
                             <div class="hb-stat"><span>Длительность</span><b>@Clock(s.Duration)</b></div>
                             <div class="hb-stat"><span>Урон группы</span><b>@Fmt(players.Sum(p => p.TotalDamage))</b></div>
-                            <div class="hb-stat"><span>DPS группы</span><b>@Fmt(players.Sum(p => p.DamagePerSecond))</b></div>
-                            <div class="hb-stat"><span>Игроков</span><b>@players.Count</b></div>
+                            <div class="hb-stat"><span>DPS группы</span><b>@Fmt(players.Sum(p => p.TotalDamage) / Math.Max(1, s.Duration.TotalSeconds))</b></div>
+                            <div class="hb-stat"><span>Лечение</span><b>@(fight is null ? "—" : Fmt(healTotal))</b></div>
+                            <div class="hb-stat"><span>Получено урона</span><b>@(fight is null ? "—" : Fmt(takenTotal))</b></div>
                             <div class="hb-stat"><span>Смерти</span><b>@players.Sum(p => p.PlayerDeaths)</b></div>
-                            @if (fight is { } f)
-                            {
-                                <div class="hb-stat"><span>Лечение</span><b>@Fmt(f.TotalHeal)</b></div>
-                                <div class="hb-stat"><span>Получено урона</span><b>@Fmt(f.TotalTaken)</b></div>
-                            }
-                        </div>
-                        <div class="hb-card">
-                            <div class="hb-card-title">⚡ Самый сильный удар</div>
-                            @foreach (var (p, top) in hits)
-                            {
-                                <div class="hb-row @(p.IsUser ? "me" : "")"><span class="hb-icon" style="background-image:url('/images/classes/@(p.ClassId).png')"></span><span class="hb-row-name">@p.PlayerName<small>@top!.SkillName</small></span><b>@Fmt(top.MaxHit)</b></div>
-                            }
-                        </div>
-                        <div class="hb-card">
-                            <div class="hb-card-title">🚩 Первый удар</div>
-                            @for (var i = 0; i < openers.Count; i++)
-                            {
-                                var p = openers[i];
-                                <div class="hb-row @(p.IsUser ? "me" : "")"><span class="hb-icon" style="background-image:url('/images/classes/@(p.ClassId).png')"></span><span class="hb-row-name">@p.PlayerName</span><b>@(i == 0 ? "0.0s" : $"+{(p.FirstHit - openers[0].FirstHit).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)}s")</b></div>
-                            }
                         </div>
                     </div>
                 }
@@ -240,6 +239,44 @@
     /// <summary>The fork's fight summary (healing, damage taken) for this fight, when the meter saw it.</summary>
     private FightSummary? Match(HistorySessionSnapshot s) =>
         Modes.Fight.History().FirstOrDefault(f => f.Start <= s.SessionEnd.AddSeconds(30) && f.Start + f.Duration >= s.SessionStart.AddSeconds(-30));
+
+    private sealed record RankRow(long Id, string Name, int ClassId, double Value, string Text);
+
+    private static string Share(double part, double total) => (part * 100 / Math.Max(1, total)).ToString("0", CultureInfo.InvariantCulture) + "%";
+
+    /// <summary>One "Итоги" card like the reference: the leader with a note, then the top five with bars; my row is
+    /// outlined and added below when I'm not in the top five.</summary>
+    private static RenderFragment RankCard(string icon, string title, string tone, IReadOnlyList<RankRow> rows, string? note, long? me, bool noData) => __builder =>
+    {
+        <div class="hb-card hb-rank-card @tone">
+            <div class="hb-card-title"><i class="hb-ct">@icon</i>@title</div>
+            @if (noData || rows.Count == 0)
+            {
+                <div class="hb-lead-note">@(noData ? "Метр не видел лечение и полученный урон в этом бою." : "Нет данных.")</div>
+            }
+            else
+            {
+                var max = Math.Max(1, rows[0].Value);
+                var mine = rows.Select((r, i) => (r, i)).FirstOrDefault(x => x.r.Id == me);
+                var shown = rows.Take(5).Select((r, i) => (r, i)).ToList();
+                if (me is not null && mine.r is not null && mine.i >= 5) shown.Add(mine);
+                <div class="hb-lead"><span class="hb-icon" style="background-image:url('/images/classes/@(rows[0].ClassId).png')"></span><b>@rows[0].Name</b><em>@rows[0].Text</em></div>
+                @if (note is not null) { <div class="hb-lead-note">@note</div> }
+                <div class="hb-ranks">
+                    @foreach (var (r, i) in shown)
+                    {
+                        <div class="hb-rank @(r.Id == me ? "me" : "")">
+                            <i class="hb-fill" style="width:@(tone == "first" ? "100%" : Pct(r.Value, max))"></i>
+                            <span class="hb-rank-n">@(i + 1)</span>
+                            <span class="hb-icon" style="background-image:url('/images/classes/@(r.ClassId).png')"></span>
+                            <span class="hb-row-name">@r.Name</span>
+                            <b>@r.Text</b>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    };
 
     private static string Title(HistorySessionSnapshot s) => string.IsNullOrWhiteSpace(s.TargetName) ? "Бой" : s.TargetName;
 

@@ -1,0 +1,197 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). Upstream's stat efficiency calculator in the fork's design and in
+   Russian: the result on top, then the character's stats from the game, the fight setup and the option simulator. *@
+@using System.Globalization
+@using AionDpsMeter.Services.Services.Session
+@using AionDpsMeter.Services.Services.Settings
+@using AionDpsMeter.UI.ViewModels
+@using AionDpsMeter.UI.StatEfficiency
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject CombatSessionManager Sessions
+@inject IAppSettingsService Settings
+@inject StatCalcWindow Window
+
+<div class="sc">
+    <div class="sc-title" @onmousedown="Window.Drag">
+        <b>Калькулятор статов</b>
+        <span class="sc-sub">сколько урона даст новая опция</span>
+        <span class="sc-grow"></span>
+        <button type="button" class="sc-btn" @onmousedown:stopPropagation="true" @onclick="Reload">⟳ Взять из игры</button>
+        <button type="button" class="sc-x" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
+    </div>
+
+    <div class="sc-body">
+        <div class="sc-hero">
+            <div class="sc-gain @(vm.DamageGainPercent > 0.0001 ? "up" : vm.DamageGainPercent < -0.0001 ? "down" : "")">
+                <small>ПРИРОСТ УРОНА</small>
+                <b>@(vm.DamageGainPercent > 0 ? "+" : "")@vm.DamageGainPercent.ToString("0.00", CultureInfo.InvariantCulture)%</b>
+            </div>
+            <div class="sc-kv"><small>Урон сейчас</small><b>@N(vm.TotalDamage)</b></div>
+            <div class="sc-arrow">→</div>
+            <div class="sc-kv"><small>С опцией</small><b class="teal">@N(vm.TotalDamage2)</b></div>
+            <div class="sc-kv sc-kv--wide"><small>Эффективная атака</small><b>@N(vm.EffectiveAttack) <span class="mute">→</span> @N(vm.EffectiveAttack2)</b></div>
+        </div>
+        @if (!hasSnapshot)
+        {
+            <div class="sc-warn">Характеристики персонажа ещё не получены. Откройте окно характеристик в игре (или смените экипировку) и нажмите «⟳ Взять из игры».</div>
+        }
+
+        <div class="sc-cols">
+            <div class="sc-col">
+                <div class="sc-cap">ХАРАКТЕРИСТИКИ ИЗ ИГРЫ <span>только чтение</span></div>
+                @Group("Атака", Attack, true)
+                @Group("Множители урона", Multipliers, true)
+                @Group("Итог", Derived, true)
+            </div>
+            <div class="sc-col">
+                <div class="sc-cap">НАСТРОЙКА БОЯ <span>сохраняется</span></div>
+                @Group("Баффы группы", Buffs, false)
+                @Group("Защита босса", BossDefense, false)
+                @Group("Допущения", Assumptions, false)
+                <div class="sc-group">
+                    <div class="sc-gtitle">Атака с позиции</div>
+                    <div class="sc-seg">
+                        <button type="button" class="@(vm.SelectedAttackType == AttackType.None ? "on" : "")" @onclick="() => vm.SelectedAttackType = AttackType.None">Нет</button>
+                        <button type="button" class="@(vm.SelectedAttackType == AttackType.Front ? "on" : "")" @onclick="() => vm.SelectedAttackType = AttackType.Front">Спереди</button>
+                        <button type="button" class="@(vm.SelectedAttackType == AttackType.Back ? "on" : "")" @onclick="() => vm.SelectedAttackType = AttackType.Back">Сзади</button>
+                    </div>
+                </div>
+            </div>
+            <div class="sc-col">
+                <div class="sc-cap">СИМУЛЯТОР ОПЦИИ <span>Δ, можно минус</span>
+                    <button type="button" class="sc-link" @onclick="ResetOptions">Сбросить</button>
+                </div>
+                @Group("Атака", OptionAttack, false)
+                @Group("Множители урона", OptionMultipliers, false)
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private sealed record Field(string Label, Func<StatEfficiencyCalculatorViewModel, double> Get, Action<StatEfficiencyCalculatorViewModel, double>? Set, bool Percent);
+
+    private static Field Ro(string label, Func<StatEfficiencyCalculatorViewModel, double> get, bool pct = false) => new(label, get, null, pct);
+    private static Field Rw(string label, Func<StatEfficiencyCalculatorViewModel, double> get, Action<StatEfficiencyCalculatorViewModel, double> set, bool pct = true) => new(label, get, set, pct);
+
+    private static readonly Field[] Attack =
+    [
+        Ro("Бонус атаки", v => v.BaseAttack), Ro("Атака", v => v.GearAttack), Ro("Мин. атака", v => v.MinAttack), Ro("Макс. атака", v => v.MaxAttack),
+        Ro("Атака PvE", v => v.PveAttack), Ro("Атака по боссам", v => v.BossAttack), Ro("Увеличение атаки", v => v.AttackIncreasePercent, true),
+    ];
+
+    private static readonly Field[] Multipliers =
+    [
+        Ro("Усиление урона", v => v.DamageBoostPercent, true), Ro("Усиление урона оружием", v => v.WeaponDamageBoostPercent, true),
+        Ro("Усиление урона PvE", v => v.PveDamageBoostPercent, true), Ro("Усиление урона по боссам", v => v.BossDamageBoostPercent, true),
+        Ro("Усиление крит. урона", v => v.CriticalDamageBoostPercent, true), Ro("Идеальный удар", v => v.PerfectPercent, true),
+        Ro("Двойной удар", v => v.SmitePercent, true), Ro("Урон спереди", v => v.FrontDamageBoostPercent, true),
+        Ro("Урон сзади", v => v.BackDamageBoostPercent, true), Ro("Урон по расам", v => v.RaceDamageBoostPercent, true),
+    ];
+
+    private static readonly Field[] Derived =
+    [
+        Ro("Скорость боя", v => v.CombatSpeedPercent, true), Ro("Атака в окне персонажа", v => v.StatWindowAttack), Ro("Эффективная атака", v => v.EffectiveAttack),
+    ];
+
+    private static readonly Field[] Buffs =
+    [
+        Rw("Увеличение атаки", v => v.AttackIncreaseCombatPercent, (v, x) => v.AttackIncreaseCombatPercent = x),
+        Rw("Усиление крит. урона", v => v.CriticalDamageBoost, (v, x) => v.CriticalDamageBoost = x),
+        Rw("Усиление урона", v => v.PartyDamageBoost, (v, x) => v.PartyDamageBoost = x),
+        Rw("Двойной удар", v => v.PartySmiteBuff, (v, x) => v.PartySmiteBuff = x),
+    ];
+
+    private static readonly Field[] BossDefense =
+    [
+        Rw("Сопротивление урону", v => v.BossDamageTolerance, (v, x) => v.BossDamageTolerance = x),
+        Rw("Сопротивление двойному удару", v => v.BossSmiteResist, (v, x) => v.BossSmiteResist = x),
+    ];
+
+    private static readonly Field[] Assumptions =
+    [
+        Rw("Шанс крита", v => v.CritChance, (v, x) => v.CritChance = x),
+        Rw("Доля ударов в спину", v => v.BackAttackRate, (v, x) => v.BackAttackRate = x),
+        Rw("Доля ударов спереди", v => v.FrontAttackRate, (v, x) => v.FrontAttackRate = x),
+    ];
+
+    private static readonly Field[] OptionAttack =
+    [
+        Rw("Бонус атаки", v => v.OptionBaseAttack, (v, x) => v.OptionBaseAttack = x, false),
+        Rw("Атака", v => v.OptionGearAttack, (v, x) => v.OptionGearAttack = x, false),
+        Rw("Мин. атака", v => v.OptionMinAttack, (v, x) => v.OptionMinAttack = x, false),
+        Rw("Макс. атака", v => v.OptionMaxAttack, (v, x) => v.OptionMaxAttack = x, false),
+        Rw("Атака PvE", v => v.OptionPveAttack, (v, x) => v.OptionPveAttack = x, false),
+        Rw("Атака по боссам", v => v.OptionBossAttack, (v, x) => v.OptionBossAttack = x, false),
+        Rw("Увеличение атаки", v => v.OptionAttackIncreasePercent, (v, x) => v.OptionAttackIncreasePercent = x),
+    ];
+
+    private static readonly Field[] OptionMultipliers =
+    [
+        Rw("Усиление урона", v => v.OptionDamageBoostPercent, (v, x) => v.OptionDamageBoostPercent = x),
+        Rw("Усиление урона оружием", v => v.OptionWeaponDamageBoostPercent, (v, x) => v.OptionWeaponDamageBoostPercent = x),
+        Rw("Усиление крит. урона", v => v.OptionCriticalDamageBoostPercent, (v, x) => v.OptionCriticalDamageBoostPercent = x),
+        Rw("Идеальный удар", v => v.OptionPerfectPercent, (v, x) => v.OptionPerfectPercent = x),
+        Rw("Двойной удар", v => v.OptionSmitePercent, (v, x) => v.OptionSmitePercent = x),
+        Rw("Урон спереди", v => v.OptionFrontDamageBoostPercent, (v, x) => v.OptionFrontDamageBoostPercent = x),
+        Rw("Урон сзади", v => v.OptionBackDamageBoostPercent, (v, x) => v.OptionBackDamageBoostPercent = x),
+    ];
+
+    private StatEfficiencyCalculatorViewModel vm = null!;
+    private bool hasSnapshot;
+
+    protected override void OnInitialized()
+    {
+        vm = new StatEfficiencyCalculatorViewModel(Settings);
+        Reload();
+        Window.Requested += OnRequested;
+    }
+
+    private void OnRequested() => InvokeAsync(() => { Reload(); StateHasChanged(); });
+
+    private void Reload()
+    {
+        var snapshot = Sessions.GetCurrentPlayerStatSnapshot();
+        hasSnapshot = snapshot?.Stats is not null;
+        vm.LoadFromSnapshot(snapshot);
+    }
+
+    private void ResetOptions()
+    {
+        foreach (var f in OptionAttack.Concat(OptionMultipliers)) f.Set!(vm, 0);
+    }
+
+    private RenderFragment Group(string title, Field[] fields, bool readOnly) => __builder =>
+    {
+        <div class="sc-group">
+            <div class="sc-gtitle">@title</div>
+            @foreach (var f in fields)
+            {
+                var field = f;
+                <label class="sc-row">
+                    <span>@f.Label@(f.Percent ? ", %" : "")</span>
+                    @if (readOnly || f.Set is null)
+                    {
+                        <b>@Value(f.Get(vm), f.Percent)</b>
+                    }
+                    else
+                    {
+                        <input type="number" step="any" value="@Raw(f.Get(vm))" @onchange="e => Set(field, e)" />
+                    }
+                </label>
+            }
+        </div>
+    };
+
+    private void Set(Field f, ChangeEventArgs e)
+    {
+        var text = (e.Value?.ToString() ?? "").Replace(',', '.').Trim();
+        f.Set!(vm, double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0);
+    }
+
+    private static string Raw(double v) => v.ToString("0.####", CultureInfo.InvariantCulture);
+    private static string Value(double v, bool pct) => pct ? v.ToString("0.##", CultureInfo.InvariantCulture) + "%" : v.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"));
+    private static string N(double v) => v.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"));
+
+    public void Dispose() => Window.Requested -= OnRequested;
+}

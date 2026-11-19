@@ -20,6 +20,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             services.AddSingleton<FightSummaryWindow>();
             services.AddSingleton<HistoryBrowserWindow>();
             services.AddSingleton<HistoryViewWindow>();
+            services.AddSingleton<StatCalcWindow>();
             services.AddSingleton<AlertRunner>();
             services.AddSingleton<WindowBoundsKeeper>();
             services.AddSingleton<AlertSoundPlayer>();
