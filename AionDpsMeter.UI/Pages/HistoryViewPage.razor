@@ -1,0 +1,539 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The damage tab's views in their own windows, laid out like the
+   reference meter: "Хронология умений" (skills on a time chart with the boss's HP), "Хронология баффов" (a Gantt with
+   filters) and "Баффы по умениям" (which buffs were on for each skill's casts). *@
+@using System.Globalization
+@using AionDpsMeter.Core.Models
+@using AionDpsMeter.Services.Models
+@using AionDpsMeter.Services.Services.Session
+@using AionDpsMeter.Timers.Modes
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject AionDpsMeter.Services.Services.Session.Persistence.ICombatHistoryStore Store
+@inject CombatSessionManager Sessions
+@inject HistoryViewWindow Window
+
+<div class="hv">
+    <div class="hv-title" @onmousedown="() => Window.Drag(View)">
+        <b>@HistoryViewWindow.Title(View)</b>
+        @if (View == HistoryViewWindow.PerSkill && Build() is { } head)
+        {
+            <span class="hv-title-sub">· @head.Who.PlayerName <em>@Clock(head.End - head.Start)</em></span>
+        }
+        <span class="hv-grow"></span>
+        <button type="button" class="hv-x" @onmousedown:stopPropagation="true" @onclick="() => Window.Close(View)">✕</button>
+    </div>
+
+    @if (Build() is not { } c)
+    {
+        <p class="hv-empty">Нет данных боя. Откройте вид из «Истории боёв» — вкладка «Урон».</p>
+    }
+    else if (View == HistoryViewWindow.PerSkill)
+    {
+        var mine = c.S.BuffEventsByPlayer.TryGetValue(c.Who.PlayerId, out var onMe) ? onMe.Where(Shown).ToList() : [];
+        var onBoss = c.S.BuffEventsByPlayer.TryGetValue(c.S.TargetId, out var tb) ? tb.Where(Shown).ToList() : [];
+        var buffSpans = Spans(c, mine);
+        var debuffSpans = Spans(c, onBoss);
+        var allCasts = c.Runs.Select(r => r.At).ToList();
+        <div class="hv-body">
+            <div class="hv-box hv-ps-head">
+                <span class="hv-cls" style="background-image:url('/images/classes/@(c.Who.ClassId).png')"></span>
+                <b>@c.Who.PlayerName</b>
+                <b class="teal">@Fmt(c.Who.TotalDamage)</b>
+                <span class="mute">@c.Runs.Count @Casts(c.Runs.Count)</span>
+                @if (c.Who.CombatPower > 0) { <span class="mute">БС @c.Who.CombatPower.ToString("N0", Ru)</span> }
+                <span class="hv-sep"></span>
+                <span>@Target(c.S)</span>
+                <span class="hv-grow"></span>
+                <span class="hv-flabel">ПОКАЗАТЬ</span>
+                <button type="button" class="hv-tog @(showOwn ? "on" : "")" @onclick="() => showOwn = !showOwn"><i></i>Свои</button>
+                <button type="button" class="hv-tog @(showGroup ? "on" : "")" @onclick="() => showGroup = !showGroup"><i></i>Группа</button>
+                <button type="button" class="hv-tog @(showOthers ? "on" : "")" @onclick="() => showOthers = !showOthers"><i></i>Другие</button>
+            </div>
+
+            <div class="hv-box">
+                <div class="hv-cap">ВСЕ УМЕНИЯ <span>Доля из @c.Runs.Count @Casts(c.Runs.Count), во время которых действовал каждый бафф</span></div>
+                <div class="hv-strip">
+                    @foreach (var b in buffSpans.Select(b => (b.Name, b.Icon, Share: Timeline.ActiveShare(allCasts, b.Spans))).Where(b => b.Share > 0).OrderByDescending(b => b.Share))
+                    {
+                        <div class="hv-strip-item" title="@b.Name">
+                            <span class="hv-big-ico">@if (!string.IsNullOrEmpty(b.Icon)) { <img src="@b.Icon" alt="" /> }</span>
+                            <b>@Pc(b.Share)</b>
+                            <small>@b.Name</small>
+                        </div>
+                    }
+                    @if (buffSpans.Count == 0) { <span class="mute">Баффов в этом бою не сохранено.</span> }
+                </div>
+            </div>
+
+            <div class="hv-cards">
+                @foreach (var k in c.SkillStats.OrderByDescending(k => k.TotalDamage))
+                {
+                    var times = c.Runs.Where(r => r.Skill == k.SkillId).Select(r => r.At).ToList();
+                    if (times.Count == 0) continue;
+                    var bs = buffSpans.Select(b => (b.Name, b.Icon, b.Caster, Share: Timeline.ActiveShare(times, b.Spans))).Where(b => b.Share > 0).OrderByDescending(b => b.Share).ToList();
+                    var always = bs.Where(b => b.Share >= 0.999).ToList();
+                    var top = bs.Where(b => b.Share < 0.999).ToList();
+                    var debuffs = debuffSpans.Select(b => (b.Name, b.Icon, b.Caster, Share: Timeline.ActiveShare(times, b.Spans))).Where(b => b.Share > 0).OrderByDescending(b => b.Share).ToList();
+                    var open = expanded.Contains(k.SkillId);
+                    var more = Math.Max(0, top.Count - 3) + Math.Max(0, debuffs.Count - 3);
+                    var skillId = k.SkillId;
+                    <div class="hv-card">
+                        <div class="hv-card-head">
+                            <span class="hv-big-ico">@if (!string.IsNullOrEmpty(k.SkillIcon)) { <img src="@k.SkillIcon" alt="" /> }</span>
+                            <span class="hv-card-name"><b>@k.SkillName</b><small>@times.Count @Casts(times.Count) · @Fmt(k.TotalDamage)</small></span>
+                            <span class="hv-card-pct"><b>@P(k.DamagePercentage)</b><small>УРОНА</small></span>
+                        </div>
+                        <div class="hv-always">
+                            <span class="hv-cap2">ВСЕГДА АКТИВЕН</span>
+                            <span class="hv-always-icons">
+                                @foreach (var b in always)
+                                {
+                                    <span class="hv-mini" title="@b.Name">@if (!string.IsNullOrEmpty(b.Icon)) { <img src="@b.Icon" alt="" /> }</span>
+                                }
+                                @if (always.Count == 0) { <span class="mute">—</span> }
+                            </span>
+                        </div>
+                        <div class="hv-cap2">ТОП 3 ПО ВРЕМЕНИ ДЕЙСТВИЯ БАФФОВ <span>всего @top.Count</span></div>
+                        @foreach (var b in open ? top : top.Take(3))
+                        {
+                            <div class="hv-brow">
+                                <span class="hv-mini">@if (!string.IsNullOrEmpty(b.Icon)) { <img src="@b.Icon" alt="" /> }</span>
+                                <span class="hv-brow-name"><span>@b.Name</span><small>@b.Caster</small></span>
+                                <span class="hv-seg">@for (var i = 0; i < 24; i++) { <i class="@(i < Math.Round(b.Share * 24) ? "on" : "")"></i> }</span>
+                                <b>@Pc(b.Share)</b>
+                            </div>
+                        }
+                        @if (top.Count == 0) { <div class="mute hv-none">—</div> }
+                        <div class="hv-cap2">ТОП 3 ПО ВРЕМЕНИ ДЕЙСТВИЯ ДЕБАФФОВ ЦЕЛИ <span>всего @debuffs.Count</span></div>
+                        @foreach (var b in open ? debuffs : debuffs.Take(3))
+                        {
+                            <div class="hv-brow">
+                                <span class="hv-mini">@if (!string.IsNullOrEmpty(b.Icon)) { <img src="@b.Icon" alt="" /> }</span>
+                                <span class="hv-brow-name"><span>@b.Name</span><small>@b.Caster</small></span>
+                                <span class="hv-seg">@for (var i = 0; i < 24; i++) { <i class="@(i < Math.Round(b.Share * 24) ? "on" : "")"></i> }</span>
+                                <b>@Pc(b.Share)</b>
+                            </div>
+                        }
+                        @if (debuffs.Count == 0) { <div class="mute hv-none">—</div> }
+                        @if (more > 0 || open)
+                        {
+                            <button type="button" class="hv-more" @onclick="() => Toggle(expanded, skillId)">@(open ? "свернуть ⌃" : $"+{more} ещё ⌄")</button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        var vs = zFrom / 1000.0 * c.Dur;
+        var ve = Math.Max(vs + 0.5, zTo / 1000.0 * c.Dur);
+        <div class="hv-body">
+            <div class="hv-who">
+                <b class="hv-boss">@Target(c.S)</b><span class="hv-bar"></span>
+                <b>@c.Who.PlayerName</b>
+                <span class="hv-badge">@ClassName(c.Who)</span>
+                <span class="teal">@(c.Dur.ToString("0", CultureInfo.InvariantCulture))s</span>
+            </div>
+            <div class="hv-box hv-opening">
+                <span class="hv-flabel">ОТКРЫТИЕ</span>
+                <span class="hv-open-row">
+                    @foreach (var r in c.Runs.Take(28))
+                    {
+                        var sk = c.Skills.GetValueOrDefault(r.Skill);
+                        <span class="hv-oi" title="@sk?.Name · +@Sec(r.At - c.Start)">@if (!string.IsNullOrEmpty(sk?.Icon)) { <img src="@sk.Icon" alt="" /> } else { <i>?</i> }</span>
+                    }
+                </span>
+            </div>
+
+            @if (View == HistoryViewWindow.Rotation)
+            {
+                var lanes = c.Runs.GroupBy(r => r.Skill)
+                    .Select(g => (Skill: g.Key, Dmg: c.Hits.Where(h => h.Skill.Id == g.Key).Sum(h => h.Damage)))
+                    .OrderByDescending(x => x.Dmg).Select(x => x.Skill).Take(22).ToList();
+                var laneH = (ChartH - 20) / Math.Max(1, lanes.Count);
+                var hp = BossHp(c);
+                <div class="hv-box hv-filters">
+                    <div class="hv-frow">
+                        <span class="hv-flabel">УМЕНИЯ</span>
+                        <span class="hv-chips">
+                            <button type="button" class="hv-chip" @onclick="() => { pickedSkills.Clear(); pickedRun = null; }">Снять выделение</button>
+                            @foreach (var id in lanes)
+                            {
+                                var sk = c.Skills.GetValueOrDefault(id);
+                                var skillId = id;
+                                <button type="button" class="hv-chip @(pickedSkills.Contains(id) ? "on" : "")" @onclick="() => Toggle(pickedSkills, skillId)">@if (!string.IsNullOrEmpty(sk?.Icon)) { <img src="@sk.Icon" alt="" /> }@sk?.Name</button>
+                            }
+                        </span>
+                    </div>
+                    <div class="hv-frow">
+                        <span class="hv-flabel">ЦЕЛИ</span>
+                        <span class="hv-chips"><span class="hv-chip on"><i class="dot" style="background:#e0609c"></i>@Target(c.S)</span></span>
+                    </div>
+                </div>
+                <div class="hv-chart" style="height:@(F(ChartH))px">
+                    @for (var i = 0; i <= 5; i++)
+                    {
+                        var y = 10 + i * (ChartH - 20) / 5.0;
+                        <i class="hv-hline" style="top:@(F(y))px"></i>
+                        if (i < 5)
+                        {
+                            <span class="hv-ylab" style="top:@(F(y))px">@(100 - i * 20)%</span>
+                        }
+                    }
+                    @foreach (var t in Ticks(vs, ve))
+                    {
+                        <i class="hv-vline" style="left:@Ps((t - vs) / (ve - vs) * 100)"></i>
+                    }
+                    @if (hp.Count > 1)
+                    {
+                        <svg class="hv-hp" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                            <polyline points="@string.Join(" ", hp.Select(p => F((p.Sec - vs) / (ve - vs) * 1000) + "," + F((1 - p.Hp) * 100)))" />
+                        </svg>
+                    }
+                    @for (var li = 0; li < lanes.Count; li++)
+                    {
+                        var id = lanes[li];
+                        var sk = c.Skills.GetValueOrDefault(id);
+                        var y = 10 + (li + 0.5) * laneH;
+                        var dim = pickedSkills.Count > 0 && !pickedSkills.Contains(id);
+                        foreach (var r in c.Runs.Where(r => r.Skill == id))
+                        {
+                            var x = ((r.At - c.Start).TotalSeconds - vs) / (ve - vs) * 100;
+                            if (x < -2 || x > 102) continue;
+                            var run = r;
+                            if (r.Hits >= 4 && (r.End - r.At).TotalSeconds >= 1)
+                            {
+                                var x2 = ((r.End - c.Start).TotalSeconds - vs) / (ve - vs) * 100;
+                                <i class="hv-channel @(dim ? "dim" : "")" style="left:@Ps(x);width:@Ps(Math.Max(0.3, x2 - x));top:@(F(y - 6))px"></i>
+                            }
+                            <span class="hv-ico @(dim ? "dim" : "") @(pickedRun == run ? "on" : "")" style="left:@Ps(x);top:@(F(y))px" title="@sk?.Name · +@Sec(r.At - c.Start)" @onclick="() => pickedRun = run">
+                                @if (!string.IsNullOrEmpty(sk?.Icon)) { <img src="@sk.Icon" alt="" /> } else { <i></i> }
+                            </span>
+                        }
+                    }
+                </div>
+                @Axis(vs, ve)
+                @Scrubber(c)
+                <div class="hv-box hv-detail">
+                    @if (pickedRun is { } pr && c.Skills.GetValueOrDefault(pr.Skill) is { } ps)
+                    {
+                        var rh = c.Hits.Where(h => h.Skill.Id == pr.Skill && h.DateTime >= pr.At && h.DateTime <= pr.End).ToList();
+                        var st = c.SkillStats.FirstOrDefault(k => k.SkillId == pr.Skill);
+                        <span class="hv-big-ico">@if (!string.IsNullOrEmpty(ps.Icon)) { <img src="@ps.Icon" alt="" /> }</span>
+                        <span class="hv-detail-name"><b>@ps.Name</b><small>+@Sec(pr.At - c.Start) от начала боя@(pr.End > pr.At ? $" · длилось {Sec(pr.End - pr.At)}" : "")</small></span>
+                        <span class="hv-kv"><small>Урон</small><b>@Fmt(rh.Sum(h => h.Damage))</b></span>
+                        <span class="hv-kv"><small>Попаданий</small><b>@rh.Count</b></span>
+                        <span class="hv-kv"><small>Крит</small><b>@rh.Count(h => h.IsCritical)</b></span>
+                        <span class="hv-kv"><small>Спина</small><b>@rh.Count(h => h.IsBackAttack)</b></span>
+                        <span class="hv-kv"><small>Идеал.</small><b>@rh.Count(h => h.IsPerfect)</b></span>
+                        <span class="hv-kv"><small>Макс</small><b>@Fmt(rh.Count > 0 ? rh.Max(h => h.Damage) : 0)</b></span>
+                        @if (st is not null)
+                        {
+                            <span class="hv-kv"><small>За бой</small><b>@Fmt(st.TotalDamage) · @P(st.DamagePercentage)</b></span>
+                            <span class="hv-kv"><small>Применений</small><b>@c.Runs.Count(r => r.Skill == pr.Skill)</b></span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="hv-hint">Нажмите на умение в графике, чтобы увидеть детали</span>
+                    }
+                </div>
+            }
+            else
+            {
+                var events = BuffEvents(c);
+                var targets = events.Select(e => e.EntityId).Distinct().ToList();
+                var sources = events.Select(e => e.CasterId).Distinct().ToList();
+                var shown = events.Where(e => !hiddenTargets.Contains(e.EntityId) && !hiddenSources.Contains(e.CasterId)).ToList();
+                var rows = shown.GroupBy(e => e.BuffName)
+                    .Select(g => (Name: g.Key, Icon: g.First().BuffIcon, Color: Color(g.Key),
+                        Bars: g.Select(e => Clip(c, e)).Where(b => b.To > b.From).OrderBy(b => b.From).ToList(),
+                        Up: Timeline.Uptime(Timeline.Merge(g.Select(e => (e.AppliedAt, e.AppliedAt.AddMilliseconds(e.DurationMs))), c.Start, c.End), c.Start, c.End)))
+                    .Where(r => r.Up > 0).OrderByDescending(r => r.Up).ThenBy(r => r.Name).ToList();
+                <div class="hv-box hv-filters">
+                    <div class="hv-frow">
+                        <span class="hv-flabel">НАПРАВЛЕНИЕ</span>
+                        <span class="hv-chips">
+                            <button type="button" class="hv-chip dotted @(dirMine ? "on" : "")" @onclick="() => dirMine = !dirMine"><i class="dot"></i>Баффы, которые я наложил</button>
+                            <button type="button" class="hv-chip dotted @(dirOnMe ? "on" : "")" @onclick="() => dirOnMe = !dirOnMe"><i class="dot"></i>Баффы на мне</button>
+                        </span>
+                    </div>
+                    <div class="hv-frow">
+                        <span class="hv-flabel">УМЕНИЯ</span>
+                        <span class="hv-chips">
+                            <button type="button" class="hv-chip" @onclick="() => pickedBuffs.Clear()">Снять выделение</button>
+                            @foreach (var r in rows)
+                            {
+                                var name = r.Name;
+                                <button type="button" class="hv-chip @(pickedBuffs.Contains(name) ? "on" : "")" @onclick="() => Toggle(pickedBuffs, name)"><i class="sq" style="background:@r.Color"></i>@if (!string.IsNullOrEmpty(r.Icon)) { <img src="@r.Icon" alt="" /> }@r.Name <em>@Pc(r.Up)</em></button>
+                            }
+                        </span>
+                    </div>
+                    <div class="hv-frow">
+                        <span class="hv-flabel">ЦЕЛИ</span>
+                        <span class="hv-chips">
+                            @foreach (var id in targets)
+                            {
+                                var e = id;
+                                <button type="button" class="hv-chip dotted @(hiddenTargets.Contains(e) ? "" : "on")" @onclick="() => Toggle(hiddenTargets, e)"><i class="dot" style="background:@(e == c.S.TargetId ? "#e0609c" : "#5fd49a")"></i>@Who(c, e)</button>
+                            }
+                        </span>
+                    </div>
+                    <div class="hv-frow">
+                        <span class="hv-flabel">ИСТОЧНИКИ</span>
+                        <span class="hv-chips">
+                            @foreach (var id in sources)
+                            {
+                                var e = id;
+                                <button type="button" class="hv-chip dotted @(hiddenSources.Contains(e) ? "" : "on")" @onclick="() => Toggle(hiddenSources, e)"><i class="dot" style="background:@(e == (int)c.Who.PlayerId ? "#5fd4c4" : "#a3d977")"></i>@Who(c, e)</button>
+                            }
+                        </span>
+                    </div>
+                </div>
+                @if (rows.Count == 0)
+                {
+                    <p class="hv-empty">Баффов по этим фильтрам нет.</p>
+                }
+                <div class="hv-gantt">
+                    @foreach (var r in rows)
+                    {
+                        var dim = pickedBuffs.Count > 0 && !pickedBuffs.Contains(r.Name);
+                        <div class="hv-grow-row @(dim ? "dim" : "")">
+                            <span class="hv-glabel">@r.Name (@Pc(r.Up))</span>
+                            <span class="hv-gtrack">
+                                @foreach (var t in Ticks(vs, ve))
+                                {
+                                    <i class="hv-vline" style="left:@Ps((t - vs) / (ve - vs) * 100)"></i>
+                                }
+                                @foreach (var b in r.Bars)
+                                {
+                                    var x1 = Math.Max(0, (b.From - vs) / (ve - vs) * 100);
+                                    var x2 = Math.Min(100, (b.To - vs) / (ve - vs) * 100);
+                                    if (x2 <= x1) continue;
+                                    <i class="hv-gbar" style="left:@Ps(x1);width:@Ps(x2 - x1);background:@(r.Color)99;border-color:@r.Color"></i>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+                <div class="hv-gantt-axis">@Axis(vs, ve)</div>
+                <div class="hv-gantt-axis">@Scrubber(c)</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string View { get; set; } = HistoryViewWindow.Rotation;
+
+    private const double ChartH = 420;
+    private static readonly CultureInfo Ru = CultureInfo.GetCultureInfo("ru-RU");
+
+    private static readonly Dictionary<int, string> Classes = new()
+    {
+        [11] = "Гладиатор", [12] = "Страж", [13] = "Убийца", [14] = "Стрелок", [15] = "Волшебник",
+        [16] = "Заклинатель", [17] = "Целитель", [18] = "Чародей", [19] = "Мастер кулака",
+    };
+
+    /// <summary>Buff colours in the reference's muted range: green, teal, orange, cyan, red, olive, blue, brown, violet.</summary>
+    private static readonly string[] Palette = ["#86b45f", "#4fb6ae", "#d68a4c", "#6fd0d6", "#c9675b", "#a3b85a", "#5f9ed8", "#b88a5c", "#9a7fd0"];
+
+    private HistorySessionSnapshot? snap;
+    private Guid? session;
+    private long playerId;
+    private System.Threading.Timer? tick;
+
+    private int zFrom, zTo = 1000;
+    private readonly HashSet<int> pickedSkills = [];
+    private (DateTime At, DateTime End, int Skill, int Hits)? pickedRun;
+    private bool dirMine = true, dirOnMe = true;
+    private readonly HashSet<string> pickedBuffs = [];
+    private readonly HashSet<int> hiddenTargets = [], hiddenSources = [];
+    private bool showOwn = true, showGroup = true, showOthers = true;
+    private readonly HashSet<long> expanded = [];
+
+    private sealed record Ctx(HistorySessionSnapshot S, PlayerStats Who, DateTime Start, DateTime End, IReadOnlyList<PlayerDamage> Hits,
+        Dictionary<int, Skill> Skills, IReadOnlyList<(DateTime At, DateTime End, int Skill, int Hits)> Runs, IReadOnlyCollection<SkillStats> SkillStats)
+    {
+        public double Dur => Math.Max(0.5, (End - Start).TotalSeconds);
+    }
+
+    private Ctx? built;
+    private (HistorySessionSnapshot? Snap, long Player) builtFor;
+
+    private Ctx? Build()
+    {
+        if (snap is not { } s || s.PlayerStats.Count == 0) return null;
+        if (built is not null && ReferenceEquals(builtFor.Snap, s) && builtFor.Player == playerId) return built;
+        var who = s.PlayerStats.FirstOrDefault(p => p.PlayerId == playerId) ?? s.PlayerStats.FirstOrDefault(p => p.IsUser) ?? s.PlayerStats.OrderByDescending(p => p.TotalDamage).First();
+        var hits = (s.HitsByPlayer.TryGetValue(who.PlayerId, out var h) ? h : []).Where(x => x.Skill is not null).OrderBy(x => x.DateTime).ToList();
+        var start = s.SessionStart;
+        var end = s.SessionEnd > start ? s.SessionEnd : start.AddSeconds(1);
+        var skills = hits.GroupBy(x => x.Skill.Id).ToDictionary(g => g.Key, g => g.First().Skill);
+        var runs = Timeline.Runs(hits.Select(x => (x.DateTime, x.Skill.Id)));
+        var stats = s.SkillStatsByPlayer.TryGetValue(who.PlayerId, out var ks) ? ks : [];
+        builtFor = (s, playerId);
+        return built = new Ctx(s, who, start, end, hits, skills, runs, stats);
+    }
+
+    protected override void OnInitialized()
+    {
+        Load();
+        Window.Requested += OnRequested;
+        tick = new System.Threading.Timer(_ => InvokeAsync(() =>
+        {
+            if (session is null) { Load(); StateHasChanged(); }
+        }), null, 1000, 1000);
+    }
+
+    private void OnRequested(string view)
+    {
+        if (view != View) return;
+        InvokeAsync(() =>
+        {
+            zFrom = 0; zTo = 1000; pickedSkills.Clear(); pickedRun = null; pickedBuffs.Clear();
+            hiddenTargets.Clear(); hiddenSources.Clear(); expanded.Clear();
+            Load();
+            StateHasChanged();
+        });
+    }
+
+    private void Load()
+    {
+        (session, playerId) = Window.Request(View);
+        try
+        {
+            snap = session is { } g ? Store.GetSession(g)
+                : Sessions.GetActiveTargetSession() is { } live ? HistorySessionSnapshot.From(live) : snap;
+        }
+        catch (Exception) { }
+    }
+
+    /// <summary>"Баффы, которые я наложил" — on anyone; "Баффы на мне" — by anyone.</summary>
+    private List<BuffEvent> BuffEvents(Ctx c)
+    {
+        var me = (int)c.Who.PlayerId;
+        var set = new HashSet<BuffEvent>(ReferenceEqualityComparer.Instance);
+        if (dirOnMe && c.S.BuffEventsByPlayer.TryGetValue(c.Who.PlayerId, out var onMe)) set.UnionWith(onMe);
+        if (dirMine) set.UnionWith(c.S.BuffEventsByPlayer.Values.SelectMany(v => v).Where(e => e.CasterId == me));
+        return set.ToList();
+    }
+
+    /// <summary>"Свои" — I cast it, "Группа" — another player of the fight did, "Другие" — anyone else.</summary>
+    private bool Shown(BuffEvent e)
+    {
+        if (built is not { } c) return true;
+        if (e.CasterId == (int)c.Who.PlayerId) return showOwn;
+        return c.S.PlayerStats.Any(p => (int)p.PlayerId == e.CasterId) ? showGroup : showOthers;
+    }
+
+    private static List<(string Name, string? Icon, string Caster, IReadOnlyList<(DateTime From, DateTime To)> Spans)> Spans(Ctx c, IEnumerable<BuffEvent> events) =>
+        events.GroupBy(e => e.BuffName)
+            .Select(g => (Name: g.Key, Icon: g.First().BuffIcon,
+                Caster: Who(c, g.GroupBy(e => e.CasterId).OrderByDescending(x => x.Count()).First().Key, self: false),
+                Spans: Timeline.Merge(g.Select(e => (e.AppliedAt, e.AppliedAt.AddMilliseconds(e.DurationMs))), c.Start, c.End)))
+            .ToList();
+
+    private static (double From, double To) Clip(Ctx c, BuffEvent e) =>
+        (Math.Max(0, (e.AppliedAt - c.Start).TotalSeconds), Math.Min(c.Dur, (e.AppliedAt.AddMilliseconds(e.DurationMs) - c.Start).TotalSeconds));
+
+    private static string Who(Ctx c, int id, bool self = true)
+    {
+        if (id == (int)c.Who.PlayerId) return self ? "Себя" : c.Who.PlayerName;
+        if (id == c.S.TargetId) return Target(c.S);
+        return c.S.PlayerStats.FirstOrDefault(p => (int)p.PlayerId == id)?.PlayerName ?? $"#{id}";
+    }
+
+    /// <summary>The boss's HP over the fight from the group's damage: 100% at the start, falling with every hit.</summary>
+    private static List<(double Sec, double Hp)> BossHp(Ctx c)
+    {
+        if (c.S.TargetHpTotal <= 0) return [];
+        var points = new List<(double Sec, double Hp)> { (0, 1) };
+        long sum = 0;
+        foreach (var h in c.S.HitsByPlayer.Values.SelectMany(v => v).OrderBy(h => h.DateTime))
+        {
+            sum += h.Damage;
+            points.Add(((h.DateTime - c.Start).TotalSeconds, Math.Max(0, 1 - (double)sum / c.S.TargetHpTotal)));
+        }
+        var every = points.Count / 500 + 1;
+        return every == 1 ? points : points.Where((_, i) => i % every == 0).Append(points[^1]).ToList();
+    }
+
+    private static IEnumerable<double> Ticks(double from, double to)
+    {
+        var step = Timeline.AxisStep(to - from);
+        for (var t = Math.Ceiling(from / step) * step; t < to - step * 0.35; t += step) yield return t;
+    }
+
+    private static RenderFragment Axis(double from, double to) => __builder =>
+    {
+        <div class="hv-axis">
+            @foreach (var t in Ticks(from, to))
+            {
+                <span style="left:@Ps((t - from) / (to - from) * 100)">@Clock(TimeSpan.FromSeconds(t))</span>
+            }
+            <span style="left:100%">@Clock(TimeSpan.FromSeconds(to))</span>
+        </div>
+    };
+
+    /// <summary>The zoom bar under the chart: the group's damage over the whole fight, two handles for the shown part.</summary>
+    private RenderFragment Scrubber(Ctx c) => __builder =>
+    {
+        var bins = new double[120];
+        foreach (var h in c.S.HitsByPlayer.Values.SelectMany(v => v))
+        {
+            var i = (int)Math.Clamp((h.DateTime - c.Start).TotalSeconds / c.Dur * bins.Length, 0, bins.Length - 1);
+            bins[i] += h.Damage;
+        }
+        var max = Math.Max(1, bins.Max());
+        var pts = string.Join(" ", bins.Select((v, i) => F(i * 1000.0 / (bins.Length - 1)) + "," + F(30 - v / max * 26)));
+        <div class="hv-scrub">
+            <svg viewBox="0 0 1000 30" preserveAspectRatio="none"><polyline points="0,30 @pts 1000,30" /></svg>
+            <i class="hv-scrub-win" style="left:@(F(zFrom / 10.0))%;width:@(F((zTo - zFrom) / 10.0))%"></i>
+            <input type="range" min="0" max="1000" value="@zFrom" @oninput="SetFrom" />
+            <input type="range" min="0" max="1000" value="@zTo" @oninput="SetTo" />
+        </div>
+    };
+
+    private void SetFrom(ChangeEventArgs e) => zFrom = Math.Clamp(int.TryParse(e.Value?.ToString(), out var v) ? v : 0, 0, zTo - 20);
+
+    private void SetTo(ChangeEventArgs e) => zTo = Math.Clamp(int.TryParse(e.Value?.ToString(), out var v) ? v : 1000, zFrom + 20, 1000);
+
+    private static void Toggle<T>(HashSet<T> set, T value)
+    {
+        if (!set.Remove(value)) set.Add(value);
+    }
+
+    private static string Color(string name)
+    {
+        var h = 0;
+        foreach (var ch in name) h = unchecked(h * 31 + ch);
+        return Palette[(int)((uint)h % Palette.Length)];
+    }
+
+    private static string ClassName(PlayerStats p) => Classes.GetValueOrDefault(p.ClassId) ?? p.ClassName;
+
+    private static string Target(HistorySessionSnapshot s) => string.IsNullOrWhiteSpace(s.TargetName) ? "Цель" : s.TargetName;
+
+    private static string Casts(int n) => (n % 10, n % 100) switch
+    {
+        (1, not 11) => "применение умений",
+        (2 or 3 or 4, not (12 or 13 or 14)) => "применения умений",
+        _ => "применений умений",
+    };
+
+    private static string Fmt(double v) => AionDpsMeter.UI.Utils.DamageFormatter.Format((long)v);
+    private static string P(double v) => v.ToString("0.0", CultureInfo.InvariantCulture) + "%";
+    private static string Pc(double share) => (share * 100).ToString("0", CultureInfo.InvariantCulture) + "%";
+    private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+    private static string Ps(double v) => F(v) + "%";
+    private static string Sec(TimeSpan t) => t.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + "s";
+    private static string Clock(TimeSpan t) => t.TotalHours >= 1 ? t.ToString(@"h\:mm\:ss") : t.ToString(@"m\:ss");
+
+    public void Dispose()
+    {
+        tick?.Dispose();
+        Window.Requested -= OnRequested;
+    }
+}

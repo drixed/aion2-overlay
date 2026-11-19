@@ -59,6 +59,8 @@ namespace AionDpsMeter.Services.Services.Session
             var buffEventsByPlayer = playerStats.ToDictionary(
                 p => p.PlayerId,
                 p => session.GetBuffEvents(p.PlayerId, sessionStart, sessionEnd));
+            // aion2-overlay fork: the boss's debuffs too, under its id, for "Buffs per skill" (see FORK_CHANGES.md).
+            buffEventsByPlayer.TryAdd(session.TargetId, session.GetBuffEvents(session.TargetId, sessionStart, sessionEnd));
 
             return new HistorySessionSnapshot
             {

@@ -30,4 +30,21 @@ public class TimelineTests
         Assert.Equal(0.5, Timeline.ActiveShare([At(1), At(15), At(25), At(40)], spans), 3);
         Assert.Equal(0, Timeline.ActiveShare([], spans));
     }
+    [Fact]
+    public void A_run_keeps_where_it_ended_and_how_many_hits_it_had()
+    {
+        var runs = Timeline.Runs([(At(0), 7), (At(0.3), 7), (At(0.6), 7), (At(1), 9), (At(5), 7)]);
+        Assert.Equal([(At(0), At(0.6), 7, 3), (At(1), At(1), 9, 1), (At(5), At(5), 7, 1)], runs);
+    }
+
+    [Theory]
+    [InlineData(18, 3)]
+    [InlineData(5, 1)]
+    [InlineData(47, 10)]
+    [InlineData(158, 30)]
+    [InlineData(900, 300)]
+    public void Axis_step_gives_at_most_eight_labels(double seconds, double step)
+    {
+        Assert.Equal(step, Timeline.AxisStep(seconds));
+    }
 }
