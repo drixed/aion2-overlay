@@ -33,6 +33,10 @@ public static class ScheduleJson
         foreach (var (key, map) in file.FieldBossMaps ?? new())
             if (int.TryParse(key, out var id) && map.Block > 0) maps[id] = new FieldBossMapInfo(map.Block, map.Name ?? "");
 
+        var slots = new Dictionary<int, int>();
+        foreach (var (key, code) in file.FieldBossSlots ?? new())
+            if (int.TryParse(key, out var slot) && code > 0) slots[slot] = code;
+
         var respawn = new Dictionary<int, int>();
         foreach (var (key, minutes) in file.RespawnMinutes ?? new())
             if (int.TryParse(key, out var code) && minutes > 0) respawn[code] = minutes;
@@ -53,7 +57,7 @@ public static class ScheduleJson
         foreach (var (key, name) in file.PetNames ?? new())
             if (int.TryParse(key, out var pet) && !string.IsNullOrWhiteSpace(name)) petNames[pet] = name;
 
-        return new ScheduleData(events, maps, respawn, enrage, notice, Math.Max(0, file.EnergyMax), cubeMaps, petNames);
+        return new ScheduleData(events, maps, respawn, enrage, notice, Math.Max(0, file.EnergyMax), cubeMaps, petNames, slots);
     }
 
     private static bool TryEvent(EventDto dto, out ScheduledEvent e)
@@ -135,6 +139,8 @@ public static class ScheduleJson
         public List<EventDto>? Events { get; set; }
         public Dictionary<string, MapDto>? FieldBossMaps { get; set; }
         public Dictionary<string, int>? RespawnMinutes { get; set; }
+        /// <summary>List place (map × 100 + place) → NPC code, for maps whose bosses are not one block of codes.</summary>
+        public Dictionary<string, int>? FieldBossSlots { get; set; }
         public Dictionary<string, int>? EnrageSeconds { get; set; }
         public NoticeDto? Notice { get; set; }
         public int EnergyMax { get; set; }

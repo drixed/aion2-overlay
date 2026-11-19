@@ -24,6 +24,10 @@ public sealed class TimersOptions
     // Overlay settings (the ✦ window), modelled on the Abyss meter's.
     public DpsMode DpsMode { get; set; } = DpsMode.Effective;
     public bool HideTotalDamage { get; set; }
+    /// <summary>An HPS column before DPS: each player's healing on others this fight, per second.</summary>
+    public bool ShowHps { get; set; }
+    /// <summary>Marks in the skill table: skills that rarely crit or are often parried.</summary>
+    public bool ShowSkillWarnings { get; set; } = true;
     /// <summary>Rows, shares, party DPS and the summary count only me and my party.</summary>
     public bool OnlyMyParty { get; set; }
     public bool ShowPartyDps { get; set; } = true;
@@ -83,6 +87,12 @@ public sealed class TimersOptions
     public bool Use12h { get; set; }
     /// <summary>Start the meter when Windows starts.</summary>
     public bool StartWithWindows { get; set; }
+    /// <summary>The main window's "_" hides the overlay to the tray instead of the taskbar.</summary>
+    public bool MinimizeToTray { get; set; }
+    /// <summary>The overlay goes to the tray while AION 2 is closed and comes back when it starts.</summary>
+    public bool TrayWhenGameClosed { get; set; }
+    /// <summary>Minutes without a fight before the overlay goes to the tray until the next fight; 0 = never.</summary>
+    public int HideWhenIdleMinutes { get; set; }
     /// <summary>Class id → "#rrggbb": the class's own bar colour instead of the built-in one.</summary>
     public Dictionary<string, string> ClassColors { get; set; } = [];
     /// <summary>Rows in the PvP mode (a mass fight lists dozens); the user's row always stays.</summary>

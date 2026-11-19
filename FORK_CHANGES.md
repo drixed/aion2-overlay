@@ -77,6 +77,11 @@
 - `AionDpsMeter.UI/Pages/ForkRecords.*` — «Рекорды» в карточках: итоги, поиск, сортировка; бой открывается в «Истории боёв» (`HistoryBrowserWindow.Open(session:)`)
 - `AionDpsMeter.UI/Pages/ForkPets.*` — «Питомцы» в карточках: плитки уровней-фильтры, поиск по питомцу и монстру, сортировка, переключатели, полоса душ
 - `AionDpsMeter.Timers/Bosses/FieldBossTracker.cs` — места полевых боссов карт, где боссы не одним блоком кодов (Элийцы, карта 1010), выучиваются по убийству и следующему списку карты (`LearnedSlots` в `timers-state.json`)
+- `AionDpsMeter.UI/AionDpsMeter.UI.csproj` — `UseWindowsForms` для значка в трее (глобальные `using System.Windows.Forms`/`System.Drawing` убраны, чтобы имена WPF не путались)
+- `AionDpsMeter.UI/Services/TimerWindow/TrayService.cs`, `AionDpsMeter.Timers/Overlay/TrayRules.cs` — трей: «Сворачивать в трей», «В трей при закрытии игры», «Скрывать в простое»; меню значка: показать метр, история боёв, калькулятор, выход
+- «Показывать лечение» — столбец HPS (лечение других в секунду за бой) перед DPS в главном окне
+- `AionDpsMeter.Timers/Modes/SkillWarnings.cs` — «Предупреждения о крите и точности»: пометки «редкий крит» и «часто парируют» в таблице умений
+- Безымянные места полевых боссов можно назвать вручную в настройках панелей («Кто здесь?», `FieldBossTracker.AssignSlot`); `schedule.json` может разметить места для всех (`fieldBossSlots`)
 - `AionDpsMeter.UI/Pages/StatCalcPage.*`, `Services/TimerWindow/StatCalcWindow.cs` — калькулятор статов в стиле форка и на русском (итог сверху, «Что даст больше урона», характеристики из игры с правкой вручную, настройка боя, симулятор опции); расчёт — авторский `StatEfficiencyCalculatorViewModel`
 - `AionDpsMeter.UI/Services/Windowing/WindowHelper.cs` — `OpenStatEff` открывает калькулятор форка (авторское окно остаётся ниже, если службы нет)
 - «Итоги» в «Истории боёв» — шесть карточек как у Abyss: лечение, получено лечения, получено урона, самый сильный удар, первый удар, бой

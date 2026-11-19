@@ -248,4 +248,28 @@ public class FieldBossTrackerTests
         restored.OnList(2, List(88, 3, Slot(88, 2, true, now)));
         Assert.Equal(2500002, Assert.Single(restored.TimersFor(2)).Key);
     }
+    [Fact]
+    public void A_place_named_by_hand_keeps_its_timer_under_the_boss()
+    {
+        var t = Tracker();
+        var back = time.GetUtcNow().AddHours(1);
+        t.OnList(1, List(88, 3, Slot(88, 3, false, back)));
+        t.AssignSlot(8803, 2500001);
+
+        var named = Assert.Single(t.TimersFor(1));
+        Assert.Equal(2500001, named.Key);
+        Assert.Equal(back, named.NextSpawn);
+        t.OnList(1, List(88, 3, Slot(88, 3, true, back)));
+        Assert.Equal(2500001, Assert.Single(t.TimersFor(1)).Key);
+        Assert.Equal(2500001, t.Export().LearnedSlots![8803]);
+    }
+
+    [Fact]
+    public void Places_named_in_schedule_json_need_no_learning()
+    {
+        var data = Data with { FieldBossSlots = new Dictionary<int, int> { [8802] = 2500002 } };
+        var t = Tracker(data);
+        t.OnList(1, List(88, 3, Slot(88, 2, true, time.GetUtcNow())));
+        Assert.Equal(2500002, Assert.Single(t.TimersFor(1)).Key);
+    }
 }

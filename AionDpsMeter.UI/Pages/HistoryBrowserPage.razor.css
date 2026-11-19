@@ -110,3 +110,8 @@
 .hb-rank-card.first .hb-lead em { color: #5fd4c4; }
 .hb-rank-card.first .hb-fill { background: transparent; }
 .hb-sum .hb-stat { padding: 5px 0; }
+
+/* "Предупреждения о крите и точности" in the skill table */
+.hb-warn { font-style: normal; font-size: 9.5px; font-weight: 600; letter-spacing: .3px; border-radius: 5px; padding: 0 5px; margin-left: 4px; white-space: nowrap; }
+.hb-warn.crit { color: #f5c76b; background: rgba(245, 199, 107, .12); border: 1px solid rgba(245, 199, 107, .4); }
+.hb-warn.parry { color: #ff8f8f; background: rgba(255, 143, 143, .12); border: 1px solid rgba(255, 143, 143, .4); }

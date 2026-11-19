@@ -61,6 +61,16 @@ public sealed class BossCatalog
     /// <summary>The NPC's Russian name, or null when the tables do not know the code.</summary>
     public string? NameOrNull(int code) => npcs.TryGetValue(code, out var n) && n.Name.Length > 0 ? n.Name : null;
 
+    private IReadOnlyList<(int Code, string Name)>? bossList;
+
+    /// <summary>Every boss the tables know, by name — the "кто здесь?" picker for an unnamed map place.</summary>
+    public IReadOnlyList<(int Code, string Name)> Bosses()
+    {
+        lock (gate)
+            return bossList ??= npcs.Where(kv => kv.Value.IsBoss && !kv.Value.IsDummy && kv.Value.Name.Length > 0)
+                .Select(kv => (kv.Key, kv.Value.Name)).OrderBy(x => x.Name, StringComparer.CurrentCulture).ToList();
+    }
+
     public string Name(int code) => npcs.TryGetValue(code, out var n) && n.Name.Length > 0 ? n.Name : $"Босс {code}";
 
     /// <summary>

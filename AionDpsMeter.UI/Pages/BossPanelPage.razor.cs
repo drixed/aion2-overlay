@@ -300,6 +300,22 @@ namespace AionDpsMeter.UI.Pages
             return dpsCache;
         }
 
+        private IReadOnlyDictionary<long, double> hpsCache = new Dictionary<long, double>();
+        private DateTime hpsAt;
+
+        /// <summary>"Показывать лечение": the player's healing on others this fight per second, refreshed four times a second.</summary>
+        private string HpsOf(PlayerRenderState player)
+        {
+            var now = DateTime.Now;
+            if (now - hpsAt > TimeSpan.FromMilliseconds(250))
+            {
+                var d = sessions.GetCombatDuration();
+                hpsCache = d > TimeSpan.Zero ? modes.Heals.Rows(now - d, now).ToDictionary(r => r.PlayerId, r => r.PerSecond) : new Dictionary<long, double>();
+                hpsAt = now;
+            }
+            return hpsCache.TryGetValue(player.PlayerId, out var v) && v > 0 ? DamageFormatter.Format(v) : "—";
+        }
+
         private string DpsOf(PlayerRenderState player) =>
             Options.DpsMode == DpsMode.Active && Dps().TryGetValue(player.PlayerId, out var dps)
                 ? DamageFormatter.Format(dps.Active)

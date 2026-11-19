@@ -279,6 +279,10 @@
                         {
                             <span class="bp-row-dmg">@player.TotalDamageFormatted (@share.ToString("0.0", CultureInfo.InvariantCulture)%)</span>
                         }
+                        @if (Options.ShowHps)
+                        {
+                            <span class="bp-row-hps" title="Лечение других игроков в секунду за этот бой">@HpsOf(player)</span>
+                        }
                         <span class="bp-row-dps">@DpsOf(player)<small>/s</small></span>
                     }
                 </div>

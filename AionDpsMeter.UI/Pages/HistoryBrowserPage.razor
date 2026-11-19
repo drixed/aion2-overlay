@@ -10,6 +10,7 @@
 @inject MeterModesService Modes
 @inject AionDpsMeter.UI.Services.TimerWindow.HistoryBrowserWindow Window
 @inject AionDpsMeter.UI.Services.TimerWindow.HistoryViewWindow Views
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore Options
 
 <div class="hb">
     <div class="hb-head" @onmousedown="Window.Drag">
@@ -96,7 +97,16 @@
                         {
                             <div class="hb-tr">
                                 <i class="hb-fill" style="width:@Pct(k.TotalDamage, skills[0].TotalDamage)"></i>
-                                <span class="hb-name">@if (!string.IsNullOrEmpty(k.SkillIcon)) { <img class="hb-skill-icon" src="@k.SkillIcon" alt="" /> }@k.SkillName</span>
+                                <span class="hb-name">@if (!string.IsNullOrEmpty(k.SkillIcon)) { <img class="hb-skill-icon" src="@k.SkillIcon" alt="" /> }@k.SkillName
+                                    @if (Options.Current.ShowSkillWarnings && SkillWarnings.RareCrit(k.CriticalRate, who.CriticalRate, k.HitCount))
+                                    {
+                                        <i class="hb-warn crit" title="@($"Критует {P(k.CriticalRate)} — меньше половины вашего крита ({P(who.CriticalRate)})")">редкий крит</i>
+                                    }
+                                    @if (Options.Current.ShowSkillWarnings && SkillWarnings.OftenParried(k.ParryRate, k.HitCount))
+                                    {
+                                        <i class="hb-warn parry" title="@($"Парируется {P(k.ParryRate)} ударов")">часто парируют</i>
+                                    }
+                                </span>
                                 <span class="hb-spec">@foreach (var f in k.SpecializationFlags) { <i class="@(f ? "on" : "")"></i> }</span>
                                 <b>@Fmt(k.TotalDamage)</b><span>@P(k.DamagePercentage)</span><span>@(k.HitCount)×</span>
                                 <span>@(k.MultihitHits > 0 ? P(k.MultihitRate) : "—")</span><span>@P(k.CriticalRate)</span>

@@ -59,6 +59,7 @@
 .bp-row-dmg { font-size: 12px; opacity: .85; font-variant-numeric: tabular-nums; }
 .bp-row-dps { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 58px; text-align: right; }
 .bp-row-dps small { font-weight: 400; opacity: .7; }
+.bp-row-hps { font-size: 11.5px; color: #7ee787; font-variant-numeric: tabular-nums; min-width: 38px; text-align: right; white-space: nowrap; } /* aion2-overlay fork */
 .bp-focus:not(:hover) .bp-header, .bp-focus:not(:hover) .bp-notice, .bp-focus:not(:hover) .bp-footer { display: none; }
 .bp-alert { margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px; background: rgba(255, 170, 0, .9); color: #111; font-weight: 700; font-size: 12px; }
 .bp-record { margin-top: 4px; font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

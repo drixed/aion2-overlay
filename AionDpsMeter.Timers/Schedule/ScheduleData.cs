@@ -15,7 +15,8 @@ public sealed record ScheduleData(
     Notice? Notice = null,
     int EnergyMax = 0,
     IReadOnlyDictionary<string, string>? CubeMaps = null,
-    IReadOnlyDictionary<int, string>? PetNames = null)
+    IReadOnlyDictionary<int, string>? PetNames = null,
+    IReadOnlyDictionary<int, int>? FieldBossSlots = null)
 {
     /// <summary>A pet's name by its collection id (the game's packets carry only the id); null when unknown.</summary>
     public string? PetName(int pet) => PetNames is not null && PetNames.TryGetValue(pet, out var name) ? name : null;

@@ -86,6 +86,12 @@
                 </div>
             </ValueSlot>
         </SettingRow>
+        <SettingRow Title="Показывать лечение" Description="Добавляет HPS каждого игрока (лечение других в секунду за бой) в столбец перед его DPS">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowHps" CheckedChanged="v => Set(o => o.ShowHps = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Предупреждения о крите и точности" Description="В таблице умений отмечает умения, которые редко критуют (меньше половины вашего крита) или часто парируются (каждый десятый удар)">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowSkillWarnings" CheckedChanged="v => Set(o => o.ShowSkillWarnings = v)" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Скрыть общий урон" Description="Убирает столбец общего урона из строк игроков" IsLast="true">
             <ValueSlot><ToggleSwitch Checked="@O.HideTotalDamage" CheckedChanged="v => Set(o => o.HideTotalDamage = v)" /></ValueSlot>
         </SettingRow>
@@ -139,6 +145,15 @@
         </SettingRow>
         <SettingRow Title="Запускать вместе с Windows" Description="Метр стартует сам при входе в Windows">
             <ValueSlot><ToggleSwitch Checked="@O.StartWithWindows" CheckedChanged="v => Set(o => o.StartWithWindows = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Сворачивать в трей" Description="Кнопка «_» убирает метр в трей (значок возле часов); двойной клик по значку — вернуть">
+            <ValueSlot><ToggleSwitch Checked="@O.MinimizeToTray" CheckedChanged="v => Set(o => o.MinimizeToTray = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="В трей при закрытии игры" Description="Метр уходит в трей, когда AION 2 закрывается, и возвращается, когда игра запускается">
+            <ValueSlot><ToggleSwitch Checked="@O.TrayWhenGameClosed" CheckedChanged="v => Set(o => o.TrayWhenGameClosed = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Скрывать в простое" Description="@(O.HideWhenIdleMinutes == 0 ? "Выключено" : $"Через {O.HideWhenIdleMinutes} мин без боя, пока вы не пользуетесь метром, он уходит в трей до следующего боя")">
+            <ValueSlot><input class="fs-range" type="range" min="0" max="60" step="5" value="@O.HideWhenIdleMinutes" @onchange="e => SetInt(e.Value, v => Set(o => o.HideWhenIdleMinutes = v))" /></ValueSlot>
         </SettingRow>
         <SettingRow Title="Компактная полоса" Description="Главное окно — только шапка и твоя строка">
             <ValueSlot><ToggleSwitch Checked="@O.Compact" CheckedChanged="v => Set(o => o.Compact = v)" /></ValueSlot>
