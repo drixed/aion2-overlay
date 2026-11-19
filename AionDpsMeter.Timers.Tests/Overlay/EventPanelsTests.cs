@@ -105,4 +105,22 @@ public class EventPanelsTests
     [Fact]
     public void A_boss_the_meter_does_not_know_on_this_server_is_left_out() =>
         Assert.Empty(EventPanels.Tiles(At, Data, new EventPanel { EventIds = ["boss:99"] }, [], k => "x"));
+    // Shugo festival: entry opens on the hour, the festival itself starts 3 minutes later (game: "02:28 Войти").
+    private static readonly ScheduleData WithEntry = ScheduleJson.Parse("""
+    { "events": [ { "id": "shugo-festival", "name": "Фестиваль шуго", "kind": "interval", "anchor": "2026-11-01T00:00:00Z",
+      "periodMinutes": 60, "durationMinutes": 10, "entryMinutes": 3, "icon": "shugo" } ] }
+    """);
+
+    [Fact]
+    public void While_only_the_entry_is_open_the_tile_glows_and_counts_down_to_the_start()
+    {
+        var panel = new EventPanel { EventIds = ["shugo-festival"] };
+        var entry = EventPanels.Tiles(new DateTimeOffset(2026, 11, 20, 22, 0, 32, TimeSpan.Zero), WithEntry, panel).Single();
+        Assert.Equal(ChipState.Soon, entry.State);
+        Assert.Equal("вход 2:28", entry.Countdown);
+
+        var running = EventPanels.Tiles(new DateTimeOffset(2026, 11, 20, 22, 4, 0, TimeSpan.Zero), WithEntry, panel).Single();
+        Assert.Equal(ChipState.Open, running.State);
+        Assert.Equal("6:00", running.Countdown);
+    }
 }

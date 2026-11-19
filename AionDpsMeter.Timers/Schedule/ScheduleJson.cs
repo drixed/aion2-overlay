@@ -93,7 +93,7 @@ public static class ScheduleJson
                     ? dm.Select(m => TimeSpan.FromMinutes(Math.Max(0, m))).ToList()
                     : null;
                 e = new ScheduledEvent(dto.Id, dto.Name, category, ScheduleKind.Fixed, zone, times, days, null, null, duration, dto.Verified,
-                    durations, dto.Icon, dto.Alert, Math.Max(0, dto.SoonMinutes ?? 2));
+                    durations, dto.Icon, dto.Alert, Math.Max(0, dto.SoonMinutes ?? 2), Math.Max(0, dto.EntryMinutes ?? 0));
                 return true;
 
             case "interval":
@@ -101,7 +101,7 @@ public static class ScheduleJson
                 if (!DateTimeOffset.TryParse(dto.Anchor, CultureInfo.InvariantCulture, DateTimeStyles.None, out var anchor)) return false;
                 e = new ScheduledEvent(dto.Id, dto.Name, category, ScheduleKind.Interval, zone, [], null,
                     anchor, TimeSpan.FromMinutes(dto.PeriodMinutes.Value), duration, dto.Verified,
-                    null, dto.Icon, dto.Alert, Math.Max(0, dto.SoonMinutes ?? 2));
+                    null, dto.Icon, dto.Alert, Math.Max(0, dto.SoonMinutes ?? 2), Math.Max(0, dto.EntryMinutes ?? 0));
                 return true;
 
             default:
@@ -173,6 +173,8 @@ public static class ScheduleJson
         public string? Icon { get; set; }
         public bool Alert { get; set; } = true;
         public int? SoonMinutes { get; set; }
+        /// <summary>Minutes at the start when only the entry is open (the game shows "Войти" with a countdown).</summary>
+        public int? EntryMinutes { get; set; }
     }
 
     internal sealed class MapDto

@@ -63,6 +63,12 @@ public static class EventPanels
             if (data.Events.FirstOrDefault(e => e.Id == id) is not { } e || ScheduleCalculator.Next(e, now) is not { } o) continue;
             var open = o.IsActive(now) && o.End > o.Start;
             var toStart = o.Start - now;
+            var entryLeft = o.Start + e.Entry - now;
+            if (open && entryLeft > TimeSpan.Zero) // only the entry is open yet (game: "Войти" with a countdown)
+            {
+                tiles.Add(new EventTile(e.Id, e.Name, e.Icon ?? "event", ChipState.Soon, "вход " + Clock(entryLeft), 0));
+                continue;
+            }
             var state = open ? ChipState.Open
                 : toStart > TimeSpan.Zero && toStart <= TimeSpan.FromMinutes(e.SoonMinutes) ? ChipState.Soon
                 : ChipState.Idle;

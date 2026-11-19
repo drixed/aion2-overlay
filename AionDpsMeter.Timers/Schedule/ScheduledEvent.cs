@@ -21,8 +21,12 @@ public sealed record ScheduledEvent(
     IReadOnlyList<TimeSpan>? Durations = null,
     string? Icon = null,
     bool AlertByDefault = true,
-    int SoonMinutes = 2)
+    int SoonMinutes = 2,
+    int EntryMinutes = 0)
 {
+    /// <summary>The first minutes of an occurrence when only the entry is open (Shugo festival: 3 min before it starts).</summary>
+    public TimeSpan Entry => TimeSpan.FromMinutes(Math.Max(0, EntryMinutes));
+
     /// <summary>Fixed events: the length of the window starting at Times[i] (Arena of Tactics: 3 h, then 2 h).</summary>
     public TimeSpan DurationAt(int index) =>
         Durations is { } d && d.Count == Times.Count ? d[index] : Duration;

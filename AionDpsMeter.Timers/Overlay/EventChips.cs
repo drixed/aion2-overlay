@@ -24,17 +24,22 @@ public static class EventChips
             if (ScheduleCalculator.Next(e, now) is not { } o) continue;
             var open = o.IsActive(now) && o.End > o.Start;
             var toStart = o.Start - now;
-            var soon = !open && toStart > TimeSpan.Zero && toStart <= TimeSpan.FromMinutes(e.SoonMinutes);
-            var state = open ? ChipState.Open : soon ? ChipState.Soon : ChipState.Idle;
+            var entryLeft = o.Start + e.Entry - now;
+            var entry = open && entryLeft > TimeSpan.Zero; // only the entry is open yet: it glows, it does not run
+            var soon = entry || (!open && toStart > TimeSpan.Zero && toStart <= TimeSpan.FromMinutes(e.SoonMinutes));
+            var state = open && !entry ? ChipState.Open : soon ? ChipState.Soon : ChipState.Idle;
             var text = state switch
             {
+                ChipState.Soon when entry => "вход",
                 ChipState.Open => Minutes(o.End - now),
                 ChipState.Soon => Minutes(toStart),
                 _ when alwaysTime => Minutes(toStart),
                 _ => "",
             };
             var unverified = e.Verified ? "" : " (не проверено)";
-            var tooltip = open
+            var tooltip = entry
+                ? $"{e.Name}{unverified} — вход открыт, начало через {FeedText.Span(entryLeft)}"
+                : open
                 ? $"{e.Name}{unverified} — идёт, ещё {FeedText.Span(o.End - now)}"
                 : $"{e.Name}{unverified} — через {FeedText.Span(toStart)} (в {Display.Time(TimeZoneInfo.ConvertTime(o.Start, local).DateTime, use12h)})";
             chips.Add((new EventChip(e.Id, e.Name, e.Icon ?? DefaultIcon(e), state, text, tooltip), toStart));

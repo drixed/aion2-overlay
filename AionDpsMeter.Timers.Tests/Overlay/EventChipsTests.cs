@@ -105,4 +105,16 @@ public class EventChipsTests
     }
 
     private static (ChipState, string) Pair(EventChip c) => (c.State, c.Text);
+    [Fact]
+    public void While_only_the_entry_is_open_the_chip_says_so()
+    {
+        var data = ScheduleJson.Parse("""
+        { "events": [ { "id": "shugo-festival", "name": "Фестиваль шуго", "kind": "interval", "anchor": "2026-11-01T00:00:00Z",
+          "periodMinutes": 60, "durationMinutes": 10, "entryMinutes": 3, "icon": "shugo" } ] }
+        """);
+        var chip = EventChips.Build(new DateTimeOffset(2026, 11, 20, 22, 0, 32, TimeSpan.Zero), data, Berlin).Single();
+        Assert.Equal(ChipState.Soon, chip.State);
+        Assert.Equal("вход", chip.Text);
+        Assert.Contains("вход открыт", chip.Tooltip);
+    }
 }
