@@ -87,4 +87,15 @@ public class ScheduleJsonTests
     {
         Assert.Throws<FormatException>(() => ScheduleJson.Parse("{ not json"));
     }
+    [Fact]
+    public void A_map_named_without_a_block_and_its_places_are_read()
+    {
+        var data = ScheduleJson.Parse("""
+        { "events": [], "fieldBossMaps": { "1010": { "block": 0, "name": "Бертрон" } },
+          "fieldBossSlots": { "101001": 2100003, "101024": 2101131 } }
+        """);
+        Assert.Equal("Бертрон", data.FieldBossMaps[1010].Name);
+        Assert.Equal(0, data.FieldBossMaps[1010].Block);
+        Assert.Equal(2101131, data.FieldBossSlots![101024]);
+    }
 }

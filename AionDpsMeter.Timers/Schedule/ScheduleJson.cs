@@ -31,7 +31,9 @@ public static class ScheduleJson
 
         var maps = new Dictionary<int, FieldBossMapInfo>();
         foreach (var (key, map) in file.FieldBossMaps ?? new())
-            if (int.TryParse(key, out var id) && map.Block > 0) maps[id] = new FieldBossMapInfo(map.Block, map.Name ?? "");
+            // block 0: a map that only has a name; its places come from fieldBossSlots (its bosses are not one block)
+            if (int.TryParse(key, out var id) && (map.Block > 0 || (map.Block == 0 && !string.IsNullOrEmpty(map.Name))))
+                maps[id] = new FieldBossMapInfo(map.Block, map.Name ?? "");
 
         var slots = new Dictionary<int, int>();
         foreach (var (key, code) in file.FieldBossSlots ?? new())
