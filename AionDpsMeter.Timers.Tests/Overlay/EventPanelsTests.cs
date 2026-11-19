@@ -123,4 +123,19 @@ public class EventPanelsTests
         Assert.Equal(ChipState.Open, running.State);
         Assert.Equal("6:00", running.Countdown);
     }
+    [Fact]
+    public void An_unnamed_map_place_on_a_panel_shows_its_countdown_and_survives_being_named()
+    {
+        var spawn = At.AddMinutes(10);
+        var panel = new EventPanel { EventIds = ["boss:-101016"] };
+        var unnamed = new AionDpsMeter.Timers.Bosses.BossTimer(1, -101016, 1010, 101016, false, null, spawn, null, null);
+        var tile = EventPanels.Tiles(At, Data, panel, [unnamed], k => "Глава армии Рагт").Single();
+        Assert.Equal("Место 16", tile.Name);
+        Assert.Equal("10:00", tile.Countdown);
+
+        var named = unnamed with { Key = 2101131 };
+        var after = EventPanels.Tiles(At, Data, panel, [named], k => k == 2101131 ? "Глава армии Рагт" : "?").Single();
+        Assert.Equal("Глава армии Рагт", after.Name);
+        Assert.Equal("10:00", after.Countdown);
+    }
 }

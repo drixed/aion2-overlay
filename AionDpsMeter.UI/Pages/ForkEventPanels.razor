@@ -228,18 +228,23 @@
         Tracker.AssignSlot(slot, code);
     }
 
-    /// <summary>The field bosses the meter knows on this server, by zone (it learns them when the map is opened in game).</summary>
+    /// <summary>The field bosses and map places the meter knows on this server, by zone: the freshest map first, places
+    /// whose boss is not named yet as "Место N" (they have their own time too); old data says from when.</summary>
     private List<(string Zone, List<(int Key, string Name)> Bosses)> BossZones() =>
         Tracker.TimersFor(Server.CurrentServerId)
-            .Where(b => b.Key > 0)
-            .GroupBy(b => Schedule.Current.FieldBossMaps.TryGetValue(b.MapId, out var map) && map.Name.Length > 0 ? map.Name : $"Карта {b.MapId}")
-            .OrderBy(g => g.Key, StringComparer.CurrentCulture)
-            .Select(g => (g.Key, g.Select(b => (b.Key, Catalog.Name(b.Key))).DistinctBy(b => b.Key).OrderBy(b => b.Item2, StringComparer.CurrentCulture).ToList()))
+            .GroupBy(b => b.MapId)
+            .OrderByDescending(g => g.Max(b => b.ListedAt ?? DateTimeOffset.MinValue))
+            .Select(g => (ZoneLabel(g.Key, g.Max(b => b.ListedAt)),
+                g.OrderBy(b => b.Key > 0 ? 0 : 1).ThenBy(b => b.Key > 0 ? Catalog.Name(b.Key) : "", StringComparer.CurrentCulture).ThenBy(b => b.SlotId)
+                    .Select(b => (b.Key, b.Key > 0 ? Catalog.Name(b.Key) : $"Место {b.SlotId % 100}")).DistinctBy(b => b.Key).ToList()))
             .ToList();
+
+    private string ZoneLabel(int mapId, DateTimeOffset? listed) =>
+        MapName(mapId) + (listed is { } at && DateTimeOffset.Now - at > TimeSpan.FromDays(1) ? $" · данные от {at.ToLocalTime():dd.MM}, откройте карту" : "");
 
     private string ItemName(string id) =>
         id.StartsWith(EventPanels.BossPrefix, StringComparison.Ordinal) && int.TryParse(id[EventPanels.BossPrefix.Length..], out var key)
-            ? Catalog.Name(key)
+            ? (key > 0 ? Catalog.Name(key) : $"Место {-key % 100}")
             : Schedule.Current.Events.FirstOrDefault(e => e.Id == id)?.Name ?? id;
 
     private AionDpsMeter.Timers.Feed.TimersOptions O => Store.Current;
