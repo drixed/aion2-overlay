@@ -11,6 +11,8 @@
 @inject AionDpsMeter.Services.Services.Session.Persistence.ICombatHistoryStore Store
 @inject CombatSessionManager Sessions
 @inject HistoryViewWindow Window
+@inject AionDpsMeter.Timers.Replay.PositionLog Positions
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore TimerOptions
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
 
@@ -28,6 +30,10 @@
     @if (Build() is not { } c)
     {
         <p class="hv-empty">Нет данных боя. Откройте вид из «Истории боёв» — вкладка «Урон».</p>
+    }
+    else if (View == HistoryViewWindow.Replay)
+    {
+        @Replay(c)
     }
     else if (View == HistoryViewWindow.PerSkill)
     {
@@ -615,8 +621,148 @@
     private static string Sec(TimeSpan t) => t.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + "s";
     private static string Clock(TimeSpan t) => t.TotalHours >= 1 ? t.ToString(@"h\:mm\:ss") : t.ToString(@"m\:ss");
 
+
+    // ---------- "Повтор боя": the group and the boss from above, as the game reported their places ----------
+    private Dictionary<int, List<AionDpsMeter.Timers.Replay.Fix>>? tracks;
+    private (HistorySessionSnapshot? Snap, Guid? Session) tracksFor;
+    private double replayT;
+    private bool playing;
+    private double speed = 1;
+    private double zoom = 1;
+    private System.Threading.Timer? player;
+
+    private Dictionary<int, List<AionDpsMeter.Timers.Replay.Fix>> Tracks(Ctx c)
+    {
+        if (tracks is not null && ReferenceEquals(tracksFor.Snap, c.S) && tracksFor.Session == session) return tracks;
+        tracksFor = (c.S, session);
+        var ids = c.S.PlayerStats.Select(p => (int)p.PlayerId).Append(c.S.TargetId).ToList();
+        tracks = (session is { } id ? Positions.LoadReplay(id) : null)
+            ?? Positions.Tracks(ids, c.Start.AddSeconds(-3), c.End.AddSeconds(3));
+        return tracks;
+    }
+
+    private static (float X, float Y)? PlaceAt(List<AionDpsMeter.Timers.Replay.Fix> fixes, DateTime t)
+    {
+        if (fixes.Count == 0 || t < fixes[0].At.AddSeconds(-2)) return null;
+        var i = fixes.FindLastIndex(f => f.At <= t);
+        if (i < 0) return (fixes[0].X, fixes[0].Y);
+        if (i == fixes.Count - 1) return (fixes[i].X, fixes[i].Y);
+        var a = fixes[i];
+        var b = fixes[i + 1];
+        var k = Math.Clamp((t - a.At).TotalSeconds / Math.Max(0.001, (b.At - a.At).TotalSeconds), 0, 1);
+        return ((float)(a.X + (b.X - a.X) * k), (float)(a.Y + (b.Y - a.Y) * k));
+    }
+
+    private void TogglePlay(Ctx c)
+    {
+        playing = !playing;
+        player?.Dispose();
+        if (!playing) return;
+        if (replayT >= c.Dur) replayT = 0;
+        player = new System.Threading.Timer(_ => InvokeAsync(() =>
+        {
+            replayT += 0.1 * speed;
+            if (built is { } b && replayT >= b.Dur) { replayT = b.Dur; playing = false; player?.Dispose(); }
+            StateHasChanged();
+        }), null, 100, 100);
+    }
+
+    private void SetSpeed(ChangeEventArgs e) =>
+        speed = double.TryParse(e.Value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 1;
+
+    private void SetReplayT(ChangeEventArgs e) =>
+        replayT = double.TryParse(e.Value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0;
+
+    private void ZoomMap(WheelEventArgs e) => zoom = Math.Clamp(zoom * (e.DeltaY > 0 ? 0.85 : 1.18), 0.5, 12);
+
+    private string ClassColor(int classId) =>
+        TimerOptions.Current.ClassColors.TryGetValue(classId.ToString(CultureInfo.InvariantCulture), out var col) ? col : classId switch
+        {
+            11 => "#c9a0ff", 12 => "#ff9a3d", 13 => "#41e08c", 14 => "#f5d26b", 15 => "#4fb4ff",
+            16 => "#8a7bff", 17 => "#57d6c8", 18 => "#c3d93a", 19 => "#ff6b6b", _ => "#c9d1d9",
+        };
+
+    private RenderFragment Replay(Ctx c) => __builder =>
+    {
+        var all = Tracks(c);
+        var fixesAll = all.Values.SelectMany(v => v).ToList();
+        if (fixesAll.Count == 0)
+        {
+            <p class="hv-empty">Для этого боя нет позиций. Повтор записывается для боёв с боссом начиная с этой версии метра: игра присылает места игроков вместе с их движениями и умениями.</p>
+            return;
+        }
+        var minX = fixesAll.Min(f => f.X);
+        var maxX = fixesAll.Max(f => f.X);
+        var minY = fixesAll.Min(f => f.Y);
+        var maxY = fixesAll.Max(f => f.Y);
+        var span = Math.Max(1500, Math.Max(maxX - minX, maxY - minY)) / zoom;
+        var cx = (minX + maxX) / 2;
+        var cy = (minY + maxY) / 2;
+        var vb = $"{F(cx - span / 2 - span * .08)} {F(-(cy + span / 2 + span * .08))} {F(span * 1.16)} {F(span * 1.16)}";
+        var t = c.Start.AddSeconds(replayT);
+        var hp = BossHp(c);
+        var hpNow = hp.LastOrDefault(p => p.Sec <= replayT).Hp;
+        var players = c.S.PlayerStats.ToDictionary(p => (int)p.PlayerId);
+        var r = span / 90;
+        var grid = Math.Pow(10, Math.Floor(Math.Log10(span / 4)));
+        <div class="hv-body">
+            <div class="hv-who">
+                <b class="hv-boss">@Target(c.S)</b><span class="hv-bar"></span>
+                <span>@Clock(TimeSpan.FromSeconds(replayT)) / @Clock(c.End - c.Start)</span>
+                @if (hp.Count > 1) { <span class="teal">HP босса @Pc(hpNow)</span> }
+                <span class="hv-grow"></span>
+                <span class="mute">колесо — масштаб</span>
+            </div>
+            <svg class="hv-map" viewBox="@vb" @onwheel="ZoomMap" @onwheel:preventDefault="true">
+                @for (var gx = Math.Floor((cx - span) / grid) * grid; gx < cx + span; gx += grid)
+                {
+                    <line x1="@F(gx)" x2="@F(gx)" y1="@F(-(cy + span))" y2="@F(-(cy - span))" class="hv-map-grid" style="stroke-width:@F(span / 900)" />
+                }
+                @for (var gy = Math.Floor((cy - span) / grid) * grid; gy < cy + span; gy += grid)
+                {
+                    <line y1="@F(-gy)" y2="@F(-gy)" x1="@F(cx - span)" x2="@F(cx + span)" class="hv-map-grid" style="stroke-width:@F(span / 900)" />
+                }
+                @foreach (var (id, fixes) in all)
+                {
+                    var boss = id == c.S.TargetId;
+                    var color = boss ? "#ff5f5f" : players.TryGetValue(id, out var ps) ? ClassColor(ps.ClassId) : "#c9d1d9";
+                    var trail = fixes.Where(f => f.At <= t && f.At >= t.AddSeconds(-5)).ToList();
+                    if (PlaceAt(fixes, t) is not { } pos) continue;
+                    var label = boss ? Target(c.S) : players.TryGetValue(id, out var pn) ? pn.PlayerName : $"#{id}";
+                    if (trail.Count > 0)
+                    {
+                        <polyline class="hv-map-trail" points="@string.Join(" ", trail.Select(f => F(f.X) + "," + F(-f.Y)).Append(F(pos.X) + "," + F(-pos.Y)))" style="stroke:@color;stroke-width:@F(r / 3)" />
+                    }
+                    <g>
+                        <circle cx="@F(pos.X)" cy="@F(-pos.Y)" r="@F(boss ? r * 2.2 : r)" style="fill:@color;stroke:#0b0f14;stroke-width:@F(r / 4)" />
+                        <text x="@F(pos.X)" y="@F(-pos.Y - (boss ? r * 3 : r * 1.8))" class="hv-map-name" style="font-size:@F(r * 1.6)px">@label</text>
+                    </g>
+                }
+            </svg>
+            <div class="hv-replay-bar">
+                <button type="button" class="hv-play" @onclick="() => TogglePlay(c)">@(playing ? "❚❚" : "▶")</button>
+                <select class="hv-speed" value="@F(speed)" @onchange="SetSpeed">
+                    <option value="0.5">×0.5</option>
+                    <option value="1">×1</option>
+                    <option value="2">×2</option>
+                    <option value="4">×4</option>
+                </select>
+                <span class="hv-replay-track">
+                    @if (hp.Count > 1)
+                    {
+                        <svg viewBox="0 0 1000 30" preserveAspectRatio="none"><polyline points="@string.Join(" ", hp.Select(p => F(p.Sec / c.Dur * 1000) + "," + F(30 - p.Hp * 28)))" /></svg>
+                    }
+                    <input type="range" min="0" max="@F(c.Dur)" step="0.1" value="@F(replayT)" @oninput="SetReplayT" />
+                </span>
+                <button type="button" class="hv-fit" @onclick="() => zoom = 1">Вписать</button>
+            </div>
+            <p class="hv-note">Места — показания самой игры: она присылает их с движениями и умениями, не постоянно, поэтому путь между двумя показаниями нарисован прямой. Показаны только игроки этого боя и босс.</p>
+        </div>
+    };
+
     public void Dispose()
     {
+        player?.Dispose();
         tick?.Dispose();
         Window.Requested -= OnRequested;
     }

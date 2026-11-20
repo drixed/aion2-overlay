@@ -13,13 +13,15 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         public const string Rotation = "rotation";
         public const string Buffs = "buffs";
         public const string PerSkill = "per-skill";
+        public const string Replay = "replay";
 
         /// <summary>Not in upstream's WindowKey enum, next to the history browser (1006).</summary>
-        private static WindowKey KeyOf(string view) => (WindowKey)(view switch { Rotation => 1007, Buffs => 1008, _ => 1009 });
+        private static WindowKey KeyOf(string view) => (WindowKey)(view switch { Rotation => 1007, Buffs => 1008, Replay => 1014, _ => 1009 });
 
         public static string Title(string view) => view switch
         {
             Rotation => "Хронология умений",
+            Replay => "Повтор боя",
             Buffs => "Хронология баффов",
             _ => "Баффы по умениям",
         };

@@ -18,3 +18,6 @@
 Формат пакета экипировки (11 56) — по их `Aion2FrameDecoder.DecodeEquipment`, код написан заново. Иконки берутся с
 публичного CDN NCSOFT (assets.playnccdn.com), как и иконки умений. Данные игры © NCSOFT.
 
+Форматы пакетов позиций (xx 37), инвентаря (11 56, 1B 56) и коды валют (кинары 930100031/930100001, очки Бездны 930100003) — по
+[SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter) (`Aion2FrameDecoder`, `Aion2Stock`, `item_names.json`), MIT; код написан заново.
+

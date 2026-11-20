@@ -146,3 +146,18 @@
 .hv-gtrack { cursor: grab; }
 .hv-zoom { display: flex; align-items: center; gap: 10px; margin: 0 52px 0 12px; color: #5f6b7c; font-size: 10.5px; }
 .hv-zoom button { margin-left: auto; background: #121820; border: 1px solid rgba(95, 212, 196, .5); color: #5fd4c4; border-radius: 6px; padding: 2px 10px; font: inherit; font-size: 11px; cursor: pointer; }
+
+/* "Повтор боя" */
+.hv-map { width: 100%; flex: 1; min-height: 380px; background: #10161e; border: 1px solid #232c39; border-radius: 10px; }
+.hv-map-grid { stroke: rgba(255, 255, 255, .05); }
+.hv-map-trail { fill: none; opacity: .55; stroke-linecap: round; stroke-linejoin: round; }
+.hv-map-name { fill: #dfe6ee; text-anchor: middle; paint-order: stroke; stroke: #0b0f14; stroke-width: 3px; font-family: 'Segoe UI', sans-serif; }
+.hv-replay-bar { display: flex; align-items: center; gap: 8px; }
+.hv-play, .hv-fit { background: #121820; border: 1px solid #2f3846; color: #dfe6ee; border-radius: 7px; padding: 4px 12px; font: inherit; cursor: pointer; }
+.hv-play:hover, .hv-fit:hover { border-color: rgba(95, 212, 196, .6); color: #5fd4c4; }
+.hv-speed { background: #0f141b; color: #e6edf3; border: 1px solid #2f3846; border-radius: 7px; padding: 4px 6px; font: inherit; }
+.hv-replay-track { position: relative; flex: 1; height: 30px; }
+.hv-replay-track svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hv-replay-track polyline { fill: none; stroke: #d65c97; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.hv-replay-track input { position: absolute; inset: 0; width: 100%; margin: 0; accent-color: #5fd4c4; }
+.hv-note { color: #5f6b7c; font-size: 11px; margin: 0; }

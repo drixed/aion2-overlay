@@ -160,13 +160,16 @@ public sealed class RecordingHistoryStore : ICombatHistoryStore
     private readonly CombatHistoryStore inner;
     private readonly BossRecords records;
     private readonly ILogger<RecordingHistoryStore> logger;
+    private readonly AionDpsMeter.Timers.Replay.PositionLog? positions;
 
     /// <summary>Upstream resolves the store at startup, so the first-run fill starts with the app.</summary>
-    public RecordingHistoryStore(CombatHistoryStore inner, BossRecords records, ILogger<RecordingHistoryStore> logger)
+    public RecordingHistoryStore(CombatHistoryStore inner, BossRecords records, ILogger<RecordingHistoryStore> logger,
+        AionDpsMeter.Timers.Replay.PositionLog? positions = null)
     {
         this.inner = inner;
         this.records = records;
         this.logger = logger;
+        this.positions = positions;
         _ = Task.Run(() => records.BackfillIfNew(inner));
     }
 
@@ -175,6 +178,9 @@ public sealed class RecordingHistoryStore : ICombatHistoryStore
         inner.Save(snapshot);
         try { records.Observe(snapshot); }
         catch (Exception ex) { logger.LogWarning(ex, "Boss records skipped a fight"); }
+        // the replay: the tracks of this fight's players and its boss, nobody else's
+        try { positions?.SaveReplay(snapshot.SessionId, snapshot.PlayerStats.Select(p => (int)p.PlayerId).Append(snapshot.TargetId), snapshot.SessionStart, snapshot.SessionEnd); }
+        catch (Exception ex) { logger.LogWarning(ex, "Replay not saved"); }
     }
 
     public void FlushPendingSaves() => inner.FlushPendingSaves();
