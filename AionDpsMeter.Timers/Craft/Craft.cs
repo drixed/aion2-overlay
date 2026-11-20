@@ -25,12 +25,16 @@ public sealed class CraftBook
     private readonly Dictionary<int, CraftRecipe> byId;
     private readonly Dictionary<(int Product, bool Elyos), CraftRecipe> producers = [];
     private readonly IReadOnlyDictionary<int, (int Grade, string Name)> names;
+    private readonly Dictionary<int, int[]> twins;
 
     public CraftBook(IReadOnlyList<CraftRecipe> recipes, IReadOnlyDictionary<int, (int Grade, string Name)> names)
     {
         Recipes = recipes;
         this.names = names;
         byId = recipes.ToDictionary(r => r.Id);
+        // what the game takes in place of a material (its bound twins): one list per material, whatever recipe named it
+        twins = recipes.SelectMany(r => r.Components).Where(c => c.Alternatives.Count > 0)
+            .GroupBy(c => c.Item).ToDictionary(g => g.Key, g => g.SelectMany(c => c.Alternatives.Select(a => a.Item)).Distinct().ToArray());
         // several recipes can make one item (1 gem → 3 dust or 10 → 30): the one needing least per piece, then the lower level, wins
         foreach (var group in recipes.GroupBy(r => (r.Product, r.Elyos)))
             producers[group.Key] = group.OrderBy(r => (double)r.Components.Sum(c => c.Count) / Math.Max(1, r.Count)).ThenBy(r => r.Level).ThenBy(r => r.Id).First();
@@ -48,6 +52,9 @@ public sealed class CraftBook
     public CraftRecipe? ProducerOf(int item, bool elyos) => producers.GetValueOrDefault((item, elyos));
 
     public bool Knows(int item) => names.ContainsKey(item);
+
+    /// <summary>The items the game counts as this material too (its bound twins).</summary>
+    public IReadOnlyList<int> Twins(int item) => twins.TryGetValue(item, out var t) ? t : [];
 
     public string Name(int item) => names.TryGetValue(item, out var n) ? n.Name : $"Предмет {item}";
 
@@ -133,8 +140,7 @@ public static class CraftCalc
                         need[c.Item] = need.GetValueOrDefault(c.Item) + wanted;
                         continue;
                     }
-                    var fromStock = Math.Min(spare.GetValueOrDefault(c.Item), wanted);
-                    spare[c.Item] = spare.GetValueOrDefault(c.Item) - fromStock;
+                    var fromStock = Take(c.Item, wanted);
                     if (fromStock > 0) covered[c.Item] = covered.GetValueOrDefault(c.Item) + fromStock;
                     var rest = wanted - fromStock;
                     if (rest <= 0) continue;
@@ -144,14 +150,24 @@ public static class CraftCalc
                 }
             }
 
+            // takes up to `wanted` of a material from what is left: the item itself first, then its bound twins
+            long Take(int item, long wanted)
+            {
+                long taken = 0;
+                foreach (var source in book.Twins(item).Prepend(item))
+                {
+                    var have = Math.Min(spare.GetValueOrDefault(source), wanted - taken);
+                    if (have <= 0) continue;
+                    spare[source] = spare.GetValueOrDefault(source) - have;
+                    taken += have;
+                    if (taken >= wanted) break;
+                }
+                return taken;
+            }
+
             Demand(recipe, entry.Count, 0);
             var lines = covered.Select(c => new CraftLine(c.Key, c.Value, c.Value)).ToList();
-            foreach (var (item, needed) in need)
-            {
-                var have = Math.Min(spare.GetValueOrDefault(item), needed);
-                spare[item] = spare.GetValueOrDefault(item) - have;
-                lines.Add(new CraftLine(item, needed, have));
-            }
+            foreach (var (item, needed) in need) lines.Add(new CraftLine(item, needed, Take(item, needed)));
             results.Add(new CraftResult(entry, recipe, lines, made.Select(m => (m.Key, m.Value)).ToList()));
         }
         return results;

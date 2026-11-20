@@ -24,6 +24,18 @@ public class CraftTests
     }
 
     [Fact]
+    public void A_bound_twin_of_a_material_counts_like_the_material()
+    {
+        // Nov 2026: "Воля ярости" showed 1 / 3 while the game showed 12 / 3 — it counts "Воля ярости (привяз.)", another item id, too
+        var book = new CraftBook(
+            [new CraftRecipe(1, true, "Alchemy", 1, "Auto", 900, 1, [new CraftComponent(610511014, 3, [(630511014, 3), (660511002, 3)])])],
+            new Dictionary<int, (int, string)> { [900] = (4, "Гримуар"), [610511014] = (4, "Воля ярости"), [630511014] = (4, "Воля ярости (привяз.)") });
+        var stock = new Dictionary<int, long> { [610511014] = 1, [630511014] = 11 };
+        var result = Assert.Single(CraftCalc.Compute(book, [new CraftEntry(1, 5)], stock, resolve: true, elyos: true));
+        Assert.Equal([new CraftLine(610511014, 15, 12)], result.Materials);
+    }
+
+    [Fact]
     public void Without_resolving_the_ingots_are_the_material()
     {
         var result = Assert.Single(CraftCalc.Compute(Book, [new CraftEntry(1, 2)], new Dictionary<int, long>(), resolve: false, elyos: true));

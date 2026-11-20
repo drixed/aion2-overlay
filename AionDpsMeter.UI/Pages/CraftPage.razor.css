@@ -48,6 +48,7 @@
 .cr-first { color: #8b95a5; font-size: 11px; margin-top: 3px; }
 .cr-total h5 { margin: 0 0 4px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #8b95a5; font-weight: 600; }
 .cr-note { color: #5f6b7c; font-size: 10.5px; margin: 4px 0 0; }
-.g2 { color: #7ee787; } .g3 { color: #58a6ff; } .g4 { color: #c4a0ff; } .g5 { color: #f2cc60; } .g6 { color: #ff9a5a; }
+/* the game's grades: 2 rare (green), 3 legend (blue), 4 unique (gold), 5 epic (orange), 6 mythic */
+.g2 { color: #7ee787; } .g3 { color: #58a6ff; } .g4 { color: #f2cc60; } .g5 { color: #ff9a5a; } .g6 { color: #ff6b8b; }
 .cr ::-webkit-scrollbar { width: 6px; }
 .cr ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }

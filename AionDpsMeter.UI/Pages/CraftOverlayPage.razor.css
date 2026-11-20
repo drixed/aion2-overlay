@@ -13,6 +13,7 @@
 .co-line b { color: #ff9a8a; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .co-hint { color: #8b95a5; line-height: 1.4; }
 .co-done { color: #7ee787; font-weight: 700; }
-.g2 { color: #7ee787; } .g3 { color: #58a6ff; } .g4 { color: #c4a0ff; } .g5 { color: #f2cc60; } .g6 { color: #ff9a5a; }
+/* the game's grades: 2 rare (green), 3 legend (blue), 4 unique (gold), 5 epic (orange), 6 mythic */
+.g2 { color: #7ee787; } .g3 { color: #58a6ff; } .g4 { color: #f2cc60; } .g5 { color: #ff9a5a; } .g6 { color: #ff6b8b; }
 .co ::-webkit-scrollbar { width: 5px; }
 .co ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }

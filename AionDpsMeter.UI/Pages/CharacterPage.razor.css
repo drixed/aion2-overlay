@@ -44,8 +44,9 @@
 .ch-item-text i { font-style: normal; align-self: flex-start; font-size: 9.5px; color: #c9d1d9; border: 1px solid #3a4352; border-radius: 4px; padding: 0 5px; margin-top: 2px; }
 .ch-item.g2 b { color: #7ee787; } .ch-item.g2 { border-color: rgba(126, 231, 135, .25); }
 .ch-item.g3 b { color: #58a6ff; } .ch-item.g3 { border-color: rgba(88, 166, 255, .3); }
-.ch-item.g4 b { color: #c4a0ff; } .ch-item.g4 { border-color: rgba(170, 120, 255, .35); }
-.ch-item.g5 b { color: #f5c76b; } .ch-item.g5 { border-color: rgba(245, 199, 107, .4); background: linear-gradient(90deg, rgba(245, 199, 107, .06), #19202a); }
+/* grade 4 is unique (gold in the game), 5 epic (orange) */
+.ch-item.g4 b { color: #f5c76b; } .ch-item.g4 { border-color: rgba(245, 199, 107, .4); background: linear-gradient(90deg, rgba(245, 199, 107, .06), #19202a); }
+.ch-item.g5 b { color: #ff9a5a; } .ch-item.g5 { border-color: rgba(255, 154, 90, .45); background: linear-gradient(90deg, rgba(255, 154, 90, .07), #19202a); }
 .ch-note { color: #5f6b7c; font-size: 10.5px; margin: 4px 0 0; }
 .ch ::-webkit-scrollbar { width: 6px; }
 .ch ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
