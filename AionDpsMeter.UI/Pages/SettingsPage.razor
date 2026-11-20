@@ -253,8 +253,9 @@
         </section>
 
         @* ---------------- OVERLAYS ---------------- *@
-        <section class="settings-group fork-gone @(_activeGroup == "overlays" ? "" : "is-hidden")"> @* aion2-overlay fork: tab removed, kept out of the search too *@
-
+        <section class="settings-group @(_activeGroup == "overlays" ? "" : "is-hidden")">
+            @* aion2-overlay fork: upstream's buff overlay is replaced by the fork's "Баффы"; only the skill cooldowns stay here *@
+            <div class="fork-gone">
             <div class="settings-section-label">BUFF OVERLAY</div>
 
             <SettingRow Title="Enabled" Description="Show a floating overlay with active buff timers">
@@ -371,7 +372,8 @@
                 </ValueSlot>
             </SettingRow>
 
-            <div class="settings-section-label settings-section-label--spaced">SKILL COOLDOWNS</div>
+            </div> @* aion2-overlay fork: end of the hidden buff overlay *@
+            <div class="settings-section-label">SKILL COOLDOWNS</div>
 
             @*   <div class="settings-empty-state">
                 Skill cooldown overlay settings are coming soon.
