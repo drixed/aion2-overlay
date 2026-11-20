@@ -33,7 +33,17 @@ namespace AionDpsMeter.Core.Models
         //public bool IsBoss => CanBeBoss();
 
         public new string Name => GameDataProvider.Instance.GetMobName(MobCode);
-        public bool IsBoss => MobCode == 0 ? HpMaxSeen >= UnknownBossHp : GameDataProvider.Instance.IsBoss(MobCode); // aion2-overlay fork: spawn unseen (meter started mid-dungeon) — judge by HP
+        public bool IsBoss => MobCode == 0 ? HpMaxSeen >= UnknownBossHp // aion2-overlay fork: spawn unseen (meter started mid-dungeon) — judge by HP
+            : GameDataProvider.Instance.IsBoss(MobCode) || ForkBoss?.Invoke(MobCode) == true || HpMaxSeen >= SureBossHp;
+
+        /// <summary>aion2-overlay fork: dungeon bosses have 20M+ (Duanka 22.8M, Ludra 194M, executors 1.4B), no ordinary mob
+        /// comes near; a boss neither table flags was ignored for two hours with "Только боссы" (Nov 2026). Mumu Worker (5M,
+        /// not a boss) stays below.</summary>
+        public const long SureBossHp = 10_000_000;
+
+        /// <summary>aion2-overlay fork: the fork's NPC table (npcs.ru.json) flags 64 bosses upstream's mobs.json misses; with
+        /// "Только боссы" their hits were dropped and the window stayed "Ожидание боя" (Nov 2026). Set by the timers module.</summary>
+        public static Func<int, bool>? ForkBoss { get; set; }
 
         public bool IsDummy => GameDataProvider.Instance.IsDummy(MobCode);
 

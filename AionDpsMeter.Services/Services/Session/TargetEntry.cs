@@ -125,9 +125,13 @@ namespace AionDpsMeter.Services.Services.Session
             CurrentSession = null;
         }
 
+        /// <summary>aion2-overlay fork: a line in the meter's log when a boss fight starts, to trace fights it did not show.</summary>
+        public static Action<Mob, int>? BossFightStarted { get; set; }
+
         private void StartNewSession(Mob mob, DateTime at)
         {
             CurrentSession = new TargetCombatSession(mob, at, entityTracker, settingsService);
+            if (mob.IsBoss) BossFightStarted?.Invoke(mob, TargetId); // aion2-overlay fork
         }
     }
 }

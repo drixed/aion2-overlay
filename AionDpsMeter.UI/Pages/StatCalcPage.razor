@@ -24,7 +24,14 @@
         <div class="sc-hero">
             <div class="sc-gain @(vm.DamageGainPercent > 0.0001 ? "up" : vm.DamageGainPercent < -0.0001 ? "down" : "")">
                 <small>ПРИРОСТ УРОНА</small>
-                <b>@(vm.DamageGainPercent > 0 ? "+" : "")@vm.DamageGainPercent.ToString("0.00", CultureInfo.InvariantCulture)%</b>
+                @if (OptionAttack.Concat(OptionMultipliers).All(f => f.Get(vm) == 0))
+                {
+                    <b class="sc-none">—</b><em>впишите опцию справа →</em>
+                }
+                else
+                {
+                    <b>@(vm.DamageGainPercent > 0 ? "+" : "")@vm.DamageGainPercent.ToString("0.00", CultureInfo.InvariantCulture)%</b>
+                }
             </div>
             <div class="sc-kv"><small>Индекс урона сейчас</small><b>@N(vm.TotalDamage)</b></div>
             <div class="sc-arrow">→</div>

@@ -22,6 +22,7 @@ namespace AionDpsMeter.Services.Services.Session
         private readonly IAppSettingsService settingsService;
         private readonly ICombatHistoryStore historyStore;
         private PlayerStatSnapshot? latestPlayerStatSnapshot;
+        private readonly HashSet<int> droppedTargets = []; // aion2-overlay fork: logged once each
         private readonly List<BuffEvent> activeBuffBacklog = new();
         private readonly ITimedEventTracker buffEventTracker;
         private readonly ITimedEventTracker skillCdEventTracker;
@@ -42,6 +43,7 @@ namespace AionDpsMeter.Services.Services.Session
             this.skillCdEventTracker = skillCdEventTracker;
             targetResolver = new ActiveTargetResolver(entityTracker);
             logger = loggerFactory.CreateLogger<CombatSessionManager>();
+            TargetEntry.BossFightStarted = (mob, id) => logger.LogInformation("Boss fight started: target {Id}, mob code {Code}, HP {Hp:N0} of {Total:N0}", id, mob.MobCode, mob.HpCurrent, mob.HpTotal); // aion2-overlay fork
             entityTracker.SummonRegistered += OnSummonRegistered;
         }
 
@@ -251,7 +253,14 @@ namespace AionDpsMeter.Services.Services.Session
                     if (settingsService.BossOnlyCapture)
                     {
                         var mob = entityTracker.GetTargetMob(damageEvent.TargetEntity.Id) ?? damageEvent.TargetEntity;
-                        if (!mob.IsBoss) return;
+                        if (!mob.IsBoss)
+                        {
+                            // aion2-overlay fork: say once per target why "Только боссы" ignores it (a boss missing from the tables)
+                            if (droppedTargets.Add(mob.Id))
+                                logger.LogInformation("Boss-only: hits on target {Id} ignored (mob code {Code}, HP seen {Hp:N0}, total {Total:N0})",
+                                    mob.Id, mob.MobCode, mob.HpMaxSeen, mob.HpTotal);
+                            return;
+                        }
                     }
 
                     if (entityTracker.IsSummon(damageEvent.SourceEntity.Id) &&

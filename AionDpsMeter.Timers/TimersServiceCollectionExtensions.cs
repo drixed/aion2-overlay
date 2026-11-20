@@ -18,7 +18,12 @@ public static class TimersServiceCollectionExtensions
     public static IServiceCollection AddTimers(this IServiceCollection services)
     {
         services.TryAddSingleton(TimeProvider.System);
-        services.AddSingleton(_ => BossCatalog.LoadDefault());
+        services.AddSingleton(_ =>
+        {
+            var catalog = BossCatalog.LoadDefault();
+            AionDpsMeter.Core.Models.Mob.ForkBoss = catalog.IsBoss; // bosses upstream's mob table misses
+            return catalog;
+        });
         services.AddSingleton(_ => new ScheduleSource(
             new HttpClient { Timeout = TimeSpan.FromSeconds(15) },
             new Uri(ScheduleSource.DefaultRemote),
