@@ -26,7 +26,6 @@ namespace AionDpsMeter.UI.Pages
         TimeProvider time,
         EnergyTracker energy,
         EntityTracker entities,
-        CubeMapWindow cubeMap,
         AlertRunner alertRunner,
         AionDpsMeter.Timers.Records.BossRecords records,
         AionDpsMeter.Timers.Modes.MeterModesService modes,
@@ -280,7 +279,6 @@ namespace AionDpsMeter.UI.Pages
 
         private IReadOnlyList<(AltRow Row, int Rank)> OrderedAltRows() =>
             AionDpsMeter.Timers.Overlay.RowOrder.Apply(AltRows(), r => r.IsUser, Options.KeepMeOnTop, Options.FirstPlaceAtBottom);
-        private void ToggleCubeMap() => cubeMap.Toggle();
         private string? AlertText => alertRunner.ActiveText;
 
         /// <summary>Upstream's player stats are rebuilt on every read: refreshed at most twice a second, only when

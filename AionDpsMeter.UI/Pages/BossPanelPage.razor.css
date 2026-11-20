@@ -28,7 +28,7 @@
 .bp-footer { display: flex; flex-direction: column; gap: 2px; padding: 5px 10px; font-size: 12px;
     border-top: 1px solid rgba(255, 255, 255, .08); color: #c9d1d9; }
 .bp-footer-line { display: flex; justify-content: space-between; gap: 8px; }
-.bp-status { flex: 0 1 auto; min-width: 0; max-width: 100%; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #9aa4b2; }
+.bp-status { flex: 0 1 auto; min-width: 0; max-width: 100%; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #7ee787; } /* the same colour as the dot in the header */
 .bp-status--fight { color: #f2cc60; }
 .bp-footer-event { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bp-footer-time { font-weight: 400; font-variant-numeric: tabular-nums; color: #f2cc60; white-space: nowrap; }
