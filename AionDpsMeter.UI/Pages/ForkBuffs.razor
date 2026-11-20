@@ -1,0 +1,165 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Баффы" settings tab: buff tracker presets per class (like the
+   reference meter), where the panel shows, the run-out sound and a spoken name. *@
+@using AionDpsMeter.Timers.Buffs
+@using AionDpsMeter.Timers.Feed
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject TimersOptionsStore Store
+@inject BuffTrackerService Buffs
+
+<div class="fs-label">ОТСЛЕЖИВАНИЕ БАФФОВ</div>
+<div class="fbf-box">
+    <div class="fbf-line">
+        <span><b>Трекеры баффов</b><small>Панель с баффами выбранного пресета: сколько осталось, а спавший бафф горит красным</small></span>
+        <ToggleSwitch Checked="@O.BuffTrackersOn" CheckedChanged="v => Set(o => o.BuffTrackersOn = v)" />
+    </div>
+    <div class="fbf-line">
+        <span><b>Показывать трекеры в</b></span>
+        <div class="fbf-seg">
+            @foreach (var (id, label) in Modes)
+            {
+                <button type="button" class="@(O.BuffTrackersShow == id ? "on" : "")" @onclick="() => Set(o => o.BuffTrackersShow = id)">@label</button>
+            }
+        </div>
+    </div>
+    <div class="fbf-line">
+        <span><b>Размер значков</b><small>@O.BuffIconSize px</small></span>
+        <span class="fbf-inline">
+            <input class="fs-range" type="range" min="24" max="80" step="2" value="@O.BuffIconSize" @onchange="e => SetInt(e.Value, v => o => o.BuffIconSize = v)" />
+            <button type="button" class="fbf-btn @(Buffs.Editing ? "on" : "")" @onclick="Buffs.ToggleEditing">@(Buffs.Editing ? "Готово" : "Расставить панель")</button>
+        </span>
+    </div>
+    <div class="fbf-line">
+        <span><b>Звук, когда бафф спал</b><small>Пока панель видна; громкость @O.BuffVolume%</small></span>
+        <span class="fbf-inline">
+            <input class="fs-range" type="range" min="0" max="100" step="5" value="@O.BuffVolume" @onchange="e => SetInt(e.Value, v => o => o.BuffVolume = v)" />
+            <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick='() => Buffs.Announce("Ярость")'>▶</button>
+            <ToggleSwitch Checked="@O.BuffSound" CheckedChanged="v => Set(o => o.BuffSound = v)" />
+        </span>
+    </div>
+    <div class="fbf-line">
+        <span><b>Назвать вслух</b><small>Голос Windows говорит «… спал». Другие голоса — Параметры Windows → Время и язык → Речь</small></span>
+        <span class="fbf-inline">
+            <select class="fs-select" value="@(O.BuffVoice ?? "")" @onchange="e => Set(o => o.BuffVoice = e.Value?.ToString() is { Length: > 0 } v ? v : null)">
+                <option value="">Голос по умолчанию</option>
+                @foreach (var v in voices)
+                {
+                    <option value="@v">@v</option>
+                }
+            </select>
+            <ToggleSwitch Checked="@O.BuffSpeak" CheckedChanged="v => Set(o => o.BuffSpeak = v)" />
+        </span>
+    </div>
+</div>
+
+<div class="fbf-classes">
+    @foreach (var (id, name) in Classes)
+    {
+        var cls = id;
+        <button type="button" class="@(selected == cls ? "on" : "")" @onclick="() => selected = cls">
+            <span class="fbf-cls" style="background-image:url('/images/classes/@(cls).png')"></span>@name
+            @if (Buffs.MyClass == cls) { <i class="fbf-me" title="Ваш персонаж"></i> }
+        </button>
+    }
+</div>
+
+<div class="fbf-presets">
+    @{ var presets = O.BuffPresets.Where(p => p.ClassId == selected).ToList(); }
+    @if (presets.Count == 0)
+    {
+        <p class="fbf-empty">Для класса @ClassName(selected) пока нет пресетов.</p>
+    }
+    @foreach (var preset in presets)
+    {
+        var p = preset;
+        var active = (O.ActiveBuffPreset.TryGetValue(selected, out var aid) ? aid : presets[0].Id) == p.Id;
+        <div class="fbf-preset @(active ? "active" : "")">
+            <div class="fbf-preset-head">
+                <button type="button" class="fbf-radio @(active ? "on" : "")" title="Сделать активным" @onclick="() => Set(o => o.ActiveBuffPreset[selected] = p.Id)"></button>
+                <input class="fbf-name" value="@p.Name" @onchange="e => Set(o => p.Name = e.Value?.ToString() is { Length: > 0 } n ? n : p.Name)" />
+                <span class="fbf-count">@p.BuffIds.Count баффов</span>
+                <button type="button" class="fbf-btn" @onclick="() => picking = picking == p.Id ? null : p.Id">@(picking == p.Id ? "Готово" : "+ Добавить баффы")</button>
+                <button type="button" class="fbf-del" title="Удалить пресет" @onclick="() => Set(o => o.BuffPresets.Remove(p))">🗑</button>
+            </div>
+            <div class="fbf-chips">
+                @foreach (var buffId in p.BuffIds.ToList())
+                {
+                    var b = Seen(buffId);
+                    var bid = buffId;
+                    <span class="fbf-chip">@if (!string.IsNullOrEmpty(b?.Icon)) { <img src="@b.Icon" alt="" /> }@(b?.Name ?? $"Бафф {buffId}")<button type="button" title="Убрать" @onclick="() => Set(o => p.BuffIds.Remove(bid))">×</button></span>
+                }
+                @if (p.BuffIds.Count == 0) { <span class="fbf-muted">Пусто — добавьте баффы, которые хотите видеть.</span> }
+            </div>
+            @if (picking == p.Id)
+            {
+                <div class="fbf-picker">
+                    <input class="fbf-search" type="search" placeholder="Найти бафф…" value="@query" @oninput="e => query = e.Value?.ToString() ?? string.Empty" />
+                    <small>Баффы, которые метр видел на вашем персонаже (каждый новый появится здесь после того, как его наложат):</small>
+                    <div class="fbf-chips">
+                        @foreach (var s in Buffs.Tracker.Seen().Where(s => !p.BuffIds.Contains(s.Id) && (query.Length == 0 || s.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase))).Take(80))
+                        {
+                            var sb = s;
+                            <button type="button" class="fbf-chip add" @onclick="() => Set(o => p.BuffIds.Add(sb.Id))">@if (!string.IsNullOrEmpty(sb.Icon)) { <img src="@sb.Icon" alt="" /> }@sb.Name</button>
+                        }
+                        @if (Buffs.Tracker.Seen().Count == 0) { <span class="fbf-muted">Пока ничего: наложите баффы или повоюйте — метр запомнит их.</span> }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    <button type="button" class="fbf-btn fbf-new" @onclick="NewPreset">+ Новый пресет</button>
+</div>
+
+@code {
+    private static readonly (string Id, string Label)[] Modes = [("bosses", "Боях с боссами и манекенами"), ("fights", "Всех боях"), ("always", "Всегда")];
+
+    private static readonly (int Id, string Name)[] Classes =
+    [
+        (11, "Гладиатор"), (12, "Страж"), (13, "Убийца"), (14, "Стрелок"), (15, "Волшебник"),
+        (16, "Заклинатель"), (17, "Целитель"), (18, "Чародей"), (19, "Мастер кулака"),
+    ];
+
+    private int selected = 15;
+    private string? picking;
+    private string query = "";
+    private IReadOnlyList<string> voices = [];
+
+    private TimersOptions O => Store.Current;
+
+    private static string ClassName(int id) => Classes.FirstOrDefault(c => c.Id == id).Name ?? $"{id}";
+
+    private SeenBuff? Seen(int id) => Buffs.Tracker.Seen().FirstOrDefault(s => s.Id == id) ?? O.SeenBuffs.FirstOrDefault(s => s.Id == id);
+
+    protected override void OnInitialized()
+    {
+        selected = Buffs.MyClass ?? selected;
+        voices = Speech.Voices();
+        Buffs.Changed += Refresh;
+    }
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    private void Set(Action<TimersOptions> change)
+    {
+        change(O);
+        Store.Save();
+    }
+
+    private void SetInt(object? value, Func<int, Action<TimersOptions>> change)
+    {
+        if (int.TryParse(value?.ToString(), out var v)) Set(change(v));
+    }
+
+    private void NewPreset()
+    {
+        var preset = new BuffPreset { ClassId = selected, Name = $"Пресет {O.BuffPresets.Count(p => p.ClassId == selected) + 1}" };
+        Set(o =>
+        {
+            o.BuffPresets.Add(preset);
+            o.ActiveBuffPreset.TryAdd(selected, preset.Id);
+        });
+        picking = preset.Id;
+    }
+
+    public void Dispose() => Buffs.Changed -= Refresh;
+}

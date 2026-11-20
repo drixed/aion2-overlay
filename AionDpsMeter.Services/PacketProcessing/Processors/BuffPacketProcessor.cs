@@ -68,6 +68,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             };
 
             sessionManager.ProcessBuffEvent(buffEvent);
+            Fork.CombatFeed.PublishBuff(buffEvent); // aion2-overlay fork: the buff trackers
         }
 
        

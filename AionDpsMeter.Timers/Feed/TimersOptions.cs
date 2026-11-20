@@ -87,6 +87,24 @@ public sealed class TimersOptions
     public bool Use12h { get; set; }
     /// <summary>Start the meter when Windows starts.</summary>
     public bool StartWithWindows { get; set; }
+
+    // ---- buff trackers ("Баффы") ----
+    public bool BuffTrackersOn { get; set; }
+    /// <summary>"bosses" — fights with a boss or a dummy, "fights" — every fight, "always".</summary>
+    public string BuffTrackersShow { get; set; } = "bosses";
+    public List<AionDpsMeter.Timers.Buffs.BuffPreset> BuffPresets { get; set; } = [];
+    /// <summary>Class id → the id of its active preset.</summary>
+    public Dictionary<int, string> ActiveBuffPreset { get; set; } = [];
+    /// <summary>Buffs seen on the player, for the preset picker after a restart.</summary>
+    public List<AionDpsMeter.Timers.Buffs.SeenBuff> SeenBuffs { get; set; } = [];
+    public bool BuffSound { get; set; } = true;
+    public int BuffVolume { get; set; } = 60;
+    /// <summary>Say the buff's name with a Windows voice when it runs out.</summary>
+    public bool BuffSpeak { get; set; }
+    public string? BuffVoice { get; set; }
+    public int BuffIconSize { get; set; } = 40;
+    public double? BuffPanelLeft { get; set; }
+    public double? BuffPanelTop { get; set; }
     /// <summary>The 📣 window loads NCSOFT's official announcements every 15 minutes.</summary>
     public bool ShowNews { get; set; } = true;
     /// <summary>Unix seconds of the newest announcement the user has seen; newer ones are marked "новое".</summary>

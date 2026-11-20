@@ -16,6 +16,8 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
     {
         public static event Action<PlayerDamage>? Damage;
         public static event Action<HealEvent>? Heal;
+        /// <summary>Every buff as parsed (on anyone): the buff trackers keep the player's own.</summary>
+        public static event Action<BuffEvent>? Buff;
         public static event Action<RawHit>? Hit;
         /// <summary>A player of the meter died (entity id, time).</summary>
         public static event Action<int, DateTime>? Death;
@@ -25,6 +27,11 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
         public static void PublishDamage(PlayerDamage hit)
         {
             try { Damage?.Invoke(hit); } catch { }
+        }
+
+        public static void PublishBuff(BuffEvent buff)
+        {
+            try { Buff?.Invoke(buff); } catch { }
         }
 
         public static void PublishHeal(HealEvent heal)

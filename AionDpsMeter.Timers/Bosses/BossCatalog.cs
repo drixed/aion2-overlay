@@ -58,6 +58,9 @@ public sealed class BossCatalog
 
     public bool IsBoss(int code) => npcs.TryGetValue(code, out var n) && n.IsBoss && !n.IsDummy;
 
+    /// <summary>A training dummy ("Мешок с песком").</summary>
+    public bool IsDummy(int code) => npcs.TryGetValue(code, out var n) && n.IsDummy;
+
     /// <summary>The NPC's Russian name, or null when the tables do not know the code.</summary>
     public string? NameOrNull(int code) => npcs.TryGetValue(code, out var n) && n.Name.Length > 0 ? n.Name : null;
 

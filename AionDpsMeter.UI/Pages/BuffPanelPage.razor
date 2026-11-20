@@ -1,0 +1,51 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The buff tracker panel: the active preset's buffs with the time
+   left; a buff that is not on glows red. Draggable while "Расставить" is on. *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Buffs
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject BuffTrackerService Buffs
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore Store
+
+<div class="bt @(Buffs.Editing ? "editing" : "")" style="--bt-size:@(Math.Clamp(Store.Current.BuffIconSize, 24, 80))px" @onmousedown="Buffs.Drag">
+    @if (Buffs.Editing)
+    {
+        <div class="bt-edit">Перетащите панель · @(Buffs.ActivePreset?.Name)</div>
+    }
+    <div class="bt-row">
+        @foreach (var t in tiles)
+        {
+            <div class="bt-tile @(t.Left is null ? "off" : t.Left < TimeSpan.FromSeconds(5) ? "ending" : "")" title="@t.Name">
+                <span class="bt-icon">
+                    @if (!string.IsNullOrEmpty(t.Icon)) { <img src="@t.Icon" alt="" /> } else { <i>@(t.Name.Length > 0 ? t.Name[..1] : "?")</i> }
+                    @if (t.Left is not null) { <i class="bt-fill" style="height:@((100 - t.Share * 100).ToString("0.#", CultureInfo.InvariantCulture))%"></i> }
+                </span>
+                <b>@(t.Left is { } left ? Time(left) : "нет")</b>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<BuffTile> tiles = [];
+    private System.Threading.Timer? tick;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+        tick = new System.Threading.Timer(_ => InvokeAsync(() => { Refresh(); StateHasChanged(); }), null, 250, 250);
+        Buffs.Changed += OnChanged;
+    }
+
+    private void Refresh() => tiles = Buffs.ActivePreset is { } p ? Buffs.Tracker.Tiles(p, DateTimeOffset.Now) : [];
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private static string Time(TimeSpan t) => t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes}:{t.Seconds:00}" : $"{Math.Ceiling(t.TotalSeconds)}";
+
+    public void Dispose()
+    {
+        tick?.Dispose();
+        Buffs.Changed -= OnChanged;
+    }
+}
