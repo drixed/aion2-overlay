@@ -167,6 +167,18 @@ public class TargetSelectionTests
     }
 
     [Fact]
+    public void The_packet_router_hands_the_selection_frame_to_the_fork()
+    {
+        // v147 read the frame but never got it: the router only passes on the opcodes listed on RawForwarder
+        var forwarder = typeof(AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener).Assembly
+            .GetType("AionDpsMeter.Services.PacketProcessing.Processors.RawForwarder")!;
+        var opcodes = forwarder.GetCustomAttributes(false)
+            .Where(a => a.GetType().Name == "PacketOpcodeAttribute")
+            .Select(a => (ushort)a.GetType().GetProperty("Opcode")!.GetValue(a)!);
+        Assert.Contains(TargetSelection.Opcode, opcodes);
+    }
+
+    [Fact]
     public void Other_and_cut_frames_change_nothing()
     {
         var target = new TargetSelection();

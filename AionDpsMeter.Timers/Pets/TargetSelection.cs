@@ -12,7 +12,8 @@ namespace AionDpsMeter.Timers.Pets;
 /// </summary>
 public sealed class TargetSelection : IRawPacketListener
 {
-    private const ushort Opcode = 0x3834;
+    /// <summary>34 38; RawForwarder must list it, or the frame never arrives.</summary>
+    public const ushort Opcode = 0x3834;
     private volatile Selected? current;
 
     private sealed record Selected(int Entity, DateTime At);
