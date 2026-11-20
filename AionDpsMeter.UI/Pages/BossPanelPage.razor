@@ -92,7 +92,7 @@
                 }
                 @if (RecordLine(f) is { } rec)
                 {
-                    <div class="bp-record">🏆 @rec.Text @if (rec.Pace is not null) { <b class="@(rec.Faster ? "bp-win" : "bp-rage")">· @rec.Pace</b> }</div>
+                    <div class="bp-record"><span>🏆 @rec.Text</span>@if (rec.Pace is not null) { <b class="@(rec.Faster ? "bp-win" : "bp-rage")">· @rec.Pace</b> }</div>
                 }
                 <div class="bp-card-bottom">
                     <span>До победы <b class="bp-win">@(f.ToKill is { } k ? FeedText.Span(k) : "—")</b></span>

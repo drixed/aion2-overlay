@@ -131,8 +131,8 @@ public static class RecordText
 
     public static string Pace(TimeSpan delta) =>
         Math.Abs(delta.TotalSeconds) < 1 ? "в темпе рекорда"
-        : delta < TimeSpan.Zero ? $"быстрее рекорда на {Time(-delta)}"
-        : $"медленнее рекорда на {Time(delta)}";
+        : delta < TimeSpan.Zero ? $"быстрее на {Time(-delta)}" // the line starts with "Рекорд": short enough to fit the panel
+        : $"медленнее на {Time(delta)}";
 }
 
 public enum FightOutcome { Unknown, Killed, NotKilled }

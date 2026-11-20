@@ -108,10 +108,10 @@ public class BossRecordBookTests
 public class RecordTextTests
 {
     [Theory]
-    [InlineData(-8, "быстрее рекорда на 0:08")]
-    [InlineData(15, "медленнее рекорда на 0:15")]
+    [InlineData(-8, "быстрее на 0:08")]
+    [InlineData(15, "медленнее на 0:15")]
     [InlineData(0.4, "в темпе рекорда")]
-    [InlineData(-75, "быстрее рекорда на 1:15")]
+    [InlineData(-75, "быстрее на 1:15")]
     public void Pace_reads_as_words(double seconds, string expected) =>
         Assert.Equal(expected, RecordText.Pace(TimeSpan.FromSeconds(seconds)));
 

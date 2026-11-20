@@ -64,7 +64,10 @@
 .bp-row-hps { font-size: 11.5px; color: #7ee787; font-variant-numeric: tabular-nums; min-width: 38px; text-align: right; white-space: nowrap; } /* aion2-overlay fork */
 .bp-focus:not(:hover) .bp-header, .bp-focus:not(:hover) .bp-notice, .bp-focus:not(:hover) .bp-footer { display: none; }
 .bp-alert { margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px; background: rgba(255, 170, 0, .9); color: #111; font-weight: 700; font-size: 12px; }
-.bp-record { margin-top: 4px; font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-record { margin-top: 4px; font-size: 11px; opacity: .85; white-space: nowrap; display: flex; gap: 4px; min-width: 0; }
+/* the record and my best give way, the pace (faster/slower) always shows */
+.bp-record > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bp-record > b { flex-shrink: 0; }
 .bp-record-news { margin: 0 8px 6px; padding: 5px 8px; border-radius: 6px; background: linear-gradient(90deg, #8a6a12, #c9a227); color: #111; font-weight: 700; font-size: 12px; }
 /* event icons (rift, shugo, air raid, arena, reset): dim while waiting, glowing just before, lit while open */
 .bp-events { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; min-width: 0; }
