@@ -184,4 +184,33 @@ public class EquipmentParserTests
         Assert.Equal(new CharacterProfile("andrew", 17, 45, "Месламтаеда", 123456, 2100), again.Profile);
         Assert.Null(again.Equipment);
     }
+
+    [Fact]
+    public void After_a_restart_my_own_row_gets_my_name_from_the_last_login()
+    {
+        // Nov 2026: after a restart in the dungeon everyone got a name but me ("Player_13189"): the game names you only on entering
+        var named = new List<(int Entity, string Name, string? Server, long Power)>();
+        var me = new CharacterProfile("DRIXED", 15, 45, "MES", 202780, 3110);
+        int? classOf13189 = null;
+        var namer = new SelfNamer(() => me, e => e == 13189 ? (false, classOf13189) : null, (e, n, s, p) => named.Add((e, n, s, p)));
+
+        namer.OnLocalEntity(13189);                 // not hit yet: no class known, the name from the last login
+        Assert.Equal([(13189, "DRIXED", "MES", 202780L)], named);
+        namer.OnLocalEntity(13189);                 // once is enough
+        Assert.Single(named);
+    }
+
+    [Fact]
+    public void Another_class_than_the_last_login_is_not_named()
+    {
+        // logged in with an alt while the meter was off: a Gladiator is not "DRIXED"
+        var named = new List<int>();
+        var namer = new SelfNamer(() => new CharacterProfile("DRIXED", 15, 45, "MES", 1, 1), _ => (false, 11), (e, _, _, _) => named.Add(e));
+        namer.OnLocalEntity(500);
+        Assert.Empty(named);
+        var known = new SelfNamer(() => new CharacterProfile("DRIXED", 15, 45, "MES", 1, 1), _ => (true, 15), (e, _, _, _) => named.Add(e));
+        known.OnLocalEntity(501);                   // already named by the game: left alone
+        Assert.Empty(named);
+    }
 }
+

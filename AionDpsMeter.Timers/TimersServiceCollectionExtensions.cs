@@ -74,6 +74,17 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp =>
+        {
+            var entities = sp.GetRequiredService<AionDpsMeter.Services.Services.Entity.EntityTracker>();
+            var character = sp.GetRequiredService<AionDpsMeter.Timers.Character.CharacterTracker>();
+            var places = sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>();
+            return new AionDpsMeter.Timers.Character.SelfNamer(
+                () => character.Profile,
+                e => entities.GetPlayerEntity(e) is { } p ? (p.IsIdentified && !string.IsNullOrEmpty(p.Name), p.CharacterClass is { } k ? (int?)k.Id : null) : null,
+                (e, name, server, power) => entities.SetSessionPlayerName(e, name, (int)Math.Min(int.MaxValue, power), server ?? "", isUser: true),
+                () => places.LocalEntity);
+        });
         services.AddSingleton(_ => new AionDpsMeter.Timers.Craft.CraftStock(AionDpsMeter.Timers.Craft.CraftBook.Default.Knows, TimersPaths.Of("craft-stock.json")));
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Craft.CraftStock>());
         services.AddSingleton(_ => new AionDpsMeter.Timers.Craft.CraftPlan(TimersPaths.Of("craft-plan.json")));
