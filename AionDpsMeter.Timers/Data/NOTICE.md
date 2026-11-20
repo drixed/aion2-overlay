@@ -31,3 +31,9 @@
 `AionDpsMeter.Core/GameData/Assets/skills.ru.json` — русские названия умений и эффектов (код → название), из
 `Backend/src/data/aion2/skill_names_i18n.json` проекта [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter),
 коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV. Данные игры © NCSOFT.
+
+`item_stats.ru.json` — названия статов на предметах (номер стата → название; какие идут в процентах), божественных камней,
+базовые статы предметов и номера Владык аркан. Собрано из `Backend/src/data/aion2/item_stats.json`, `godstones.json`,
+`item_details.json` проекта [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter), коммит `f6ef644`, MIT License,
+Copyright (c) 2026 SkeeveTV. Разбор камней, статов и аркан в пакете входа (11 56) — по `Aion2FrameDecoder.TryReadItemDetails` и
+`TryReadArcana` того же проекта, код написан заново. Названия Владык — смысловой перевод. Данные игры © NCSOFT.

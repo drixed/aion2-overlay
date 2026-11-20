@@ -36,6 +36,71 @@ public class EquipmentParserTests
         Assert.Empty(EquipmentParser.Parse([0x11, 0x56, 1, 2, 3], known.Contains));
     }
 
+    // A piece with its details behind the size byte (layout checked on the EU login list of 2026-11-20): size u32, a flag byte,
+    // the stone count, 7 bytes per stone (4 constant bytes, stat u16, tier), the owner block (…, 03), the godstone u32,
+    // 9 bytes, then the rolled stats: count, stat u16 + value u32 each; a second list and the skill bonuses follow.
+    private static byte[] Detailed(int itemId, byte slot, byte enchant, (int Stat, byte Tier)[] stones, int godstone, (int Stat, int Value)[] stats)
+    {
+        var e = new List<byte>(Entry(itemId, slot, enchant)[..34]);
+        e.AddRange([0x60, 0, 0, 0, 0x00, (byte)stones.Length]);
+        foreach (var (stat, tier) in stones) e.AddRange([0x11, 0x22, 0x33, 0x44, (byte)stat, (byte)(stat >> 8), tier]);
+        e.AddRange([7, 7, 7, 7, 0, 0, 0x1C, 0x05, 1, 3]);
+        e.AddRange(BitConverter.GetBytes(godstone));
+        e.AddRange(new byte[9]);
+        e.Add((byte)stats.Length);
+        foreach (var (stat, value) in stats) { e.AddRange([(byte)stat, (byte)(stat >> 8)]); e.AddRange(BitConverter.GetBytes(value)); }
+        e.AddRange([0, 0]);
+        return [.. e];
+    }
+
+    // An arcana piece: the experience u32 right behind the level, then from the size byte: 01 | god stat | 00 | god value u32
+    // at +28, and at +37 two skill lists (count, skill u32 + levels u8): what the piece gives and what it rolled on top.
+    private static byte[] Arcana(int itemId, byte slot, byte level, int experience, byte god, int godValue, int skill, byte given, byte rolled)
+    {
+        var e = Entry(itemId, slot, level)[..34];
+        BitConverter.GetBytes(experience).CopyTo(e, 21);
+        var tail = new byte[37];
+        tail[0] = 0x60;
+        tail[28] = 1;
+        tail[29] = god;
+        BitConverter.GetBytes(godValue).CopyTo(tail, 31);
+        return [.. e, .. tail, 1, .. BitConverter.GetBytes(skill), given, 1, .. BitConverter.GetBytes(skill), rolled];
+    }
+
+    [Fact]
+    public void A_piece_brings_its_stones_rolled_stats_and_godstone()
+    {
+        var known = new HashSet<int> { 115030053 };
+        var item = Assert.Single(EquipmentParser.Parse(Frame(Detailed(115030053, 2, 18, [(317, 2), (104, 1)], 19950001, [(5, 25), (32, 732)])), known.Contains));
+        Assert.Equal(18, item.Enchant);
+        Assert.Equal([new ItemStone(317, 2), new ItemStone(104, 1)], item.Stones!);
+        Assert.Equal([new ItemStat(5, 25), new ItemStat(32, 732)], item.Stats!);
+        Assert.Equal(19950001, item.Godstone);
+    }
+
+    [Fact]
+    public void An_arcana_brings_its_lord_value_and_skill_levels()
+    {
+        var known = new HashSet<int> { 900001 };
+        var item = Assert.Single(EquipmentParser.Parse(Frame(Arcana(900001, 41, 3, 600, 7, 22, 11010000, 1, 1)), known.Contains));
+        Assert.Equal(new ArcanaInfo(600, 7, 22, [new SkillLevel(11010000, 2)]), item.Arcana! with { Skills = item.Arcana!.Skills.ToList() }, ArcanaComparer);
+    }
+
+    private static readonly IEqualityComparer<ArcanaInfo> ArcanaComparer = EqualityComparer<ArcanaInfo>.Create(
+        (a, b) => a!.Experience == b!.Experience && a.GodStat == b.GodStat && a.GodValue == b.GodValue && a.Skills.SequenceEqual(b.Skills));
+
+    [Fact]
+    public void Stats_have_russian_names_and_percent_stats_show_as_percent()
+    {
+        Assert.Equal("7.32%", ItemStats.Value(32, 732));
+        Assert.Equal("25", ItemStats.Value(5, 25));
+        Assert.DoesNotContain("#", ItemStats.Name(5));
+        Assert.Equal("Стат 9999", ItemStats.Name(9999));
+        Assert.NotNull(ItemStats.Godstone(19950001));
+        Assert.NotEmpty(ItemStats.Base(115030053));
+        Assert.Equal("Справедливость", ItemStats.Lord(7));
+    }
+
     [Fact]
     public void The_catalog_knows_items_with_russian_names()
     {

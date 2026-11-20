@@ -118,18 +118,76 @@
         16 => "Заклинатель", 17 => "Целитель", 18 => "Чародей", 19 => "Мастер кулака", _ => "Класс неизвестен",
     };
 
+    private int? openSlot;
+
+    private void Toggle(int slot) => openSlot = openSlot == slot ? null : slot;
+
+    private static string TierName(int tier) => tier switch { 1 => "белый", 2 => "зелёный", 3 => "синий", 4 => "золотой", _ => "" };
+
+    private static string SkillName(int skill) =>
+        AionDpsMeter.Core.GameData.Services.GameDataProvider.Instance.GetSkillOrDefault(skill).Name is { Length: > 0 } n ? n : $"Умение {skill}";
+
     private RenderFragment Card(WornItem w, ItemInfo? info) => __builder =>
     {
-        <div class="ch-item g@(info?.Grade ?? 0)" title="@(info?.Name ?? $"Предмет {w.ItemId}")">
-            <span class="ch-icon">
-                @if (info?.IconUrl is { } url) { <img src="@url" alt="" /> }
-                @if (w.Enchant > 0) { <em>+@w.Enchant</em> }
-            </span>
-            <span class="ch-item-text">
-                <b>@(info?.Name ?? $"Предмет {w.ItemId}")</b>
-                <small>@SlotName(info?.Slot)@(info is { ItemLevel: > 0 } ? $" · IL {info.ItemLevel}" : "")</small>
-                @if (info is { Tier: > 0 }) { <i>Тир @info.Tier</i> }
-            </span>
+        var open = openSlot == w.Slot;
+        var stones = w.Stones ?? [];
+        <div class="ch-card @(open ? "open" : "")">
+            <div class="ch-item g@(info?.Grade ?? 0)" title="Нажмите, чтобы увидеть статы, камни и божественный камень" @onclick="() => Toggle(w.Slot)">
+                <span class="ch-icon">
+                    @if (info?.IconUrl is { } url) { <img src="@url" alt="" /> }
+                    @if (w.Enchant > 0) { <em>+@w.Enchant</em> }
+                </span>
+                <span class="ch-item-text">
+                    <b>@(info?.Name ?? $"Предмет {w.ItemId}")</b>
+                    <small>@SlotName(info?.Slot)@(info is { ItemLevel: > 0 } ? $" · IL {info.ItemLevel}" : "")</small>
+                    <span class="ch-tags">
+                        @if (info is { Tier: > 0 }) { <i>Тир @info.Tier</i> }
+                        @foreach (var st in stones) { <u class="ch-dot t@(st.Tier)" title="@(st.Stat == 0 ? "пустой слот" : ItemStats.Name(st.Stat))"></u> }
+                        @if (w.Godstone != 0) { <u class="ch-god" title="@(ItemStats.Godstone(w.Godstone) ?? "божественный камень")">✦</u> }
+                    </span>
+                </span>
+                <span class="ch-more">@(open ? "▴" : "▾")</span>
+            </div>
+            @if (open)
+            {
+                var baseStats = ItemStats.Base(w.ItemId);
+                <div class="ch-details">
+                    @if (w.Arcana is { } a)
+                    {
+                        <h5>Аркана</h5>
+                        <div class="ch-row"><span>Владыка: @ItemStats.Lord(a.GodStat)</span><b>+@a.GodValue</b></div>
+                        <div class="ch-row"><span>Опыт</span><b>@a.Experience.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b></div>
+                        @foreach (var sk in a.Skills) { <div class="ch-row"><span>@SkillName(sk.Skill)</span><b>+@sk.Level ур.</b></div> }
+                    }
+                    @if (baseStats.Count > 0)
+                    {
+                        <h5>Свойства</h5>
+                        @foreach (var (name, value) in baseStats) { <div class="ch-row"><span>@name</span><b>@value.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b></div> }
+                    }
+                    @if (w.Stats is { Count: > 0 } rolled)
+                    {
+                        <h5>Дополнительные статы</h5>
+                        @foreach (var st in rolled.Where(r => r.Value != 0)) { <div class="ch-row"><span>@ItemStats.Name(st.Stat)</span><b class="up">+@ItemStats.Value(st.Stat, st.Value)</b></div> }
+                    }
+                    @if (stones.Count > 0)
+                    {
+                        <h5>Камни маны</h5>
+                        @foreach (var st in stones)
+                        {
+                            <div class="ch-row"><span><u class="ch-dot t@(st.Tier)"></u>@(st.Stat == 0 ? "пустой слот" : ItemStats.Name(st.Stat))</span><small>@TierName(st.Tier)</small></div>
+                        }
+                    }
+                    @if (ItemStats.Godstone(w.Godstone) is { } god)
+                    {
+                        <h5>Божественный камень</h5>
+                        <div class="ch-row"><span class="ch-godname">✦ @god</span></div>
+                    }
+                    @if (w.Arcana is null && baseStats.Count == 0 && w.Stats is null && stones.Count == 0)
+                    {
+                        <div class="ch-row"><span class="ch-muted">Статы и камни придут при следующем входе персонажа в игру (метр читает их из пакета входа).</span></div>
+                    }
+                </div>
+            }
         </div>
     };
 

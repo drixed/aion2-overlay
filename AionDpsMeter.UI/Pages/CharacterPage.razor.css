@@ -53,3 +53,22 @@
 .ch-class.none { display: inline-flex; align-items: center; justify-content: center; color: #5f6b7c; font-weight: 700; font-size: 18px; }
 .ch-class.big.none { font-size: 34px; }
 .ch-ring-class { font-style: normal; color: #aeb8c5; font-size: 12px; }
+/* a piece opens on click: its own stats, rolled stats, mana stones, godstone; arcana: Lord, experience, skill levels */
+.ch-card { display: flex; flex-direction: column; min-width: 0; }
+.ch-card .ch-item { cursor: pointer; }
+.ch-card.open .ch-item { border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: #1d2531; }
+.ch-more { margin-left: auto; color: #5f6b7c; font-size: 11px; padding-left: 4px; }
+.ch-tags { display: flex; align-items: center; gap: 4px; margin-top: 2px; flex-wrap: wrap; }
+.ch-tags i { margin-top: 0 !important; }
+.ch-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3a4352; text-decoration: none; flex: 0 0 8px; }
+.ch-dot.t1 { background: #e6edf3; } .ch-dot.t2 { background: #7ee787; } .ch-dot.t3 { background: #58a6ff; } .ch-dot.t4 { background: #f2cc60; }
+.ch-god { text-decoration: none; color: #f2cc60; font-size: 11px; }
+.ch-details { padding: 6px 10px 8px; border: 1px solid #252e3b; border-top: 0; border-radius: 0 0 8px 8px; background: #151b24; font-size: 11.5px; }
+.ch-details h5 { margin: 6px 0 2px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #8b95a5; font-weight: 600; }
+.ch-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; }
+.ch-row span { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; color: #c9d1d9; }
+.ch-row b { color: #e6edf3; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ch-row b.up { color: #7ee787; }
+.ch-row small { color: #7d8898; font-size: 10.5px; }
+.ch-godname { color: #f2cc60 !important; }
+.ch-muted { color: #7d8898 !important; }
