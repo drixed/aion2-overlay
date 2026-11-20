@@ -127,71 +127,6 @@
             </ValueSlot>
         </SettingRow>
 
-        <div class="fs-label fs-label--spaced">ОКНО</div>
-        <SettingRow Title="Затухание в простое" Description="@(O.IdleFadeSeconds == 0 ? "Выключено — окно всегда яркое" : $"Через {O.IdleFadeSeconds} с без боя окно тускнеет до {O.IdleFadePercent}%; наведи мышь — вернётся")">
-            <ValueSlot><input class="fs-range" type="range" min="0" max="120" step="5" value="@O.IdleFadeSeconds" @onchange="e => SetInt(e.Value, v => Set(o => o.IdleFadeSeconds = v))" /></ValueSlot>
-        </SettingRow>
-        @if (O.IdleFadeSeconds > 0)
-        {
-            <SettingRow Title="Яркость в простое" Description="@($"{O.IdleFadePercent}%")">
-                <ValueSlot><input class="fs-range" type="range" min="10" max="90" step="5" value="@O.IdleFadePercent" @onchange="e => SetInt(e.Value, v => Set(o => o.IdleFadePercent = v))" /></ValueSlot>
-            </SettingRow>
-        }
-        <SettingRow Title="Частота обновления" Description="@($"{O.RefreshMs} мс — как часто обновляются полосы. Меньше — быстрее отклик, больше — меньше нагрузка на процессор")">
-            <ValueSlot><input class="fs-range" type="range" min="33" max="500" step="1" value="@O.RefreshMs" @onchange="e => SetInt(e.Value, v => Set(o => o.RefreshMs = v))" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Формат времени" Description="Время начала событий в подсказках">
-            <ValueSlot>
-                <div class="fs-segmented">
-                    <button type="button" class="fs-segmented__option @(!O.Use12h ? "is-selected" : "")" @onclick="() => Set(o => o.Use12h = false)">24 часа</button>
-                    <button type="button" class="fs-segmented__option @(O.Use12h ? "is-selected" : "")" @onclick="() => Set(o => o.Use12h = true)">12 часов</button>
-                </div>
-            </ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Запускать вместе с Windows" Description="Метр стартует сам при входе в Windows">
-            <ValueSlot><ToggleSwitch Checked="@O.StartWithWindows" CheckedChanged="v => Set(o => o.StartWithWindows = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Объявления NCSOFT" Description="Кнопка 📣 в главном окне: официальные новости AION 2 (техработы, сбои, компенсации) и кампании Twitch Drops; метр проверяет их раз в 15 минут">
-            <ValueSlot><ToggleSwitch Checked="@O.ShowNews" CheckedChanged="v => Set(o => o.ShowNews = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Сворачивать в трей" Description="Кнопка «_» убирает метр в трей (значок возле часов); двойной клик по значку — вернуть">
-            <ValueSlot><ToggleSwitch Checked="@O.MinimizeToTray" CheckedChanged="v => Set(o => o.MinimizeToTray = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="В трей при закрытии игры" Description="Метр уходит в трей, когда AION 2 закрывается, и возвращается, когда игра запускается">
-            <ValueSlot><ToggleSwitch Checked="@O.TrayWhenGameClosed" CheckedChanged="v => Set(o => o.TrayWhenGameClosed = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Скрывать в простое" Description="@(O.HideWhenIdleMinutes == 0 ? "Выключено" : $"Через {O.HideWhenIdleMinutes} мин без боя, пока вы не пользуетесь метром, он уходит в трей до следующего боя")">
-            <ValueSlot><input class="fs-range" type="range" min="0" max="60" step="5" value="@O.HideWhenIdleMinutes" @onchange="e => SetInt(e.Value, v => Set(o => o.HideWhenIdleMinutes = v))" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Компактная полоса" Description="Главное окно — только шапка и твоя строка">
-            <ValueSlot><ToggleSwitch Checked="@O.Compact" CheckedChanged="v => Set(o => o.Compact = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Компактно вне боя" Description="Вне боя окно само сворачивается в полосу, в бою разворачивается">
-            <ValueSlot><ToggleSwitch Checked="@O.AutoCompact" CheckedChanged="v => Set(o => o.AutoCompact = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Режим фокуса" Description="В бою скрывает шапку, объявления и разлом; наведи курсор — появятся">
-            <ValueSlot><ToggleSwitch Checked="@O.FocusMode" CheckedChanged="v => Set(o => o.FocusMode = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Только поверх игры" Description="Оверлей поверх остальных окон, только пока активна игра">
-            <ValueSlot><ToggleSwitch Checked="@O.OnlyOverGame" CheckedChanged="v => Set(o => o.OnlyOverGame = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Масштаб интерфейса" Description="Главное окно и окно таймеров; высота подстраивается сама">
-            <ValueSlot>
-                <div class="slider-field">
-                    <input type="range" min="80" max="150" step="5" value="@O.UiScale" @onchange="e => SetScale(e.Value)" />
-                    <span class="slider-field__value">@O.UiScale%</span>
-                </div>
-            </ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Расти вверх" Description="Нижний край окна стоит на месте, окно растёт вверх — для метра внизу экрана">
-            <ValueSlot><ToggleSwitch Checked="@O.GrowUpward" CheckedChanged="v => Set(o => o.GrowUpward = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Прозрачность при сквозном клике" Description="@($"{O.LockedOpacity}% — когда клики проходят сквозь окна в игру (горячая клавиша «Сквозной клик»)")">
-            <ValueSlot><input class="fs-range" type="range" min="10" max="100" step="5" value="@O.LockedOpacity" @onchange="e => SetInt(e.Value, v => Set(o => o.LockedOpacity = v))" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Скрыть полосу HP босса" Description="В карточке босса останутся цифры, без полосы" IsLast="true">
-            <ValueSlot><ToggleSwitch Checked="@O.HideBossHpBar" CheckedChanged="v => Set(o => o.HideBossHpBar = v)" /></ValueSlot>
-        </SettingRow>
         break;
 
     case "tracking":
@@ -218,12 +153,6 @@
         </SettingRow>
         <SettingRow Title="Рекорды по боссам" Description="В карточке босса — рекорд и темп относительно него; после боя — плашка «Новый рекорд». Список — во вкладке «Рекорды»">
             <ValueSlot><ToggleSwitch Checked="@O.ShowRecords" CheckedChanged="v => Set(o => o.ShowRecords = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Питомцы" Description="Бьёшь монстра, чей питомец ещё не прокачан, — над списком видно его уровень и души; новый уровень — плашка и звук. Метр сам учится, какой монстр какого питомца">
-            <ValueSlot><ToggleSwitch Checked="@O.ShowPets" CheckedChanged="v => Set(o => o.ShowPets = v)" /></ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Лобби" Description="Группа из поиска («Немедленный старт» и др.): над списком — кто в ней и кто уже принял (✓), пока все не примут; когда приняли все — звук (настраивается во вкладке «Таймеры»)">
-            <ValueSlot><ToggleSwitch Checked="@O.ShowLobby" CheckedChanged="v => Set(o => o.ShowLobby = v)" /></ValueSlot>
         </SettingRow>
         <SettingRow Title="Бой окончен через" Description="@($"{O.FightIdleSeconds} с без ударов — бой завершается и уходит в историю (по умолчанию 45)")">
             <ValueSlot><input class="fs-range" type="range" min="10" max="120" step="5" value="@O.FightIdleSeconds" @onchange="e => SetInt(e.Value, v => Set(o => o.FightIdleSeconds = v))" /></ValueSlot>
@@ -280,6 +209,132 @@
                 </ValueSlot>
             </SettingRow>
         }
+        break;
+
+    case "window":
+        <div class="fs-label">ГЛАВНОЕ ОКНО</div>
+        <SettingRow Title="Затухание в простое" Description="@(O.IdleFadeSeconds == 0 ? "Выключено — окно всегда яркое" : $"Через {O.IdleFadeSeconds} с без боя окно тускнеет до {O.IdleFadePercent}%; наведи мышь — вернётся")">
+            <ValueSlot><input class="fs-range" type="range" min="0" max="120" step="5" value="@O.IdleFadeSeconds" @onchange="e => SetInt(e.Value, v => Set(o => o.IdleFadeSeconds = v))" /></ValueSlot>
+        </SettingRow>
+        @if (O.IdleFadeSeconds > 0)
+        {
+            <SettingRow Title="Яркость в простое" Description="@($"{O.IdleFadePercent}%")">
+                <ValueSlot><input class="fs-range" type="range" min="10" max="90" step="5" value="@O.IdleFadePercent" @onchange="e => SetInt(e.Value, v => Set(o => o.IdleFadePercent = v))" /></ValueSlot>
+            </SettingRow>
+        }
+        <SettingRow Title="Частота обновления" Description="@($"{O.RefreshMs} мс — как часто обновляются полосы. Меньше — быстрее отклик, больше — меньше нагрузка на процессор")">
+            <ValueSlot><input class="fs-range" type="range" min="33" max="500" step="1" value="@O.RefreshMs" @onchange="e => SetInt(e.Value, v => Set(o => o.RefreshMs = v))" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Формат времени" Description="Время начала событий в подсказках">
+            <ValueSlot>
+                <div class="fs-segmented">
+                    <button type="button" class="fs-segmented__option @(!O.Use12h ? "is-selected" : "")" @onclick="() => Set(o => o.Use12h = false)">24 часа</button>
+                    <button type="button" class="fs-segmented__option @(O.Use12h ? "is-selected" : "")" @onclick="() => Set(o => o.Use12h = true)">12 часов</button>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Компактная полоса" Description="Главное окно — только шапка и твоя строка">
+            <ValueSlot><ToggleSwitch Checked="@O.Compact" CheckedChanged="v => Set(o => o.Compact = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Компактно вне боя" Description="Вне боя окно само сворачивается в полосу, в бою разворачивается">
+            <ValueSlot><ToggleSwitch Checked="@O.AutoCompact" CheckedChanged="v => Set(o => o.AutoCompact = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Режим фокуса" Description="В бою скрывает шапку, объявления и разлом; наведи курсор — появятся">
+            <ValueSlot><ToggleSwitch Checked="@O.FocusMode" CheckedChanged="v => Set(o => o.FocusMode = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Только поверх игры" Description="Оверлей поверх остальных окон, только пока активна игра">
+            <ValueSlot><ToggleSwitch Checked="@O.OnlyOverGame" CheckedChanged="v => Set(o => o.OnlyOverGame = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Масштаб интерфейса" Description="Главное окно и окно таймеров; высота подстраивается сама">
+            <ValueSlot>
+                <div class="slider-field">
+                    <input type="range" min="80" max="150" step="5" value="@O.UiScale" @onchange="e => SetScale(e.Value)" />
+                    <span class="slider-field__value">@O.UiScale%</span>
+                </div>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Расти вверх" Description="Нижний край окна стоит на месте, окно растёт вверх — для метра внизу экрана">
+            <ValueSlot><ToggleSwitch Checked="@O.GrowUpward" CheckedChanged="v => Set(o => o.GrowUpward = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Прозрачность при сквозном клике" Description="@($"{O.LockedOpacity}% — когда клики проходят сквозь окна в игру (горячая клавиша «Сквозной клик»)")">
+            <ValueSlot><input class="fs-range" type="range" min="10" max="100" step="5" value="@O.LockedOpacity" @onchange="e => SetInt(e.Value, v => Set(o => o.LockedOpacity = v))" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Скрыть полосу HP босса" Description="В карточке босса останутся цифры, без полосы" IsLast="true">
+            <ValueSlot><ToggleSwitch Checked="@O.HideBossHpBar" CheckedChanged="v => Set(o => o.HideBossHpBar = v)" /></ValueSlot>
+        </SettingRow>
+        break;
+
+    case "system":
+        <div class="fs-label">WINDOWS И ТРЕЙ</div>
+        <SettingRow Title="Запускать вместе с Windows" Description="Метр стартует сам при входе в Windows">
+            <ValueSlot><ToggleSwitch Checked="@O.StartWithWindows" CheckedChanged="v => Set(o => o.StartWithWindows = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Сворачивать в трей" Description="Кнопка «_» убирает метр в трей (значок возле часов); двойной клик по значку — вернуть">
+            <ValueSlot><ToggleSwitch Checked="@O.MinimizeToTray" CheckedChanged="v => Set(o => o.MinimizeToTray = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="В трей при закрытии игры" Description="Метр уходит в трей, когда AION 2 закрывается, и возвращается, когда игра запускается">
+            <ValueSlot><ToggleSwitch Checked="@O.TrayWhenGameClosed" CheckedChanged="v => Set(o => o.TrayWhenGameClosed = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Скрывать в простое" Description="@(O.HideWhenIdleMinutes == 0 ? "Выключено" : $"Через {O.HideWhenIdleMinutes} мин без боя, пока вы не пользуетесь метром, он уходит в трей до следующего боя")" IsLast="true">
+            <ValueSlot><input class="fs-range" type="range" min="0" max="60" step="5" value="@O.HideWhenIdleMinutes" @onchange="e => SetInt(e.Value, v => Set(o => o.HideWhenIdleMinutes = v))" /></ValueSlot>
+        </SettingRow>
+
+        <div class="fs-label fs-label--spaced">ОБЪЯВЛЕНИЯ</div>
+        <SettingRow Title="Объявления NCSOFT" Description="Кнопка 📣 в главном окне: официальные новости AION 2 (техработы, сбои, компенсации) и кампании Twitch Drops; метр проверяет их раз в 15 минут" IsLast="true">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowNews" CheckedChanged="v => Set(o => o.ShowNews = v)" /></ValueSlot>
+        </SettingRow>
+        break;
+
+    case "pets":
+        <div class="fs-label">ПИТОМЦЫ В ГЛАВНОМ ОКНЕ</div>
+        <SettingRow Title="Питомцы" Description="Бьёшь монстра, чей питомец ещё не прокачан, — над списком видно его уровень и души; новый уровень — плашка и звук. Метр сам учится, какой монстр какого питомца">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowPets" CheckedChanged="v => Set(o => o.ShowPets = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Питомец: новый уровень" Description="Звук, когда питомец поднимает уровень (вместе с плашкой в главном окне). Работает при включённых «Питомцах»" IsLast="true">
+            <ValueSlot>
+                <span class="fs-hotkey">
+                    <select class="fs-select" value="@(O.SoundFor(TimersOptions.PetLevelUpKey).ToString())" @onchange="e => OnSoundPicked(TimersOptions.PetLevelUpKey, e.Value)" title="Звук">
+                        @foreach (var (value, label) in WindowsSounds)
+                        {
+                            <option value="@value">@label</option>
+                        }
+                        @if (O.SoundFor(TimersOptions.PetLevelUpKey) is { File: not null } petOwn)
+                        {
+                            <option value="@petOwn.ToString()">@FileLabel(petOwn)</option>
+                        }
+                        <option value="@PickFile">Свой файл…</option>
+                    </select>
+                    <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(TimersOptions.PetLevelUpKey)">▶</button>
+                    <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.PetLevelUpKey))" CheckedChanged="v => SetAlert(TimersOptions.PetLevelUpKey, v)" />
+                </span>
+            </ValueSlot>
+        </SettingRow>
+        break;
+
+    case "lobby":
+        <div class="fs-label">ЛОББИ</div>
+        <SettingRow Title="Лобби" Description="Группа из поиска («Немедленный старт» и др.): над списком — кто в ней и кто уже принял (✓), пока все не примут; когда приняли все — звук (ниже)">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowLobby" CheckedChanged="v => Set(o => o.ShowLobby = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Лобби: все приняли" Description="Звук, когда в группе из поиска все приняли игру. Работает при включённом «Лобби» выше" IsLast="true">
+            <ValueSlot>
+                <span class="fs-hotkey">
+                    <select class="fs-select" value="@(O.SoundFor(TimersOptions.LobbyReadyKey).ToString())" @onchange="e => OnSoundPicked(TimersOptions.LobbyReadyKey, e.Value)" title="Звук">
+                        @foreach (var (value, label) in WindowsSounds)
+                        {
+                            <option value="@value">@label</option>
+                        }
+                        @if (O.SoundFor(TimersOptions.LobbyReadyKey) is { File: not null } lobbyOwn)
+                        {
+                            <option value="@lobbyOwn.ToString()">@FileLabel(lobbyOwn)</option>
+                        }
+                        <option value="@PickFile">Свой файл…</option>
+                    </select>
+                    <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(TimersOptions.LobbyReadyKey)">▶</button>
+                    <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.LobbyReadyKey))" CheckedChanged="v => SetAlert(TimersOptions.LobbyReadyKey, v)" />
+                </span>
+            </ValueSlot>
+        </SettingRow>
         break;
 
     case "calc":
@@ -360,44 +415,6 @@
             </SettingRow>
         }
 
-        <SettingRow Title="Питомец: новый уровень" Description="Звук, когда питомец поднимает уровень (вместе с плашкой в главном окне). Работает при включённых «Питомцах»">
-            <ValueSlot>
-                <span class="fs-hotkey">
-                    <select class="fs-select" value="@(O.SoundFor(TimersOptions.PetLevelUpKey).ToString())" @onchange="e => OnSoundPicked(TimersOptions.PetLevelUpKey, e.Value)" title="Звук">
-                        @foreach (var (value, label) in WindowsSounds)
-                        {
-                            <option value="@value">@label</option>
-                        }
-                        @if (O.SoundFor(TimersOptions.PetLevelUpKey) is { File: not null } petOwn)
-                        {
-                            <option value="@petOwn.ToString()">@FileLabel(petOwn)</option>
-                        }
-                        <option value="@PickFile">Свой файл…</option>
-                    </select>
-                    <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(TimersOptions.PetLevelUpKey)">▶</button>
-                    <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.PetLevelUpKey))" CheckedChanged="v => SetAlert(TimersOptions.PetLevelUpKey, v)" />
-                </span>
-            </ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Лобби: все приняли" Description="Звук, когда в группе из поиска все приняли игру. Работает при включённом «Лобби» (вкладка «Учёт»)">
-            <ValueSlot>
-                <span class="fs-hotkey">
-                    <select class="fs-select" value="@(O.SoundFor(TimersOptions.LobbyReadyKey).ToString())" @onchange="e => OnSoundPicked(TimersOptions.LobbyReadyKey, e.Value)" title="Звук">
-                        @foreach (var (value, label) in WindowsSounds)
-                        {
-                            <option value="@value">@label</option>
-                        }
-                        @if (O.SoundFor(TimersOptions.LobbyReadyKey) is { File: not null } lobbyOwn)
-                        {
-                            <option value="@lobbyOwn.ToString()">@FileLabel(lobbyOwn)</option>
-                        }
-                        <option value="@PickFile">Свой файл…</option>
-                    </select>
-                    <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(TimersOptions.LobbyReadyKey)">▶</button>
-                    <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.LobbyReadyKey))" CheckedChanged="v => SetAlert(TimersOptions.LobbyReadyKey, v)" />
-                </span>
-            </ValueSlot>
-        </SettingRow>
 
         break;
 }

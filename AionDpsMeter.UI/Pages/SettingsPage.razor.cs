@@ -42,6 +42,8 @@ namespace AionDpsMeter.UI.Pages
         private readonly List<SettingsGroup> _groups = new()
     {
         new("appearance", "Appearance", "&#9707;"),
+        new("fork-window", "Window", "&#9707;"), // aion2-overlay fork
+        new("fork-system", "System", "&#9707;"), // aion2-overlay fork
         new("hotkeys", "Hotkeys", "&#9000;"),
         new("tracking", "Tracking", "&#9881;"),
         new("overlays", "Overlays", "&#9635;"),
@@ -50,6 +52,7 @@ namespace AionDpsMeter.UI.Pages
         new("fork-buffs", "Buffs", "&#9201;"), // aion2-overlay fork
         new("fork-records", "Records", "&#127942;"), // aion2-overlay fork
         new("fork-pets", "Pets", "&#128062;"), // aion2-overlay fork
+        new("fork-lobby", "Lobby", "&#9707;"), // aion2-overlay fork
         new("fork-calc", "Calculator", "&#9878;"), // aion2-overlay fork
         new("fork-craft", "Craft", "&#9874;"), // aion2-overlay fork
         new("fork-diag", "Diagnostics", "&#9673;"), // aion2-overlay fork

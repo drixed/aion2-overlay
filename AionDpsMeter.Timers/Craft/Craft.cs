@@ -183,14 +183,32 @@ public static class CraftCalc
 /// <summary>
 /// What the player owns in the inventory (container 1), the character storage (15) and the account storage (2): all three come in the login
 /// list (11 56, EU login 2026-11-20: 70 / 21 / 73 slots); later inventory changes in 1B 56. Moving between the inventory and a storage sends
-/// nothing readable, so the storages are as of the login.
+/// nothing readable, so the storages are as of the login. Kept in craft-stock.json, so a restart of the meter does not empty it.
 /// </summary>
-public sealed class CraftStock(Func<int, bool> known) : IRawPacketListener
+public sealed class CraftStock : IRawPacketListener
 {
     private const ushort LoginOpcode = 0x5611, ChangeOpcode = 0x561B;
     private static readonly int[] Kept = [1, 15, 2];
     private readonly Lock gate = new();
     private readonly Dictionary<(int Container, int Slot), (int Item, long Quantity)> slots = [];
+    private readonly Func<int, bool> known;
+    private readonly string? path;
+
+    private sealed record Saved(DateTime? LoginAt, List<SavedSlot> Slots);
+    private sealed record SavedSlot(int Container, int Slot, int Item, long Quantity);
+
+    public CraftStock(Func<int, bool> known, string? path = null)
+    {
+        this.known = known;
+        this.path = path;
+        try
+        {
+            if (path is null || !File.Exists(path) || JsonSerializer.Deserialize<Saved>(File.ReadAllText(path)) is not { } saved) return;
+            LoginAt = saved.LoginAt;
+            foreach (var s in saved.Slots) slots[(s.Container, s.Slot)] = (s.Item, s.Quantity);
+        }
+        catch (Exception) { slots.Clear(); }
+    }
 
     public event Action? Changed;
 
@@ -237,6 +255,11 @@ public sealed class CraftStock(Func<int, bool> known) : IRawPacketListener
             {
                 if (r.Kind == 2 || r.Quantity == 0) slots.Remove((r.Container, r.Slot));
                 else slots[(r.Container, r.Slot)] = (r.Item, r.Quantity);
+            }
+            if (path is not null)
+            {
+                var saved = new Saved(LoginAt, slots.Select(kv => new SavedSlot(kv.Key.Container, kv.Key.Slot, kv.Value.Item, kv.Value.Quantity)).ToList());
+                try { File.WriteAllText(path, JsonSerializer.Serialize(saved)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             }
         }
         Changed?.Invoke();

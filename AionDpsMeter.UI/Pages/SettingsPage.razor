@@ -24,6 +24,7 @@
         @foreach (var group in _groups)
         {
             <button type="button"
+                    data-tab="@group.Id" @* aion2-overlay fork: the sidebar icon keys on it *@
                     class="settings-tab @(group.Id == _activeGroup ? "is-active" : "")"
                     role="tab"
                     aria-selected="@(group.Id == _activeGroup ? "true" : "false")"
@@ -507,7 +508,10 @@
             </SettingRow>
         </section>
         <section class="settings-group @(_activeGroup == "fork-records" ? "" : "is-hidden")"><ForkRecords /></section> @* aion2-overlay fork *@
-        <section class="settings-group @(_activeGroup == "fork-pets" ? "" : "is-hidden")"><ForkPets /></section> @* aion2-overlay fork *@
+        <section class="settings-group @(_activeGroup == "fork-window" ? "" : "is-hidden")"><ForkSettings Section="window" /></section> @* aion2-overlay fork *@
+        <section class="settings-group @(_activeGroup == "fork-system" ? "" : "is-hidden")"><ForkSettings Section="system" /></section> @* aion2-overlay fork *@
+        <section class="settings-group @(_activeGroup == "fork-pets" ? "" : "is-hidden")"><ForkSettings Section="pets" /><ForkPets /></section> @* aion2-overlay fork *@
+        <section class="settings-group @(_activeGroup == "fork-lobby" ? "" : "is-hidden")"><ForkSettings Section="lobby" /></section> @* aion2-overlay fork *@
 
     </main>
 </div>

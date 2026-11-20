@@ -72,6 +72,23 @@ public class CraftTests
     }
 
     [Fact]
+    public void The_stock_is_kept_across_a_restart_of_the_meter()
+    {
+        // Nov 2026: after an update the craft window showed nothing until the next login
+        using var dir = new TempDir();
+        const int Ore = 610000600;
+        var stock = new CraftStock(i => i == Ore, dir.File("craft-stock.json"));
+        var at = new DateTime(2026, 11, 20, 17, 56, 0);
+        stock.OnFrame(at, [0x11, 0x56, .. new byte[10], .. Record(0, Ore, 5, 1, 0), .. Record(0, Ore, 7, 15, 3), .. new byte[5000]]);
+
+        var again = new CraftStock(i => i == Ore, dir.File("craft-stock.json"));
+        Assert.Equal(12, again.Count(Ore));
+        Assert.Equal(at, again.LoginAt);
+        again.OnFrame(at.AddMinutes(1), [0x1B, 0x56, .. new byte[10], .. Record(1, Ore, 2, 1, 0)]);
+        Assert.Equal(9, new CraftStock(i => i == Ore, dir.File("craft-stock.json")).Count(Ore));
+    }
+
+    [Fact]
     public void The_plan_is_kept()
     {
         using var dir = new TempDir();

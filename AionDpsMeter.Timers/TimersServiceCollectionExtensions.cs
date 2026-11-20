@@ -74,7 +74,7 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
-        services.AddSingleton(_ => new AionDpsMeter.Timers.Craft.CraftStock(AionDpsMeter.Timers.Craft.CraftBook.Default.Knows));
+        services.AddSingleton(_ => new AionDpsMeter.Timers.Craft.CraftStock(AionDpsMeter.Timers.Craft.CraftBook.Default.Knows, TimersPaths.Of("craft-stock.json")));
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Craft.CraftStock>());
         services.AddSingleton(_ => new AionDpsMeter.Timers.Craft.CraftPlan(TimersPaths.Of("craft-plan.json")));
         services.AddSingleton(_ =>
