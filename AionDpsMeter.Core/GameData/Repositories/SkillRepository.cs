@@ -94,6 +94,9 @@ namespace AionDpsMeter.Core.GameData.Repositories
             var json = File.ReadAllText(path);
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var ids = JsonSerializer.Deserialize<int[]>(json, options) ?? throw new InvalidDataException("Failed to deserialize dot_skill_ids.json");
+            // aion2-overlay fork: the Cleric's Light of Regeneration (HoT) and Benevolence (group heal) heal too; Logs/heal-probe.txt
+            // of a Ludra run showed them ticking millions of healing that the list missed (see FORK_CHANGES.md).
+            ids = [.. ids, 17090000, 17160000];
             
             foreach (var id in ids)
             {
