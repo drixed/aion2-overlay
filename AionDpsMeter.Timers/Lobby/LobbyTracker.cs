@@ -165,7 +165,8 @@ public sealed class LobbyTracker : IRawPacketListener
 /// Gives party members their names back when the meter missed the character → entity link (sent only on entering a zone,
 /// so a restart in the dungeon left "Player_9022"): the game keeps sending every party member's place
 /// (<c>1c 92 | character u32 | 00 00 | server u16 | class u32 | zone u32 | u32 | u32 | x f32 | y f32 | z f32 | …</c>), and an
-/// unnamed player standing there alone — within 4 m, no other unnamed one within twice that — is that character.
+/// unnamed player there alone — within 8 m (the frame comes every two seconds, a runner is further by then), no other unnamed
+/// one within twice that — is that character. A place up to two minutes old counts: someone standing still sends no moves.
 /// </summary>
 public sealed class PartyLinker(
     Func<IEnumerable<(int Entity, bool Named, int? Character)>> players,
@@ -173,8 +174,8 @@ public sealed class PartyLinker(
     Action<int, int> link) : IRawPacketListener
 {
     public const ushort Opcode = 0x921C;
-    private const float Near = 400, Apart = 800;
-    private static readonly TimeSpan Fresh = TimeSpan.FromSeconds(10);
+    private const float Near = 800, Apart = 1600;
+    private static readonly TimeSpan Fresh = TimeSpan.FromMinutes(2);
 
     public void OnRawPacket(ushort opcode, Packet packet)
     {

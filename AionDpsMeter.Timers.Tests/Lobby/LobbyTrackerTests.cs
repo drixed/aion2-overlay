@@ -192,11 +192,18 @@ public class PartyLinkerTests
     }
 
     [Fact]
-    public void An_old_position_is_no_match()
+    public void A_player_standing_still_or_a_few_metres_on_is_still_found_but_not_a_long_gone_one()
     {
+        // v155 linked one member of four: a place more than 10 s old (someone standing still) or 4 m off (the party frame
+        // comes every two seconds, a runner is further by then) did not count
         var links = new List<(int, int)>();
         var linker = new PartyLinker(() => [(1, false, null)], _ => new(T0, -24640, 34120), (c, e) => links.Add((c, e)));
-        linker.OnFrame(T0.AddMinutes(1), PartyPosition(7, -24640, 34120));
-        Assert.Empty(links);
+        linker.OnFrame(T0.AddMinutes(1), PartyPosition(7, -24640 + 600, 34120));
+        Assert.Equal([(7, 1)], links);
+
+        var late = new List<(int, int)>();
+        var linker2 = new PartyLinker(() => [(1, false, null)], _ => new(T0, -24640, 34120), (c, e) => late.Add((c, e)));
+        linker2.OnFrame(T0.AddMinutes(5), PartyPosition(7, -24640, 34120));
+        Assert.Empty(late);
     }
 }
