@@ -66,6 +66,12 @@ public static class TimersServiceCollectionExtensions
         services.AddSingleton(_ => new AionDpsMeter.Timers.Character.CharacterTracker(TimersPaths.Of("character.json")));
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Character.CharacterTracker>());
         services.AddSingleton(_ => new AionDpsMeter.Timers.Replay.PositionLog(TimersPaths.Of("Replays")));
+        services.AddSingleton(_ =>
+        {
+            var recorder = new AionDpsMeter.Timers.Diagnostics.PacketRecorder(Path.Combine(AppContext.BaseDirectory, "Logs"));
+            AionDpsMeter.Services.PacketProcessing.Fork.PacketTap.Frame += (opcode, packet) => recorder.Record(DateTime.Now, opcode, packet.Data);
+            return recorder;
+        });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Farm.FarmIncome>();
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Farm.FarmIncome>());

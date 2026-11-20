@@ -13,6 +13,8 @@ namespace AionDpsMeter.Services.PacketProcessing.Routing
                 return;
             }
 
+            Fork.PacketTap.Publish(opcode, packet); // aion2-overlay fork: the packet recorder sees every frame
+
             if (!registry.TryGet(opcode, out var processor))
             {
                 logger.LogTrace("No processor mapped for opcode 0x{Opcode:X4}.", opcode);

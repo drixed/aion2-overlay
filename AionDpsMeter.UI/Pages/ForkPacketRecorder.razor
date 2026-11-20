@@ -1,0 +1,63 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). Settings → Таймеры → "Диагностика": record every packet for a few
+   minutes into Logs/packets-*.txt, so features the meter cannot read yet (the party finder's applicants) can be worked out. *@
+@using AionDpsMeter.Timers.Diagnostics
+@using AionDpsMeter.UI.Pages.Components
+@implements IDisposable
+@inject PacketRecorder Recorder
+
+<div class="fs-label fs-label--spaced">ДИАГНОСТИКА</div>
+<SettingRow Title="Записать пакеты игры" Description="@Description()" IsLast="true">
+    <ValueSlot>
+        <span class="fs-hotkey">
+            @if (Recorder.Recording)
+            {
+                <button type="button" class="fs-segmented__option fs-button" @onclick="Recorder.Stop">■ Остановить</button>
+            }
+            else
+            {
+                @foreach (var minutes in new[] { 5, 10, 20 })
+                {
+                    <button type="button" class="fs-segmented__option fs-button" @onclick="() => Recorder.Start(DateTime.Now, TimeSpan.FromMinutes(minutes))">● @minutes мин</button>
+                }
+            }
+            @if (Recorder.File is not null)
+            {
+                <button type="button" class="fs-segmented__option fs-button" title="Показать файл в проводнике" @onclick="ShowFile">📂</button>
+            }
+        </span>
+    </ValueSlot>
+</SettingRow>
+
+@code {
+    private Timer? timer;
+
+    private string Description()
+    {
+        if (Recorder.Recording)
+            return $"Идёт запись: {Recorder.Count:N0} пакетов, до {Recorder.Until:HH:mm}. Делайте в игре то, что нужно записать (например, соберите группу через поиск — заявки, вход, готовность).";
+        if (Recorder.File is { } file)
+            return $"Записано {Recorder.Count:N0} пакетов в Logs\\{System.IO.Path.GetFileName(file)}. Файл остаётся у вас на компьютере; в нём могут быть ники и чат.";
+        return "Для новых функций (например, заявки в поиске группы): метр записывает всё, что присылает игра, в папку Logs. Ничего никуда не отправляется.";
+    }
+
+    private void ShowFile()
+    {
+        if (Recorder.File is not { } file || !System.IO.File.Exists(file)) return;
+        try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{file}\""); }
+        catch (Exception) { }
+    }
+
+    protected override void OnInitialized()
+    {
+        Recorder.Changed += OnChanged;
+        timer = new Timer(_ => { if (Recorder.Recording) OnChanged(); }, null, 1000, 1000);
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Recorder.Changed -= OnChanged;
+        timer?.Dispose();
+    }
+}
