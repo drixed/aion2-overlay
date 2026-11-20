@@ -24,8 +24,11 @@ namespace AionDpsMeter.Core.GameData.Repositories
             var file = JsonSerializer.Deserialize<Dictionary<string, string>>(json, options)
                 ?? throw new InvalidDataException("Failed to deserialize skills.json");
 
-            foreach (var (idStr, name) in file)
+            var ru = LoadRussianNames(path); // aion2-overlay fork: Russian skill names (skills.ru.json, see FORK_CHANGES.md)
+
+            foreach (var (idStr, englishName) in file)
             {
+                var name = ru.TryGetValue(idStr, out var ruName) && ruName.Length > 0 ? ruName : englishName;
                 if (!int.TryParse(idStr, out var fullId))
                     continue;
 
@@ -53,6 +56,21 @@ namespace AionDpsMeter.Core.GameData.Repositories
                     Name = name,
                     Icon = SkillIconResolver.GetIconUrl(fullId, isTheostone)
                 };
+            }
+        }
+
+        // aion2-overlay fork: skills.ru.json next to skills.json (code -> Russian name) replaces the English names it has.
+        private static Dictionary<string, string> LoadRussianNames(string skillsPath)
+        {
+            try
+            {
+                var ruPath = Path.Combine(Path.GetDirectoryName(skillsPath) ?? ".", "skills.ru.json");
+                if (!File.Exists(ruPath)) return [];
+                return JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(ruPath)) ?? [];
+            }
+            catch (Exception)
+            {
+                return [];
             }
         }
 

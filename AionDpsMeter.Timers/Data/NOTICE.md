@@ -27,3 +27,7 @@
 `Client/assets/aion2/maps/maps.json`, `gather.json`, `pets/pets.json`, `pets/spawns.json`, `bosses/field_bosses.json` проекта
 [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter), коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV.
 Только координаты и названия — картинки карт игры не используются, карта рисуется схемой. Данные игры © NCSOFT.
+
+`AionDpsMeter.Core/GameData/Assets/skills.ru.json` — русские названия умений и эффектов (код → название), из
+`Backend/src/data/aion2/skill_names_i18n.json` проекта [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter),
+коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV. Данные игры © NCSOFT.
