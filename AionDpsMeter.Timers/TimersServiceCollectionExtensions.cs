@@ -74,6 +74,13 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton(_ =>
+        {
+            // 0x610C belongs to the energy forwarder, so the checklist listens to every frame like the lobby
+            var checklist = new AionDpsMeter.Timers.Checklist.ChecklistTracker(TimersPaths.Of("checklist.json"));
+            AionDpsMeter.Services.PacketProcessing.Fork.PacketTap.Frame += (opcode, packet) => checklist.OnRawPacket(opcode, packet);
+            return checklist;
+        });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp =>
         {
             var entities = sp.GetRequiredService<AionDpsMeter.Services.Services.Entity.EntityTracker>();

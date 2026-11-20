@@ -37,3 +37,9 @@
 `item_details.json` проекта [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter), коммит `f6ef644`, MIT License,
 Copyright (c) 2026 SkeeveTV. Разбор камней, статов и аркан в пакете входа (11 56) — по `Aion2FrameDecoder.TryReadItemDetails` и
 `TryReadArcana` того же проекта, код написан заново. Названия Владык — смысловой перевод. Данные игры © NCSOFT.
+
+`tickets.ru.json` — счётчики чек-листа (входы, попытки, энергия Од, время в Бездне): русские названия, максимумы, время и размер
+пополнения. Собрано из `Client/assets/aion2/tickets/tickets.json` проекта [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter),
+коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV. Разбор пакетов счётчиков (0B 61, 0C 61), подписки (3B E3) и
+обязательных заданий (1C 8D) — по `Aion2Tickets` того же проекта, код написан заново. Данные игры © NCSOFT.
+

@@ -8,6 +8,7 @@
 @inject CharacterWindow Window
 @inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
 @inject InspectedPlayers Inspected
+@inject AionDpsMeter.Timers.Checklist.ChecklistTracker Checklist
 
 @{
     var eq = Character.Equipment;
@@ -76,11 +77,19 @@
         <div class="ch-tabs">
             <button type="button" class="@(tab == "gear" ? "on" : "")" @onclick='() => tab = "gear"'>Экипировка <small>@gear.Count</small></button>
             <button type="button" class="@(tab == "arcana" ? "on" : "")" @onclick='() => tab = "arcana"'>Арканы <small>@arcana.Count</small></button>
+            @if (other is null)
+            {
+                <button type="button" class="@(tab == "checklist" ? "on" : "")" @onclick='() => tab = "checklist"'>Чек-лист</button>
+            }
             <span class="ch-grow"></span>
             @if (other is null && eq is { } e) { <small class="ch-when">по входу @e.At.ToString("dd.MM HH:mm")</small> }
         </div>
 
-        @if (items.Count == 0)
+        @if (tab == "checklist" && other is null)
+        {
+            @ChecklistView()
+        }
+        else if (items.Count == 0)
         {
             <div class="ch-empty">Экипировку игра присылает при входе персонажа в игру. Перезайдите на персонажа — метр запомнит её, и окно больше не будет пустым.</div>
         }
@@ -146,6 +155,97 @@
     {
         11 => "Гладиатор", 12 => "Страж", 13 => "Убийца", 14 => "Стрелок", 15 => "Волшебник",
         16 => "Заклинатель", 17 => "Целитель", 18 => "Чародей", 19 => "Мастер кулака", _ => "Класс неизвестен",
+    };
+
+    private static readonly int[] EntryIds = [1, 8, 4, 80000001, 70000001];
+
+    private static string Left(long ms)
+    {
+        var t = TimeSpan.FromMilliseconds(ms);
+        return t.TotalDays >= 1 ? $"{(int)t.TotalDays} д {t.Hours} ч" : $"{(int)t.TotalHours}:{t.Minutes:00}";
+    }
+
+    /// <summary>The daily tasks reset at 09:00 on the clock of the European servers (summer and winter time alike).</summary>
+    private static DateTime LastTasksResetUtc(DateTime nowUtc)
+    {
+        TimeZoneInfo zone;
+        try { zone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time"); }
+        catch (Exception) { zone = TimeZoneInfo.Local; }
+        var server = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, zone);
+        var reset = server.Date.AddHours(9);
+        if (reset > server) reset = reset.AddDays(-1);
+        return TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(reset, DateTimeKind.Unspecified), zone);
+    }
+
+    private RenderFragment ChecklistView() => __builder =>
+    {
+        var st = Checklist.State;
+        var nowUtc = DateTime.UtcNow;
+        if (st is null)
+        {
+            <div class="ch-empty">Чек-лист игра присылает при входе персонажа. Перезайдите на персонажа — метр запомнит счётчики и будет досчитывать их пополнение сам.</div>
+            return;
+        }
+        var premium = st.MembershipEndMs > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        <div class="ck">
+            <div class="ck-head">По входу @st.SeenAtUtc.ToLocalTime().ToString("dd.MM HH:mm") · пополнения после него метр досчитывает сам (≈) · сброс в 16:00 по Корее</div>
+            <section>
+                <h5>Энергия Од</h5>
+                @if (st.Tickets.TryGetValue(AionDpsMeter.Timers.Checklist.Tickets.Odyle, out var od))
+                {
+                    var cap = premium ? 840 : 560;
+                    @Bar("Базовая", od.Count, cap, false)
+                    @Bar("Заряженная", od.Bonus, 2000, false)
+                }
+            </section>
+            <section>
+                <h5>Входы и попытки</h5>
+                @foreach (var id in EntryIds)
+                {
+                    if (AionDpsMeter.Timers.Checklist.Tickets.Find(id) is not { } def || !st.Tickets.TryGetValue(id, out var v)) continue;
+                    var count = AionDpsMeter.Timers.Checklist.Tickets.Expected(def, v.Count, st.SeenAtUtc, nowUtc, premium);
+                    var cap = premium ? Math.Max(def.Max, def.SubscribeMax) : def.Max;
+                    @Bar(def.Name, count, Math.Max(cap, count), count != v.Count, v.Bonus)
+                }
+            </section>
+            <section>
+                <h5>Ежедневно</h5>
+                @{
+                    var stale = st.MissionsAtUtc is not { } at || at < LastTasksResetUtc(nowUtc);
+                    var done = stale ? 0 : st.Missions ?? 0;
+                }
+                @Bar("Обязательные задания", done, 5, stale && st.Missions is not null)
+            </section>
+            <section>
+                <h5>Еженедельно</h5>
+                @if (AionDpsMeter.Timers.Checklist.Tickets.Find(AionDpsMeter.Timers.Checklist.Tickets.DailyDungeon) is { } dd && st.Tickets.TryGetValue(dd.Id, out var dv))
+                {
+                    var count = AionDpsMeter.Timers.Checklist.Tickets.Expected(dd, dv.Count, st.SeenAtUtc, nowUtc, premium);
+                    @Bar(dd.Name, count, Math.Max(dd.Max, count), count != dv.Count, dv.Bonus)
+                }
+            </section>
+            <section>
+                <h5>Осталось времени</h5>
+                @foreach (var id in new[] { 3, 9, 13 })
+                {
+                    if (AionDpsMeter.Timers.Checklist.Tickets.Find(id) is { } def && st.Tickets.TryGetValue(id, out var v) && v.TimeMs > 0)
+                    {
+                        <div class="ck-row"><span>@def.Name</span><b>@Left(v.TimeMs)</b></div>
+                    }
+                }
+                <div class="ck-row"><span>Подписка (Квай)</span><b>@(premium ? $"до {DateTimeOffset.FromUnixTimeMilliseconds(st.MembershipEndMs).ToLocalTime():dd.MM HH:mm}" : "нет")</b></div>
+            </section>
+        </div>
+    };
+
+    private static RenderFragment Bar(string name, int count, int cap, bool estimated, int bonus = 0) => __builder =>
+    {
+        var share = cap > 0 ? Math.Min(100, count * 100.0 / cap) : 0;
+        <div class="ck-row @(count == 0 ? "zero" : "")">
+            <span title="@name">@name</span>
+            <b>@(estimated ? "≈ " : "")@count / @cap@(bonus > 0 ? $" (+{bonus})" : "")</b>
+            <i class="ck-bar"><i style="width:@(share.ToString("0.#", CultureInfo.InvariantCulture))%"></i></i>
+        </div>
     };
 
     private int? openSlot;
@@ -228,6 +328,7 @@
         Character.Changed += OnChanged;
         Inspected.Changed += OnChanged;
         Window.ViewChanged += OnChanged;
+        Checklist.Changed += OnChanged;
         Remember();
         // the entity marked as me comes with the first fight or login after the window opened
         timer = new Timer(_ => { if (Remember()) OnChanged(); }, null, 2000, 2000);
@@ -251,6 +352,7 @@
         Character.Changed -= OnChanged;
         Inspected.Changed -= OnChanged;
         Window.ViewChanged -= OnChanged;
+        Checklist.Changed -= OnChanged;
         timer?.Dispose();
     }
 }

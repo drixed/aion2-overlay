@@ -18,6 +18,8 @@ public sealed class TimersHostedService(
     KillWatcher kills,
     TimerStateStore store,
     AionDpsMeter.Timers.Modes.MeterModesService modes, // created with the app, so the modes hear every hit
+    AionDpsMeter.Timers.Checklist.ChecklistTracker checklist, // created with the app, so it hears the login frames
+    AionDpsMeter.Timers.Lobby.LobbyTracker lobby, // the same for the party finder
     TimeProvider time,
     ILogger<TimersHostedService> logger) : BackgroundService
 {
