@@ -11,7 +11,7 @@ public class ScheduleJsonTests
         var rift = Assert.Single(data.Events, e => e.Id == "rift");
         Assert.Equal(8, rift.Times.Count);
         Assert.True(rift.Verified); // confirmed on EU by the user
-        Assert.Equal(4, data.Events.Count); // every shipped event parses: a typo would silently drop one
+        Assert.Equal(8, data.Events.Count); // every shipped event parses: a typo would silently drop one
         Assert.DoesNotContain(data.Events, e => e.Id == "beritra-air-raid"); // "on the half hour" per LOXIN/aion2hub, but not seen on EU (2026-10-13)
         Assert.Contains(data.Events, e => e.Id == "shugo-festival" && e.Kind == ScheduleKind.Interval);
         var arena = Assert.Single(data.Events, e => e.Id == "arena-of-tactics");
@@ -97,5 +97,23 @@ public class ScheduleJsonTests
         Assert.Equal("Бертрон", data.FieldBossMaps[1010].Name);
         Assert.Equal(0, data.FieldBossMaps[1010].Block);
         Assert.Equal(2101131, data.FieldBossSlots![101024]);
+    }
+    /// <summary>The schedule.json the meters download (the repository root): it must parse whole.</summary>
+    [Fact]
+    public void The_published_schedule_parses_with_every_event_and_the_boss_places()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "schedule.json"))) dir = dir.Parent;
+        Assert.NotNull(dir);
+        var json = File.ReadAllText(Path.Combine(dir!.FullName, "schedule.json"));
+        var data = ScheduleJson.Parse(json);
+
+        var ids = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("events").EnumerateArray()
+            .Select(e => e.GetProperty("id").GetString()).ToList();
+        Assert.Equal(ids, data.Events.Select(e => e.Id));
+        Assert.Contains(data.Events, e => e.Id == "argo-spirit-king" && e.Name == "Король духов Агро");
+        Assert.Equal(48, data.FieldBossSlots!.Count);
+        Assert.Equal(2100877, data.FieldBossSlots[101016]);
+        Assert.Equal("Бертрон", data.FieldBossMaps[1010].Name);
     }
 }

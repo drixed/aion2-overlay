@@ -68,6 +68,75 @@
       "icon": "reset",
       "alert": false,
       "verified": false
+    },
+    {
+      "id": "argo-spirit-king",
+      "name": "Король духов Агро",
+      "category": "worldboss",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "times": [
+        "10:30",
+        "22:30"
+      ],
+      "durationMinutes": 20,
+      "verified": true,
+      "icon": "boss",
+      "alert": false
+    },
+    {
+      "id": "guardian-lord-nahma",
+      "name": "Лорд-хранитель Нахма",
+      "category": "worldboss",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "days": [
+        "Friday",
+        "Sunday"
+      ],
+      "times": [
+        "21:00"
+      ],
+      "durationMinutes": 30,
+      "verified": true,
+      "icon": "boss",
+      "alert": false
+    },
+    {
+      "id": "abyss-executors",
+      "name": "Палачи Бездны",
+      "category": "worldboss",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "days": [
+        "Thursday",
+        "Saturday"
+      ],
+      "times": [
+        "21:30"
+      ],
+      "durationMinutes": 30,
+      "verified": false,
+      "icon": "boss",
+      "alert": false
+    },
+    {
+      "id": "artifact-siege",
+      "name": "Захват артефактов (Бездна)",
+      "category": "raid",
+      "kind": "fixed",
+      "timeZone": "Europe/Berlin",
+      "days": [
+        "Thursday",
+        "Saturday"
+      ],
+      "times": [
+        "21:00"
+      ],
+      "durationMinutes": 60,
+      "verified": true,
+      "icon": "raid",
+      "alert": false
     }
   ],
   "fieldBossMaps": {
@@ -142,5 +211,6 @@
     "111023": 2400854,
     "111024": 2400855
   },
-  "fieldBossSlotsSource": "Place order of the in-game field boss list: SkeeveAN/Aion-DPS-Meter Client/assets/aion2/bosses/field_bosses.json @ f6ef644, MIT (c) 2026 SkeeveTV; checked against our captures by map coordinates"
+  "fieldBossSlotsSource": "Place order of the in-game field boss list: SkeeveAN/Aion-DPS-Meter Client/assets/aion2/bosses/field_bosses.json @ f6ef644, MIT (c) 2026 SkeeveTV; checked against our captures by map coordinates",
+  "eventsSource": "Times of argo-spirit-king, guardian-lord-nahma, abyss-executors, artifact-siege: SkeeveAN/Aion-DPS-Meter Client/assets/aion2/schedule/events.json @ f6ef644, MIT (c) 2026 SkeeveTV"
 }

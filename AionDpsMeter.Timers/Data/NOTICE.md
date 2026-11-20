@@ -8,3 +8,7 @@
 `Client/assets/aion2/bosses/field_bosses.json`, коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV.
 Проверено по нашим захватам: координаты живых мест совпадают с координатами из этой таблицы.
 
+`schedule.json` → события `argo-spirit-king`, `guardian-lord-nahma`, `abyss-executors`, `artifact-siege`
+— время из [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter)
+`Client/assets/aion2/schedule/events.json`, коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV.
+
