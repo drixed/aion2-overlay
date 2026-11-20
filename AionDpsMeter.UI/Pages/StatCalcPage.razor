@@ -243,7 +243,11 @@
                     }
                     else
                     {
-                        <input type="number" step="any" value="@Raw(f.Get(vm))" @onchange="e => Set(field, e)" />
+                        <span class="sc-num">
+                            <button type="button" tabindex="-1" @onclick="() => StepBy(field, -1)">−</button>
+                            <input type="number" step="any" value="@Raw(f.Get(vm))" @onchange="e => Set(field, e)" />
+                            <button type="button" tabindex="-1" @onclick="() => StepBy(field, 1)">+</button>
+                        </span>
                     }
                 </label>
             }
@@ -254,6 +258,14 @@
     {
         var text = (e.Value?.ToString() ?? "").Replace(',', '.').Trim();
         f.Set!(vm, double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0);
+        if (Attack.Contains(f) || Multipliers.Contains(f) || Derived.Contains(f)) edited = true;
+    }
+
+    /// <summary>The − / + beside a field: 10 for attack values, 0.5 for percents.</summary>
+    private void StepBy(Field f, int direction)
+    {
+        var step = f.Percent ? 0.5 : 10;
+        f.Set!(vm, Math.Round(f.Get(vm) + direction * step, 2));
         if (Attack.Contains(f) || Multipliers.Contains(f) || Derived.Contains(f)) edited = true;
     }
 

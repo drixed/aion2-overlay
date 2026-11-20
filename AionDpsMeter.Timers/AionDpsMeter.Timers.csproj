@@ -17,6 +17,7 @@
   <ItemGroup>
     <EmbeddedResource Include="..\schedule.json" LogicalName="schedule.json" Link="schedule.json" />
     <EmbeddedResource Include="Data\npcs.ru.json" LogicalName="npcs.ru.json" WithCulture="false" />
+    <EmbeddedResource Include="Data\items.ru.json" LogicalName="items.ru.json" WithCulture="false" />
   </ItemGroup>
 
   <ItemGroup>

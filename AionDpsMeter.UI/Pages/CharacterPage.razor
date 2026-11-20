@@ -1,0 +1,133 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The 👤 window: the played character with its equipment and arcana
+   (item level, enchant, tier) as the game sends them at login; the last login is kept, so it is never empty. *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Character
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject CharacterTracker Character
+@inject CharacterWindow Window
+@inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
+
+@{
+    var eq = Character.Equipment;
+    var items = eq?.Items.Select(i => (Worn: i, Info: ItemCatalog.Find(i.ItemId))).ToList() ?? [];
+    var gear = items.Where(x => x.Worn.Slot < EquipmentParser.ArcanaSlotStart && x.Info?.Slot != "Arcana").ToList();
+    var arcana = items.Where(x => x.Worn.Slot >= EquipmentParser.ArcanaSlotStart || x.Info?.Slot == "Arcana").ToList();
+    var avg = gear.Where(x => x.Info is not null).Select(x => (double)x.Info!.ItemLevel).DefaultIfEmpty(0).Average();
+    var me = Entities.PlayerEntities.FirstOrDefault(p => p.IsUser);
+}
+<div class="ch">
+    <div class="ch-title" @onmousedown="Window.Drag">
+        <b>Персонаж</b>
+        <span class="ch-grow"></span>
+        <button type="button" class="ch-x" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
+    </div>
+    <div class="ch-body">
+        <div class="ch-hero">
+            <span class="ch-class" style="background-image:url('/images/classes/@(me?.CharacterClass?.Id ?? 0).png')"></span>
+            <div class="ch-who">
+                <b>@(me?.Name is { Length: > 0 } n ? n : "Ваш персонаж")</b>
+                <small>@ClassName(me?.CharacterClass?.Id)@(me?.CharacterLevel > 0 ? $" · уровень {me.CharacterLevel}" : "")@(me?.ServerName is { Length: > 0 } s ? $" · {s}" : "")</small>
+            </div>
+            <span class="ch-grow"></span>
+            <div class="ch-stat"><b class="gold">@(avg > 0 ? avg.ToString("0.0", CultureInfo.InvariantCulture) : "—")</b><small>ср. уровень предметов</small></div>
+            <div class="ch-stat"><b>@gear.Count</b><small>предметов</small></div>
+            @if (me?.CombatPower > 0) { <div class="ch-stat"><b>@me.CombatPower.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b><small>боевая мощь</small></div> }
+            @if (me?.GearScore > 0) { <div class="ch-stat"><b>@me.GearScore.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b><small>ГС</small></div> }
+        </div>
+
+        <div class="ch-tabs">
+            <button type="button" class="@(tab == "gear" ? "on" : "")" @onclick='() => tab = "gear"'>Экипировка <small>@gear.Count</small></button>
+            <button type="button" class="@(tab == "arcana" ? "on" : "")" @onclick='() => tab = "arcana"'>Арканы <small>@arcana.Count</small></button>
+            <span class="ch-grow"></span>
+            @if (eq is { } e) { <small class="ch-when">по входу @e.At.ToString("dd.MM HH:mm")</small> }
+        </div>
+
+        @if (items.Count == 0)
+        {
+            <div class="ch-empty">Экипировку игра присылает при входе персонажа в игру. Перезайдите на персонажа — метр запомнит её, и окно больше не будет пустым.</div>
+        }
+        else if (tab == "gear")
+        {
+            <div class="ch-grid">
+                <div class="ch-col">
+                    @foreach (var x in gear.Where(x => IsArmor(x.Info?.Slot)).OrderBy(x => Order(x.Info?.Slot)).ThenBy(x => x.Worn.Slot))
+                    {
+                        @Card(x.Worn, x.Info)
+                    }
+                </div>
+                <div class="ch-center">
+                    <div class="ch-ring">
+                        <span class="ch-class big" style="background-image:url('/images/classes/@(me?.CharacterClass?.Id ?? 0).png')"></span>
+                        <b>@(avg > 0 ? avg.ToString("0.0", CultureInfo.InvariantCulture) : "—")</b>
+                        <small>средний уровень предметов</small>
+                    </div>
+                </div>
+                <div class="ch-col">
+                    @foreach (var x in gear.Where(x => !IsArmor(x.Info?.Slot)).OrderBy(x => Order(x.Info?.Slot)).ThenBy(x => x.Worn.Slot))
+                    {
+                        @Card(x.Worn, x.Info)
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="ch-arcana">
+                @foreach (var x in arcana.OrderBy(x => x.Worn.Slot))
+                {
+                    @Card(x.Worn, x.Info)
+                }
+                @if (arcana.Count == 0) { <div class="ch-empty">Арканы не надеты или игра их не прислала.</div> }
+            </div>
+        }
+        <p class="ch-note">Названия и уровни предметов — из открытой таблицы SkeeveAN/Aion-DPS-Meter (MIT), иконки — с сайта NCSOFT.</p>
+    </div>
+</div>
+
+@code {
+    private string tab = "gear";
+
+    private static readonly string[] Armor = ["MainHand", "SubHand", "Helmet", "Shoulder", "Torso", "Pants", "Gloves", "Boots", "Cape", "Belt"];
+    private static readonly string[] SlotOrder = ["MainHand", "SubHand", "Helmet", "Shoulder", "Torso", "Pants", "Gloves", "Boots", "Cape", "Belt",
+        "Necklace", "Earring", "Ring", "Bracelet", "Amulet", "Brooch", "Pendant", "Rune"];
+
+    private static bool IsArmor(string? slot) => slot is not null && Armor.Contains(slot);
+    private static int Order(string? slot) => slot is null ? 99 : Array.IndexOf(SlotOrder, slot) is var i and >= 0 ? i : 98;
+
+    private static string SlotName(string? slot) => slot switch
+    {
+        "MainHand" => "Оружие", "SubHand" => "Вторая рука", "Helmet" => "Шлем", "Shoulder" => "Наплечники", "Torso" => "Нагрудник",
+        "Pants" => "Поножи", "Gloves" => "Перчатки", "Boots" => "Ботинки", "Cape" => "Плащ", "Belt" => "Пояс",
+        "Necklace" => "Ожерелье", "Earring" => "Серьга", "Ring" => "Кольцо", "Bracelet" => "Браслет", "Amulet" => "Амулет",
+        "Brooch" => "Брошь", "Pendant" => "Подвеска", "Rune" => "Руна", "Arcana" => "Аркана",
+        _ => slot ?? "Предмет",
+    };
+
+    private static string ClassName(long? id) => id switch
+    {
+        11 => "Гладиатор", 12 => "Страж", 13 => "Убийца", 14 => "Стрелок", 15 => "Волшебник",
+        16 => "Заклинатель", 17 => "Целитель", 18 => "Чародей", 19 => "Мастер кулака", _ => "Класс неизвестен",
+    };
+
+    private RenderFragment Card(WornItem w, ItemInfo? info) => __builder =>
+    {
+        <div class="ch-item g@(info?.Grade ?? 0)" title="@(info?.Name ?? $"Предмет {w.ItemId}")">
+            <span class="ch-icon">
+                @if (info?.IconUrl is { } url) { <img src="@url" alt="" /> }
+                @if (w.Enchant > 0) { <em>+@w.Enchant</em> }
+            </span>
+            <span class="ch-item-text">
+                <b>@(info?.Name ?? $"Предмет {w.ItemId}")</b>
+                <small>@SlotName(info?.Slot)@(info is { ItemLevel: > 0 } ? $" · IL {info.ItemLevel}" : "")</small>
+                @if (info is { Tier: > 0 }) { <i>Тир @info.Tier</i> }
+            </span>
+        </div>
+    };
+
+    protected override void OnInitialized() => Character.Changed += OnChanged;
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Character.Changed -= OnChanged;
+}

@@ -12,3 +12,9 @@
 — время из [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter)
 `Client/assets/aion2/schedule/events.json`, коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV.
 
+`items.ru.json` — предметы AION 2 (код → русское название, слот, грейд, тир, уровень предмета, имя иконки), собрано из
+`Client/assets/aion2/items/item_info.json`, `item_names.json`, `item_icons.json` проекта
+[SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter), коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV.
+Формат пакета экипировки (11 56) — по их `Aion2FrameDecoder.DecodeEquipment`, код написан заново. Иконки берутся с
+публичного CDN NCSOFT (assets.playnccdn.com), как и иконки умений. Данные игры © NCSOFT.
+

@@ -63,6 +63,8 @@ public static class TimersServiceCollectionExtensions
             sp.GetRequiredService<BossCatalog>(), sp.GetRequiredService<TimeProvider>(),
             sp.GetRequiredService<ILogger<AionDpsMeter.Timers.Pets.PetTracker>>()));
         services.AddSingleton<IPetListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Pets.PetTracker>());
+        services.AddSingleton(_ => new AionDpsMeter.Timers.Character.CharacterTracker(TimersPaths.Of("character.json")));
+        services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Character.CharacterTracker>());
         services.AddHostedService<TimersHostedService>();
         return services;
     }

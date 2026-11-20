@@ -39,7 +39,7 @@
 .sc-row input { width: 96px; box-sizing: border-box; background: #0f141b; color: #e6edf3; border: 1px solid #2f3846; border-radius: 6px; padding: 3px 7px;
     font: inherit; font-variant-numeric: tabular-nums; text-align: right; outline: none; user-select: text; }
 .sc-row input:focus { border-color: #5fd4c4; }
-.sc-row input::-webkit-inner-spin-button { opacity: .4; }
+
 .sc-seg { display: inline-flex; border: 1px solid #2f3846; border-radius: 7px; overflow: hidden; align-self: flex-start; }
 .sc-seg button { background: none; border: 0; color: #c9d1d9; padding: 5px 14px; font: inherit; font-size: 12px; cursor: pointer; }
 .sc-seg button + button { border-left: 1px solid #2f3846; }
@@ -59,3 +59,11 @@
 .sc-wbar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #3f9f93, #5fd4c4); }
 .sc-gain .sc-none { color: #5f6b7c; }
 .sc-gain em { font-style: normal; color: #5fd4c4; font-size: 11.5px; }
+
+/* the field with its own − and + instead of the browser's tiny arrows */
+.sc-num { display: inline-flex; align-items: stretch; border: 1px solid #2f3846; border-radius: 6px; overflow: hidden; background: #0f141b; }
+.sc-num:focus-within { border-color: #5fd4c4; }
+.sc-num input { width: 74px; border: 0; border-radius: 0; background: transparent; padding: 3px 4px; text-align: center; }
+.sc-num input::-webkit-inner-spin-button, .sc-num input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.sc-num button { width: 22px; background: #151c26; border: 0; color: #8b95a5; font: inherit; font-size: 13px; cursor: pointer; padding: 0; }
+.sc-num button:hover { color: #5fd4c4; background: #1b2430; }
