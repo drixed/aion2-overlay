@@ -18,8 +18,9 @@ public sealed record ScheduleData(
     IReadOnlyDictionary<int, string>? PetNames = null,
     IReadOnlyDictionary<int, int>? FieldBossSlots = null)
 {
-    /// <summary>A pet's name by its collection id (the game's packets carry only the id); null when unknown.</summary>
-    public string? PetName(int pet) => PetNames is not null && PetNames.TryGetValue(pet, out var name) ? name : null;
+    /// <summary>A pet's name by its collection id (the game's packets carry only the id): schedule.json first, then the
+    /// pet table that ships with the map (aion2-overlay fork); null when unknown.</summary>
+    public string? PetName(int pet) => PetNames is not null && PetNames.TryGetValue(pet, out var name) ? name : Map.WorldMap.PetName(pet);
 
     private static readonly IReadOnlyDictionary<int, int> None = new Dictionary<int, int>();
 

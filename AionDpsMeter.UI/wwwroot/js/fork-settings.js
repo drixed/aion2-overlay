@@ -40,3 +40,9 @@ window.forkRect = function (el) {
     const r = el.getBoundingClientRect();
     return [r.left, r.width];
 };
+
+// aion2-overlay fork: the map window needs where its view is and how big, to zoom around the cursor.
+window.forkBox = function (el) {
+    const r = el.getBoundingClientRect();
+    return [r.left, r.top, r.width, r.height];
+};

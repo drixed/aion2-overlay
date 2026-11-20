@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\AionDpsMeter.Services\AionDpsMeter.Services.csproj" />
@@ -18,6 +18,7 @@
     <EmbeddedResource Include="..\schedule.json" LogicalName="schedule.json" Link="schedule.json" />
     <EmbeddedResource Include="Data\npcs.ru.json" LogicalName="npcs.ru.json" WithCulture="false" />
     <EmbeddedResource Include="Data\items.ru.json" LogicalName="items.ru.json" WithCulture="false" />
+    <EmbeddedResource Include="Data\maps.ru.json" LogicalName="maps.ru.json" WithCulture="false" />
   </ItemGroup>
 
   <ItemGroup>

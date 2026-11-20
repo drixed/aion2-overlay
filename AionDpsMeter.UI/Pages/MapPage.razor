@@ -1,0 +1,524 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The 🗺 window: the open world map drawn as a diagram (no game
+   images) from factual coordinates — the character's own place, spawn points of monsters that give pet souls, gathering
+   points, hidden cubes and field boss places. Wheel zooms around the cursor, dragging moves the map. *@
+@using System.Globalization
+@using Microsoft.JSInterop
+@using AionDpsMeter.Timers.Map
+@using AionDpsMeter.Timers.Pets
+@using AionDpsMeter.Timers.Replay
+@using AionDpsMeter.Timers.Zones
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject MapWindow Window
+@inject ZoneTracker Zones
+@inject PositionLog Positions
+@inject PetTracker Pets
+@inject AionDpsMeter.Timers.Bosses.BossCatalog Catalog
+@inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+@{
+    var layer = Layer;
+    var me = MeOn(layer);
+    var levels = Levels();
+    var petsHere = layer is null ? new List<PetHere>() : PetsOn(layer, levels);
+    var kinds = layer is null ? new List<KindHere>() : KindsOn(layer);
+    var k = Span / Math.Min(W, H);
+    var vbW = W * k;
+    var vbH = H * k;
+    var x0 = cx - vbW / 2;
+    var y0 = cy - vbH / 2;
+    var nearest = me is { } m0 && layer is not null ? Nearest(layer, m0, petsHere) : new List<Near>();
+}
+<div class="mp">
+    <div class="mp-title" @onmousedown="Window.Drag">
+        <b>Карта</b>
+        <div class="mp-maps" @onmousedown:stopPropagation="true">
+            @foreach (var m in WorldMap.All)
+            {
+                <button type="button" class="@(layer?.Id == m.Id ? "on" : "")" @onclick="() => Pick(m.Id)">@m.Name@(Here(m) ? " ●" : "")</button>
+            }
+        </div>
+        <span class="mp-grow"></span>
+        <small class="mp-here">@HereText(layer)</small>
+        <button type="button" class="mp-x" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
+    </div>
+
+    <div class="mp-body">
+        <aside class="mp-side">
+            <section>
+                <h4>Я</h4>
+                @if (me is { } p)
+                {
+                    <div class="mp-me-row"><span class="sw me"></span>@(Here(layer) ? "Вы здесь" : "Вы на этой карте") <button type="button" class="mp-link" @onclick="() => CenterOn(p)">показать</button></div>
+                }
+                else
+                {
+                    <div class="mp-hint">@(Here(layer) || Zones.CurrentMapId is null ? "Ваша точка появится, как только персонаж сдвинется с места." : "Вы сейчас на другой карте.")</div>
+                }
+                <label class="mp-check"><input type="checkbox" checked="@follow" @onchange="e => follow = e.Value is true" /> Держать меня в центре</label>
+            </section>
+
+            <section>
+                <h4><label class="mp-check"><input type="checkbox" checked="@showPets" @onchange="e => showPets = e.Value is true" /> Питомцы</label><small>@petsHere.Count</small></h4>
+                <label class="mp-check sub"><input type="checkbox" checked="@onlyUnfinished" @onchange="e => onlyUnfinished = e.Value is true" /> только не прокачанные</label>
+                <input class="mp-search" placeholder="Поиск питомца или монстра" value="@petQuery" @oninput="e => petQuery = e.Value?.ToString() ?? string.Empty" />
+                <div class="mp-pets">
+                    @foreach (var pet in petsHere.Where(ShowsInList))
+                    {
+                        <button type="button" class="mp-pet @(selectedPet == pet.Pet ? "on" : "") @(pet.Level >= PetBook.MaxLevel ? "done" : "")" @onclick="() => SelectPet(pet.Pet)" title="@pet.Monsters">
+                            <span class="mp-pet-name">@pet.Name</span>
+                            <span class="mp-lvl">@LevelText(pet.Level)</span>
+                            <small>@pet.Count</small>
+                        </button>
+                    }
+                </div>
+            </section>
+
+            <section>
+                <h4>Сбор</h4>
+                @foreach (var kind in kinds)
+                {
+                    <label class="mp-check"><input type="checkbox" checked="@shownKinds.Contains(kind.Kind)" @onchange="e => Toggle(shownKinds, kind.Kind, e.Value is true)" />
+                        <span class="sw" style="background:@KindColor(kind.Kind)"></span>@WorldMap.KindLabel(kind.Kind)<small>@kind.Count</small></label>
+                }
+                @if (kinds.Count == 0) { <div class="mp-hint">Точек сбора на этой карте нет в таблице.</div> }
+            </section>
+
+            <section>
+                <h4>Прочее</h4>
+                <label class="mp-check"><input type="checkbox" checked="@showBosses" @onchange="e => showBosses = e.Value is true" /><span class="sw boss"></span>Полевые боссы<small>@(layer?.Bosses.Count ?? 0)</small></label>
+                <label class="mp-check"><input type="checkbox" checked="@showCubes" @onchange="e => showCubes = e.Value is true" /><span class="sw cube"></span>Скрытые кубы<small>@(layer?.Cubes.Count ?? 0)</small></label>
+            </section>
+            <p class="mp-note">Схема нарисована по координатам из открытой таблицы SkeeveAN/Aion-DPS-Meter (MIT); картинок игры здесь нет.</p>
+        </aside>
+
+        <div class="mp-view @(dragging ? "drag" : "")" @ref="viewRef" @onwheel="Wheel" @onwheel:preventDefault="true"
+             @onmousedown="DragStart" @onmousemove="DragMove" @onmouseup="DragEnd" @onmouseleave="DragEnd">
+            @if (layer is null)
+            {
+                <div class="mp-empty">Карта не найдена в таблице.</div>
+            }
+            else
+            {
+                <svg viewBox="@F(x0) @F(y0) @F(vbW) @F(vbH)" preserveAspectRatio="xMidYMid meet">
+                    <g class="land">
+                        @foreach (var c in Land(layer))
+                        {
+                            if (In(c, x0, y0, vbW, vbH, LandR)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@LandR" /> }
+                        }
+                    </g>
+                    @{ var step = GridStep(k); }
+                    <g class="grid" stroke-width="@F(k)">
+                        @for (var gx = Math.Floor(x0 / step) * step; gx <= x0 + vbW; gx += step) { <line x1="@F(gx)" y1="@F(y0)" x2="@F(gx)" y2="@F(y0 + vbH)" /> }
+                        @for (var gy = Math.Floor(y0 / step) * step; gy <= y0 + vbH; gy += step) { <line x1="@F(x0)" y1="@F(gy)" x2="@F(x0 + vbW)" y2="@F(gy)" /> }
+                    </g>
+
+                    @if (showCubes)
+                    {
+                        <g class="cubes">
+                            @foreach (var c in layer.Cubes)
+                            {
+                                if (In(c, x0, y0, vbW, vbH, 0)) { <rect x="@F(c.X - 2.4 * k)" y="@F(c.Y - 2.4 * k)" width="@F(4.8 * k)" height="@F(4.8 * k)" /> }
+                            }
+                        </g>
+                    }
+
+                    @foreach (var g in layer.Gather)
+                    {
+                        var obj = WorldMap.Object(g.Key);
+                        if (obj is null || !shownKinds.Contains(obj.Kind)) continue;
+                        <g class="gather" fill="@KindColor(obj.Kind)">
+                            @foreach (var c in g.Value)
+                            {
+                                if (In(c, x0, y0, vbW, vbH, 0)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@F(3.6 * k)"><title>@obj.Name</title></circle> }
+                            }
+                        </g>
+                    }
+
+                    @if (showPets)
+                    {
+                        @foreach (var pet in petsHere.Where(ShowsOnMap))
+                        {
+                            var on = selectedPet == pet.Pet;
+                            <g class="pets @(on ? "on" : selectedPet is null ? "" : "dim")">
+                                @foreach (var code in pet.Codes)
+                                {
+                                    var tip = $"{MonsterName(code)} → {pet.Name} ({LevelText(pet.Level)})";
+                                    foreach (var c in layer.PetSpawns[code])
+                                    {
+                                        if (In(c, x0, y0, vbW, vbH, 0)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@F((on ? 5.5 : 3.4) * k)"><title>@tip</title></circle> }
+                                    }
+                                }
+                            </g>
+                        }
+                    }
+
+                    @if (showBosses)
+                    {
+                        <g class="bosses">
+                            @foreach (var b in layer.Bosses)
+                            {
+                                if (!In(b.At, x0, y0, vbW, vbH, 400 * k)) continue;
+                                <circle cx="@F(b.At.X)" cy="@F(b.At.Y)" r="@F(7 * k)" stroke-width="@F(2 * k)"><title>@b.Name</title></circle>
+                                <g><text x="@F(b.At.X)" y="@F(b.At.Y - 11 * k)" font-size="@F(11 * k)">@b.Name</text></g>
+                            }
+                        </g>
+                    }
+
+                    @if (me is { } my && nearest.FirstOrDefault(n => n.Line) is { Label: not null } target)
+                    {
+                        <line class="near-line" x1="@F(my.X)" y1="@F(my.Y)" x2="@F(target.At.X)" y2="@F(target.At.Y)" stroke-width="@F(1.6 * k)" stroke-dasharray="@F(6 * k) @F(5 * k)" />
+                    }
+
+                    @if (me is { } pos)
+                    {
+                        if (In(pos, x0, y0, vbW, vbH, 0))
+                        {
+                            <circle class="me-ring" cx="@F(pos.X)" cy="@F(pos.Y)" r="@F(16 * k)" />
+                            <circle class="me" cx="@F(pos.X)" cy="@F(pos.Y)" r="@F(6 * k)" stroke-width="@F(2 * k)"><title>Вы</title></circle>
+                        }
+                        else
+                        {
+                            var (ex, ey, angle) = Edge(pos, x0, y0, vbW, vbH, 18 * k);
+                            <g transform="translate(@F(ex) @F(ey)) rotate(@F(angle))">
+                                <path class="me-edge" d="M @F(9 * k) 0 L @F(-7 * k) @F(-7 * k) L @F(-7 * k) @F(7 * k) Z"><title>Вы — за краем карты</title></path>
+                            </g>
+                        }
+                    }
+                </svg>
+
+                <div class="mp-tools" @onmousedown:stopPropagation="true">
+                    <button type="button" @onclick="() => Fit(layer)">Вписать</button>
+                    @if (me is { } c1) { <button type="button" @onclick="() => CenterOn(c1)">На меня</button> }
+                    <button type="button" @onclick="() => ZoomBy(0.7)">+</button>
+                    <button type="button" @onclick="() => ZoomBy(1.4)">−</button>
+                </div>
+                <div class="mp-scale"><span style="width:@F(GridStep(k) / k)px"></span>@Metres(GridStep(k))</div>
+                @if (nearest.Count > 0)
+                {
+                    <div class="mp-near" @onmousedown:stopPropagation="true">
+                        <b>Ближайшее</b>
+                        @foreach (var n in nearest)
+                        {
+                            <button type="button" @onclick="() => CenterOn(n.At)"><span class="sw" style="background:@n.Color"></span>@n.Label<small>@n.Metres м</small></button>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private const double LandR = 2600;
+
+    private sealed record PetHere(int Pet, string Name, int? Level, IReadOnlyList<int> Codes, int Count, string Monsters);
+    private sealed record KindHere(string Kind, int Count);
+    private sealed record Near(string? Label, string Color, MapPoint At, int Metres, bool Line);
+
+    private static readonly Dictionary<int, List<MapPoint>> LandCache = [];
+
+    private ElementReference viewRef;
+    private int? pickedMap;
+    private int fittedFor;
+    private double cx, cy, Span = 100_000, W = 800, H = 600;
+    private bool follow, showPets = true, onlyUnfinished = true, showBosses = true, showCubes;
+    private int? selectedPet;
+    private string petQuery = string.Empty;
+    private readonly HashSet<string> shownKinds = ["Herb", "Ore"];
+    private bool dragging, skipRender;
+    private double dragX, dragY, dragCx, dragCy;
+    private DateTime lastMe;
+    private Timer? timer;
+
+    private MapLayer? Layer => WorldMap.For(pickedMap ?? Zones.CurrentMapId) ?? WorldMap.All.FirstOrDefault();
+
+    private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private bool Here(MapLayer? m) => m is not null && WorldMap.For(Zones.CurrentMapId) is { } here && here.Id == m.Id;
+
+    private string HereText(MapLayer? layer) => Zones.CurrentMapId switch
+    {
+        null => "карта, на которой вы, станет известна после телепорта или входа в зону",
+        var id when WorldMap.For(id) is { } m => $"вы на карте «{m.Name}»",
+        var id => $"вы на карте {id} — точки есть для Бертрона и Альтгарда",
+    };
+
+    /// <summary>My place on this map: the own position frame first, the entity marked as me otherwise.</summary>
+    private MapPoint? MeOn(MapLayer? layer)
+    {
+        if (layer is null) return null;
+        if (Zones.CurrentMapId is not null && !Here(layer)) return null;
+        var fix = Positions.Me;
+        if (fix is null && Entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is { } user) fix = Positions.Last(user.Id);
+        return fix is { } f ? new MapPoint(f.X, f.Y) : null;
+    }
+
+    private Dictionary<int, int> Levels() => Pets.All().GroupBy(r => r.View.Pet).ToDictionary(g => g.Key, g => g.First().View.Level);
+
+    private string MonsterName(int code) => Catalog.NameOrNull(code) ?? $"Монстр {code}";
+
+    private List<PetHere> PetsOn(MapLayer layer, Dictionary<int, int> levels) =>
+        layer.PetSpawns.Keys
+            .Select(code => (Code: code, Pet: WorldMap.PetOf(code)))
+            .Where(x => x.Pet is not null)
+            .GroupBy(x => x.Pet!.Value)
+            .Select(g => new PetHere(
+                g.Key,
+                WorldMap.PetName(g.Key) ?? $"Питомец {g.Key}",
+                levels.TryGetValue(g.Key, out var l) ? l : null,
+                g.Select(x => x.Code).ToList(),
+                g.Sum(x => layer.PetSpawns[x.Code].Count),
+                string.Join(", ", g.Select(x => MonsterName(x.Code)).Distinct())))
+            .OrderBy(p => p.Level >= PetBook.MaxLevel ? 1 : 0)
+            .ThenBy(p => p.Name, StringComparer.CurrentCulture)
+            .ToList();
+
+    private static List<KindHere> KindsOn(MapLayer layer) =>
+        layer.Gather
+            .Select(g => (Obj: WorldMap.Object(g.Key), Count: g.Value.Count))
+            .Where(x => x.Obj is not null)
+            .GroupBy(x => x.Obj!.Kind)
+            .Select(g => new KindHere(g.Key, g.Sum(x => x.Count)))
+            .OrderBy(k => WorldMap.KindLabel(k.Kind), StringComparer.CurrentCulture)
+            .ToList();
+
+    private bool Unfinished(PetHere p) => p.Level is null || p.Level < PetBook.MaxLevel;
+
+    private bool ShowsInList(PetHere p) =>
+        (!onlyUnfinished || Unfinished(p) || selectedPet == p.Pet)
+        && (petQuery.Length == 0 || p.Name.Contains(petQuery, StringComparison.CurrentCultureIgnoreCase) || p.Monsters.Contains(petQuery, StringComparison.CurrentCultureIgnoreCase));
+
+    private bool ShowsOnMap(PetHere p) => selectedPet == p.Pet || (selectedPet is null && ShowsInList(p));
+
+    private static string LevelText(int? level) => level switch
+    {
+        null => "ур. ?",
+        >= PetBook.MaxLevel => "макс.",
+        var l => $"ур. {l}/{PetBook.MaxLevel}",
+    };
+
+    private void SelectPet(int pet) => selectedPet = selectedPet == pet ? null : pet;
+
+    private static void Toggle(HashSet<string> set, string value, bool on)
+    {
+        if (on) set.Add(value);
+        else set.Remove(value);
+    }
+
+    private static string KindColor(string kind) => kind switch
+    {
+        "Herb" => "#7ee787",
+        "Ore" => "#b8c4d2",
+        "Gemstone" => "#c4a0ff",
+        "Food" => "#f2cc60",
+        "Wood" => "#c98a52",
+        "Cotton" => "#f0f3f6",
+        "Od" => "#58a6ff",
+        "Fragment" => "#ff7b9c",
+        _ => "#8b95a5",
+    };
+
+    private List<Near> Nearest(MapLayer layer, MapPoint me, List<PetHere> petsHere)
+    {
+        var list = new List<Near>();
+        if (showPets)
+        {
+            var pets = petsHere.Where(ShowsOnMap).ToList();
+            var points = pets.SelectMany(p => p.Codes.SelectMany(c => layer.PetSpawns[c].Select(pt => (Pet: p, Code: c, At: pt))));
+            var best = points.Select(x => (x.Pet, x.Code, x.At, D: Dist(x.At, me))).OrderBy(x => x.D).FirstOrDefault();
+            if (best.Pet is not null)
+                list.Add(new Near($"{best.Pet.Name} · {MonsterName(best.Code)}", "#f0a35e", best.At, (int)Math.Round(best.D / 100), true));
+        }
+        foreach (var kind in shownKinds.OrderBy(WorldMap.KindLabel))
+        {
+            var points = layer.Gather.Where(g => WorldMap.Object(g.Key)?.Kind == kind).SelectMany(g => g.Value);
+            if (WorldMap.Nearest(points, me) is { } n) list.Add(new Near(WorldMap.KindLabel(kind), KindColor(kind), n.Point, n.Metres, list.Count == 0));
+        }
+        if (showCubes && WorldMap.Nearest(layer.Cubes, me) is { } cube) list.Add(new Near("Скрытый куб", "#5fd4c4", cube.Point, cube.Metres, list.Count == 0));
+        if (showBosses)
+        {
+            var boss = layer.Bosses.MinBy(b => Dist(b.At, me));
+            if (boss is not null) list.Add(new Near(boss.Name, "#ff6b6b", boss.At, (int)Math.Round(Dist(boss.At, me) / 100), list.Count == 0));
+        }
+        return list;
+    }
+
+    private static double Dist(MapPoint a, MapPoint b) => Math.Sqrt(((double)a.X - b.X) * ((double)a.X - b.X) + ((double)a.Y - b.Y) * ((double)a.Y - b.Y));
+
+    private static bool In(MapPoint p, double x0, double y0, double w, double h, double pad) =>
+        p.X >= x0 - pad && p.X <= x0 + w + pad && p.Y >= y0 - pad && p.Y <= y0 + h + pad;
+
+    /// <summary>The ground as a silhouette: every known point snapped to a coarse grid, one soft circle per cell.</summary>
+    private static List<MapPoint> Land(MapLayer layer)
+    {
+        lock (LandCache)
+        {
+            if (LandCache.TryGetValue(layer.Id, out var land)) return land;
+            const float cell = 3000;
+            land = layer.PetSpawns.Values.SelectMany(v => v)
+                .Concat(layer.Gather.Values.SelectMany(v => v))
+                .Concat(layer.Cubes)
+                .Concat(layer.Bosses.Select(b => b.At))
+                .Select(p => new MapPoint(MathF.Round(p.X / cell) * cell, MathF.Round(p.Y / cell) * cell))
+                .Distinct()
+                .ToList();
+            LandCache[layer.Id] = land;
+            return land;
+        }
+    }
+
+    private static double GridStep(double k)
+    {
+        foreach (var s in new double[] { 1000, 2000, 5000, 10_000, 20_000, 50_000, 100_000 })
+            if (s / k >= 70) return s;
+        return 200_000;
+    }
+
+    private static string Metres(double units) => units >= 100_000 ? $"{units / 100_000:0.#} км" : $"{units / 100:0} м";
+
+    private static (double X, double Y, double Angle) Edge(MapPoint p, double x0, double y0, double w, double h, double inset)
+    {
+        var mx = x0 + w / 2;
+        var my = y0 + h / 2;
+        var dx = p.X - mx;
+        var dy = p.Y - my;
+        var sx = Math.Abs(dx) < 1e-6 ? double.MaxValue : (w / 2 - inset) / Math.Abs(dx);
+        var sy = Math.Abs(dy) < 1e-6 ? double.MaxValue : (h / 2 - inset) / Math.Abs(dy);
+        var s = Math.Min(sx, sy);
+        return (mx + dx * s, my + dy * s, Math.Atan2(dy, dx) * 180 / Math.PI);
+    }
+
+    private void Pick(int mapId)
+    {
+        pickedMap = mapId;
+        selectedPet = null;
+    }
+
+    private void Fit(MapLayer layer)
+    {
+        var land = Land(layer);
+        if (land.Count == 0) return;
+        var minX = land.Min(p => p.X) - LandR;
+        var maxX = land.Max(p => p.X) + LandR;
+        var minY = land.Min(p => p.Y) - LandR;
+        var maxY = land.Max(p => p.Y) + LandR;
+        cx = (minX + maxX) / 2;
+        cy = (minY + maxY) / 2;
+        Span = Math.Max(maxX - minX, maxY - minY) * 1.02;
+        fittedFor = layer.Id;
+        follow = false;
+    }
+
+    private void CenterOn(MapPoint p)
+    {
+        cx = p.X;
+        cy = p.Y;
+        if (Span > 60_000) Span = 40_000;
+    }
+
+    private void ZoomBy(double f) => Span = Math.Clamp(Span * f, 2_000, 900_000);
+
+    private async Task<double[]?> Box()
+    {
+        try
+        {
+            var r = await JS.InvokeAsync<double[]>("forkBox", viewRef);
+            if (r is { Length: 4 } && r[2] > 10 && r[3] > 10) { W = r[2]; H = r[3]; }
+            return r;
+        }
+        catch (Exception) { return null; }
+    }
+
+    /// <summary>The wheel zooms around the cursor: the place under it stays under it.</summary>
+    private async Task Wheel(WheelEventArgs e)
+    {
+        var r = await Box();
+        var k = Span / Math.Min(W, H);
+        var px = r is { Length: 4 } ? e.ClientX - r[0] : W / 2;
+        var py = r is { Length: 4 } ? e.ClientY - r[1] : H / 2;
+        var wx = cx + (px - W / 2) * k;
+        var wy = cy + (py - H / 2) * k;
+        ZoomBy(e.DeltaY > 0 ? 1.2 : 1 / 1.2);
+        var k2 = Span / Math.Min(W, H);
+        cx = wx - (px - W / 2) * k2;
+        cy = wy - (py - H / 2) * k2;
+    }
+
+    private void DragStart(MouseEventArgs e)
+    {
+        if (e.Button != 0) return;
+        dragging = true;
+        follow = false;
+        (dragX, dragY, dragCx, dragCy) = (e.ClientX, e.ClientY, cx, cy);
+    }
+
+    private void DragMove(MouseEventArgs e)
+    {
+        if (!dragging) { skipRender = true; return; }
+        var k = Span / Math.Min(W, H);
+        cx = dragCx - (e.ClientX - dragX) * k;
+        cy = dragCy - (e.ClientY - dragY) * k;
+    }
+
+    private void DragEnd(MouseEventArgs e)
+    {
+        if (!dragging) { skipRender = true; return; }
+        dragging = false;
+    }
+
+    protected override bool ShouldRender()
+    {
+        if (!skipRender) return true;
+        skipRender = false;
+        return false;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Layer is { } layer && fittedFor != layer.Id) Fit(layer);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await Box();
+        if (Layer is { } layer) Fit(layer);
+        if (MeOn(Layer) is { } me && Here(Layer)) CenterOn(me);
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+        Zones.Changed += OnZone;
+        timer = new Timer(_ => Tick(), null, 1000, 1000);
+    }
+
+    private void OnZone() => InvokeAsync(() =>
+    {
+        pickedMap = null;
+        if (Layer is { } layer) Fit(layer);
+        StateHasChanged();
+    });
+
+    /// <summary>Redraws once a second while the character moves; in follow mode keeps it in the middle.</summary>
+    private void Tick()
+    {
+        var fix = Positions.Me;
+        if (fix is null && Entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is { } user) fix = Positions.Last(user.Id);
+        if (fix is null || fix.Value.At == lastMe) return;
+        lastMe = fix.Value.At;
+        InvokeAsync(() =>
+        {
+            if (follow && MeOn(Layer) is { } me) { cx = me.X; cy = me.Y; }
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Zones.Changed -= OnZone;
+        timer?.Dispose();
+    }
+}

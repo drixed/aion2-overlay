@@ -21,3 +21,9 @@
 Форматы пакетов позиций (xx 37), инвентаря (11 56, 1B 56) и коды валют (кинары 930100031/930100001, очки Бездны 930100003) — по
 [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter) (`Aion2FrameDecoder`, `Aion2Stock`, `item_names.json`), MIT; код написан заново.
 
+
+`maps.ru.json` — точки карт «Бертрон» (1010) и «Альтгард» (1110): места появления монстров, дающих души питомцев, точки сбора
+с русскими названиями, скрытые кубы, места полевых боссов, связь монстр → питомец и русские имена питомцев. Собрано из
+`Client/assets/aion2/maps/maps.json`, `gather.json`, `pets/pets.json`, `pets/spawns.json`, `bosses/field_bosses.json` проекта
+[SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter), коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV.
+Только координаты и названия — картинки карт игры не используются, карта рисуется схемой. Данные игры © NCSOFT.

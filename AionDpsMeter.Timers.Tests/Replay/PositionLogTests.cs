@@ -61,4 +61,20 @@ public class PositionLogTests
         Assert.Equal(10f, back![1][0].X);
         Assert.Null(log.LoadReplay(Guid.NewGuid()));
     }
+
+    [Fact]
+    public void The_last_place_of_an_entity_and_of_the_local_player_is_remembered()
+    {
+        var log = new PositionLog();
+        Assert.Null(log.Last(5));
+        Assert.Null(log.Me);
+        log.Add(T0, 5, 10, 20);
+        log.Add(T0.AddSeconds(1), 5, 30, 40);
+        Assert.Equal(new Fix(T0.AddSeconds(1), 30, 40), log.Last(5));
+
+        log.OnFrame(T0.AddSeconds(2), Local(777, 100_000f, 2_000f));
+        Assert.Equal(777, log.LocalEntity);
+        log.OnFrame(T0.AddSeconds(3), Move(777, 100_500f, 2_500f));
+        Assert.Equal(new Fix(T0.AddSeconds(3), 100_500f, 2_500f), log.Me);
+    }
 }

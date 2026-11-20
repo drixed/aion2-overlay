@@ -15,7 +15,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
     /// tray; a double click or "Показать метр" brings back exactly the windows that were hidden.
     /// </summary>
     public sealed class TrayService(TimersOptionsStore options, CombatSessionManager sessions, HistoryBrowserWindow history,
-        StatCalcWindow calc, NewsWindow news, CharacterWindow character, ILogger<TrayService> logger)
+        StatCalcWindow calc, NewsWindow news, CharacterWindow character, MapWindow map, ILogger<TrayService> logger)
     {
         private readonly List<Window> hidden = [];
         private Forms.NotifyIcon? icon;
@@ -69,6 +69,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             menu.Items.Add("Показать метр", null, (_, _) => OnUi(() => ShowAll(byUser: true)));
             menu.Items.Add("История боёв", null, (_, _) => OnUi(() => { ShowAll(byUser: true); history.Open(); }));
             menu.Items.Add("Персонаж", null, (_, _) => OnUi(() => { ShowAll(byUser: true); character.Open(); }));
+            menu.Items.Add("Карта", null, (_, _) => OnUi(() => { ShowAll(byUser: true); map.Open(); }));
             menu.Items.Add("Калькулятор статов", null, (_, _) => OnUi(() => { ShowAll(byUser: true); calc.Open(); }));
             menu.Items.Add("Объявления и Twitch Drops", null, (_, _) => OnUi(() => { ShowAll(byUser: true); news.Open(); }));
             menu.Items.Add(new Forms.ToolStripSeparator());

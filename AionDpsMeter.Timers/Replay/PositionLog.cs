@@ -23,6 +23,19 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
 
     private readonly Lock gate = new();
     private readonly List<(DateTime At, int Entity, float X, float Y)> fixes = [];
+    private readonly Dictionary<int, Fix> last = [];
+    private volatile int localEntity;
+
+    /// <summary>The played character's entity id, from its own position frame (3C 37); 0 until one came.</summary>
+    public int LocalEntity => localEntity;
+
+    /// <summary>Where the played character was last seen, for the map window.</summary>
+    public Fix? Me => localEntity == 0 ? null : Last(localEntity);
+
+    public Fix? Last(int entity)
+    {
+        lock (gate) return last.TryGetValue(entity, out var f) ? f : null;
+    }
 
     public static readonly ushort[] Opcodes = [0x371A, 0x371B, 0x371C, 0x371E, 0x3720, 0x3728, 0x3729, 0x372A, 0x371F, 0x372F, LocalOpcode];
 
@@ -60,12 +73,14 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
     {
         lock (gate)
         {
+            last[entity] = new Fix(at, x, y);
             fixes.Add((at, entity, x, y));
             if (fixes.Count > MaxFixes || (fixes.Count % 5000 == 0 && at - fixes[0].At > Keep))
             {
                 // too old, and when still too many the oldest quarter (the cut is taken before anything is removed)
                 var cut = fixes.Count > MaxFixes ? fixes[fixes.Count / 4].At : DateTime.MinValue;
                 fixes.RemoveAll(f => at - f.At > Keep || f.At < cut);
+                foreach (var gone in last.Where(kv => at - kv.Value.At > Keep).Select(kv => kv.Key).ToList()) last.Remove(gone);
             }
         }
     }
@@ -76,9 +91,17 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
         try
         {
             if (!Wire.TryVarint(packet.Data, 0, out _, out var header) || packet.Data.Length < header + 4) return;
-            if (TryRead(packet.Data.AsSpan(header), out var entity, out var x, out var y)) Add(DateTime.Now, entity, x, y);
+            OnFrame(DateTime.Now, packet.Data.AsSpan(header));
         }
         catch (Exception) { }
+    }
+
+    /// <param name="frame">The frame from its opcode on.</param>
+    public void OnFrame(DateTime at, ReadOnlySpan<byte> frame)
+    {
+        if (!TryRead(frame, out var entity, out var x, out var y)) return;
+        if (frame[0] == 0x3c) localEntity = entity;
+        Add(at, entity, x, y);
     }
 
     public Dictionary<int, List<Fix>> Tracks(IEnumerable<int> entities, DateTime from, DateTime to)

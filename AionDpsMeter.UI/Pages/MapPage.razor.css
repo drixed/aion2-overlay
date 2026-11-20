@@ -1,0 +1,74 @@
+/* aion2-overlay fork: new file (see FORK_CHANGES.md). The map window in the fork's design. */
+.mp { box-sizing: border-box; width: 100vw; height: 100vh; display: flex; flex-direction: column; background: #141a23; color: #dfe6ee;
+    border: 1px solid #2a3340; border-radius: 10px; overflow: hidden; font-family: 'Segoe UI', sans-serif; font-size: 12.5px; user-select: none; }
+.mp-title { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 16px; background: #11161e; border-bottom: 1px solid #222a36; cursor: move; }
+.mp-title b { font-size: 14px; }
+.mp-maps { display: flex; gap: 4px; }
+.mp-maps button { background: #1b2330; border: 1px solid #2a3442; color: #aeb8c5; border-radius: 6px; padding: 3px 10px; font: inherit; cursor: pointer; }
+.mp-maps button.on { color: #5fd4c4; border-color: rgba(95, 212, 196, .55); background: rgba(95, 212, 196, .08); font-weight: 600; }
+.mp-grow { flex: 1; }
+.mp-here { color: #7d8898; font-size: 11px; }
+.mp-x { background: none; border: 0; color: #8b95a5; font-size: 13px; cursor: pointer; }
+.mp-x:hover { color: #ff8f8f; }
+
+.mp-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+.mp-side { overflow-y: auto; padding: 10px 12px; border-right: 1px solid #222a36; display: flex; flex-direction: column; gap: 12px; background: #121820; }
+.mp-side section { display: flex; flex-direction: column; gap: 4px; }
+.mp-side h4 { margin: 0 0 2px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8b95a5; display: flex; align-items: center; gap: 6px; }
+.mp-side h4 small, .mp-check small { margin-left: auto; color: #5f6b7c; font-size: 10.5px; text-transform: none; letter-spacing: 0; }
+.mp-check { display: flex; align-items: center; gap: 7px; cursor: pointer; color: #c9d1d9; padding: 2px 0; }
+.mp-check.sub { color: #8b95a5; font-size: 11.5px; }
+.mp-side h4 .mp-check { color: #8b95a5; }
+.mp-check input { accent-color: #5fd4c4; margin: 0; }
+.mp-hint { color: #7d8898; font-size: 11.5px; line-height: 1.4; }
+.mp-me-row { display: flex; align-items: center; gap: 7px; color: #c9d1d9; }
+.mp-link { margin-left: auto; background: none; border: 0; color: #5fd4c4; cursor: pointer; font: inherit; font-size: 11.5px; padding: 0; }
+.mp-search { box-sizing: border-box; width: 100%; background: #0f141b; border: 1px solid #2a3442; border-radius: 6px; color: #e6edf3; padding: 5px 8px; font: inherit; font-size: 12px; outline: none; }
+.mp-search:focus { border-color: rgba(95, 212, 196, .6); }
+.mp-pets { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }
+.mp-pet { display: flex; align-items: center; gap: 6px; background: none; border: 1px solid transparent; border-radius: 6px; color: #c9d1d9; padding: 3px 6px; font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.mp-pet:hover { background: #19202a; }
+.mp-pet.on { border-color: rgba(240, 163, 94, .6); background: rgba(240, 163, 94, .08); color: #ffd7a8; }
+.mp-pet.done { opacity: .55; }
+.mp-pet-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-lvl { font-size: 10px; color: #f0a35e; border: 1px solid rgba(240, 163, 94, .4); border-radius: 4px; padding: 0 4px; white-space: nowrap; }
+.mp-pet small { color: #5f6b7c; font-size: 10.5px; min-width: 22px; text-align: right; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+.sw.me { background: #5fd4c4; box-shadow: 0 0 0 2px rgba(95, 212, 196, .3); }
+.sw.boss { background: #ff6b6b; }
+.sw.cube { background: #5fd4c4; border-radius: 2px; }
+.mp-note { color: #5f6b7c; font-size: 10.5px; margin: auto 0 0; line-height: 1.4; }
+
+.mp-view { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 40%, #121a24, #0c1117); cursor: grab; }
+.mp-view.drag { cursor: grabbing; }
+.mp-view svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.mp-empty { color: #8b95a5; text-align: center; padding: 40px; }
+.land circle { fill: #1a2431; }
+.grid line { stroke: rgba(255, 255, 255, .045); }
+.cubes rect { fill: #5fd4c4; opacity: .75; }
+.gather circle { opacity: .9; }
+.pets circle { fill: #f0a35e; opacity: .85; }
+.pets.dim circle { opacity: .15; }
+.pets.on circle { fill: #ffd166; opacity: 1; }
+.bosses circle { fill: rgba(255, 107, 107, .25); stroke: #ff6b6b; }
+.bosses text { fill: #ffb3b3; text-anchor: middle; font-family: 'Segoe UI', sans-serif; font-weight: 600; paint-order: stroke; stroke: #0c1117; stroke-width: .25em; pointer-events: none; }
+.near-line { stroke: #5fd4c4; opacity: .7; fill: none; pointer-events: none; }
+.me { fill: #5fd4c4; stroke: #fff; }
+.me-ring { fill: none; stroke: #5fd4c4; stroke-width: 0; fill: rgba(95, 212, 196, .18); transform-box: fill-box; transform-origin: center; animation: mp-pulse 1.6s ease-out infinite; pointer-events: none; }
+.me-edge { fill: #5fd4c4; stroke: #fff; stroke-width: 0; }
+@keyframes mp-pulse { from { transform: scale(.4); opacity: .9; } to { transform: scale(1.4); opacity: 0; } }
+
+.mp-tools { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; }
+.mp-tools button { background: rgba(20, 26, 35, .92); border: 1px solid #2a3442; color: #c9d1d9; border-radius: 6px; padding: 4px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.mp-tools button:hover { border-color: rgba(95, 212, 196, .6); color: #5fd4c4; }
+.mp-scale { position: absolute; left: 12px; bottom: 10px; display: flex; align-items: center; gap: 6px; color: #8b95a5; font-size: 11px; pointer-events: none; }
+.mp-scale span { display: inline-block; height: 6px; border: 1px solid #8b95a5; border-top: 0; }
+.mp-near { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 2px; min-width: 210px; max-width: 300px; padding: 8px 10px;
+    background: rgba(20, 26, 35, .93); border: 1px solid #2a3442; border-radius: 8px; }
+.mp-near b { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b95a5; margin-bottom: 2px; }
+.mp-near button { display: flex; align-items: center; gap: 7px; background: none; border: 0; color: #dfe6ee; font: inherit; font-size: 12px; padding: 2px 0; text-align: left; cursor: pointer; }
+.mp-near button:hover { color: #5fd4c4; }
+.mp-near small { margin-left: auto; padding-left: 10px; color: #f5c76b; font-variant-numeric: tabular-nums; }
+.mp ::-webkit-scrollbar { width: 6px; }
+.mp ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
+.mp ::-webkit-scrollbar-track, .mp ::-webkit-scrollbar-button { background: transparent; display: none; }
