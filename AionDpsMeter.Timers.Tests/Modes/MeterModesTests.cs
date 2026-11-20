@@ -28,6 +28,18 @@ public class DummyRunTests
     }
 
     [Fact]
+    public void A_summoned_object_named_late_gives_its_damage_to_its_owner_row()
+    {
+        var run = new DummyRun(TimeSpan.FromMinutes(1));
+        run.Add(OnDummy(Me, 6_000, 0));
+        run.Add(OnDummy(77, 1_000, 5));   // the owner of 77 is not known yet
+        run.Add(OnDummy(77, 500, 8));
+        run.Merge(77, Me);
+        var row = run.View(T0.AddSeconds(20)).Rows.Single();
+        Assert.Equal((Me, 7_500L), (row.PlayerId, row.Total));
+    }
+
+    [Fact]
     public void While_running_it_shows_dps_so_far_and_time_left()
     {
         var run = new DummyRun(TimeSpan.FromMinutes(1));

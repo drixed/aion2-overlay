@@ -34,6 +34,13 @@ public sealed class MeterModesService : IDisposable
         CombatFeed.Heal += OnHeal;
         CombatFeed.Hit += OnHit;
         CombatFeed.Death += OnDeath;
+        entities.SummonRegistered += OnSummonRegistered;
+    }
+
+    private void OnSummonRegistered(int summonId, int ownerId)
+    {
+        Dummy.Merge(summonId, ownerId);
+        Grind.Merge(summonId, ownerId);
     }
 
     /// <summary>Hits on the meter's players, named now (the attacker may be gone by the time someone looks).</summary>
@@ -74,12 +81,15 @@ public sealed class MeterModesService : IDisposable
     private void OnDamage(PlayerDamage d)
     {
         if (d.SourceEntity is null || d.Damage <= 0) return;
-        var hit = new Hit(d.SourceEntity.Id, d.Damage, d.TargetEntity?.IsDummy == true, d.DateTime, d.SourceEntity.IsUser);
+        // a summoned object's hit (the session gives it to its owner later, the feed comes first): counted as the owner's
+        var sourceId = entities.GetSummonOwner(d.SourceEntity.Id) is { } owner ? owner : d.SourceEntity.Id;
+        var mine = sourceId == d.SourceEntity.Id ? d.SourceEntity.IsUser : entities.GetPlayerEntity(sourceId)?.IsUser == true;
+        var hit = new Hit(sourceId, d.Damage, d.TargetEntity?.IsDummy == true, d.DateTime, mine);
         Dummy.Add(hit);
         Grind.Add(hit);
         // a hit on a monster (not a player, not a training dummy) opens or feeds the fight summary
         if (d.TargetEntity is { IsDummy: false } mob && entities.GetPlayerEntity(mob.Id) is not ({ IsIdentified: true } or { IsUser: true }))
-            Fight.AddDamage(d.SourceEntity.Id, d.Damage, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name, d.DateTime,
+            Fight.AddDamage(sourceId, d.Damage, string.IsNullOrEmpty(d.Skill?.Name) ? "?" : d.Skill.Name, d.DateTime,
                 mob.MobCode > 0 ? mob.Name : null);
         if (d.TargetEntity is { } target && entities.GetPlayerEntity(target.Id) is { } victim
             && PvpLog.IsPlayerTarget(victim, entities.GetTargetMob(target.Id), entities.IsSummon(target.Id))
@@ -101,5 +111,6 @@ public sealed class MeterModesService : IDisposable
         CombatFeed.Hit -= OnHit;
         CombatFeed.Death -= OnDeath;
         options.Changed -= OnOptionsChanged;
+        entities.SummonRegistered -= OnSummonRegistered;
     }
 }

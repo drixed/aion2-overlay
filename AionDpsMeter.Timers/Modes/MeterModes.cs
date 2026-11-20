@@ -63,6 +63,23 @@ public sealed class DummyRun(TimeSpan length)
         }
     }
 
+    /// <summary>A summoned object whose owner became known after its first hits: its damage goes to the owner's run
+    /// (started then if the owner had none yet).</summary>
+    public void Merge(long from, long into)
+    {
+        lock (gate)
+        {
+            if (from == into || !runs.Remove(from, out var moved)) return;
+            if (me == from) me = into;
+            if (!runs.TryGetValue(into, out var run)) runs[into] = moved;
+            else
+            {
+                run.Total += moved.Total;
+                if (moved.LastHit > run.LastHit) run.LastHit = moved.LastHit;
+            }
+        }
+    }
+
     /// <summary>The user's run and everyone who hit a scarecrow within the run length; players without the user's
     /// run started still show, with <see cref="DummyView.Started"/> false.</summary>
     public DummyView View(DateTime now)
@@ -124,6 +141,15 @@ public sealed class GrindSession
         {
             if (start is not { } s || stop is not null || hit.At < s) return;
             totals[hit.PlayerId] = totals.GetValueOrDefault(hit.PlayerId) + hit.Damage;
+        }
+    }
+
+    /// <summary>A summoned object whose owner became known after its first hits: its damage goes to the owner.</summary>
+    public void Merge(long from, long into)
+    {
+        lock (gate)
+        {
+            if (from != into && totals.Remove(from, out var moved)) totals[into] = totals.GetValueOrDefault(into) + moved;
         }
     }
 
