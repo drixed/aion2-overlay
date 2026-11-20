@@ -128,3 +128,5 @@ html body .settings-shell.settings-shell .fs-select { max-width: 200px; backgrou
 html body .settings-shell.settings-shell .fs-select { color: #e6edf3; font-family: 'Segoe UI', sans-serif; font-size: 12px; }
 html body .settings-shell.settings-shell .fs-select option { background: #0f141c; color: #e6edf3; }
 html body .settings-shell.settings-shell .fs-label { color: var(--text-dim); font-size: 10.5px; letter-spacing: .7px; }
+/* a section whose tab the fork removed (upstream's buff overlay): not even in the search */
+html body .settings-shell.settings-shell .settings-group.fork-gone { display: none !important; }

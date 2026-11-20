@@ -153,8 +153,9 @@ namespace AionDpsMeter.UI.Services.Windowing
 
         private void ManageBuffOverlay()
         {
-            if (IsBuffOverlayEnabled) OpenBuffOverlay();
-            else HideBuffOverlay();
+            // aion2-overlay fork: the fork's "Баффы" (class presets, sounds) replace upstream's buff overlay — it stays closed
+            // even where an old settings file has it on (see FORK_CHANGES.md)
+            HideBuffOverlay();
         }
         private void ManageSkillCdOverlay()
         {

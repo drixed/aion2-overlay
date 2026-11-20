@@ -46,7 +46,7 @@ namespace AionDpsMeter.UI.Pages
         new("fork-system", "System", "&#9707;"), // aion2-overlay fork
         new("hotkeys", "Hotkeys", "&#9000;"),
         new("tracking", "Tracking", "&#9881;"),
-        new("overlays", "Overlays", "&#9635;"),
+        // aion2-overlay fork: "Overlays" (upstream's buff overlay) removed — the fork's "Баффы" do it
         new("fork-timers", "Timers", "&#9200;"), // aion2-overlay fork
         new("fork-bosses", "Bosses", "&#9760;"), // aion2-overlay fork
         new("fork-buffs", "Buffs", "&#9201;"), // aion2-overlay fork
