@@ -23,6 +23,12 @@ public static class FightArchive
     public static FightSummary? Find(IEnumerable<FightSummary> kept, DateTime sessionStart, DateTime sessionEnd) =>
         kept.FirstOrDefault(f => f.Start <= sessionEnd.AddSeconds(30) && f.Start + f.Duration >= sessionStart.AddSeconds(-30));
 
+    /// <summary>The fight with only the group in it: the players of the history session (they hit the boss) and whoever
+    /// healed (a healer may not hit at all; monsters do not heal). The boss the group hit and adds counted as "taking"
+    /// damage are left out.</summary>
+    public static FightSummary OnlyGroup(FightSummary fight, IReadOnlySet<long> group) =>
+        fight with { Players = fight.Players.Where(p => group.Contains(p.Id) || p.HealDone > 0).ToList() };
+
     public static string Serialize(IReadOnlyList<FightSummary> fights) => JsonSerializer.Serialize(fights);
 
     public static List<FightSummary> Parse(string json)

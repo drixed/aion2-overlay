@@ -48,4 +48,19 @@ public class FightArchiveTests
 
     [Fact]
     public void A_broken_file_gives_an_empty_archive() => Assert.Empty(FightArchive.Parse("{oops"));
+
+    [Fact]
+    public void Only_the_group_of_the_fight_is_shown_not_the_boss_it_hit_or_an_add()
+    {
+        var f = new FightSummary(T0, TimeSpan.FromMinutes(1),
+        [
+            new FightPlayer(1, 5_000_000, 0, 788_000, 0, 101_000, 0, 97_000, "Зарево", TimeSpan.FromSeconds(5)), // me
+            new FightPlayer(35043, 0, 0, 0, 0, 13_250_000, 0, 0, "", null),                                    // the boss
+            new FightPlayer(40769, 0, 0, 0, 0, 19_760, 0, 0, "", null),                                        // an add
+            new FightPlayer(9, 0, 3_780_000, 918_000, 0, 116_000, 0, 0, "", null),                             // a healer with no hit on the boss
+        ]);
+        var group = FightArchive.OnlyGroup(f, new HashSet<long> { 1 });
+        Assert.Equal([1L, 9L], group.Players.Select(p => p.Id).Order().ToArray());
+        Assert.Equal(217_000, group.TotalTaken);
+    }
 }

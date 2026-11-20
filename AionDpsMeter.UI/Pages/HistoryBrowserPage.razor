@@ -249,7 +249,7 @@
 
     /// <summary>The fork's fight summary (healing, damage taken) for this fight, when the meter saw it.</summary>
     private FightSummary? Match(HistorySessionSnapshot s) =>
-        Modes.FightFor(s.SessionStart, s.SessionEnd);
+        Modes.FightFor(s.SessionStart, s.SessionEnd) is { } f ? FightArchive.OnlyGroup(f, s.PlayerStats.Select(p => p.PlayerId).ToHashSet()) : null;
 
     private sealed record RankRow(long Id, string Name, int ClassId, double Value, string Text);
 

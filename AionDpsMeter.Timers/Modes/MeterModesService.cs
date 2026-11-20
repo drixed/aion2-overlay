@@ -81,6 +81,8 @@ public sealed class MeterModesService : IDisposable
     private void OnHit(RawHit h)
     {
         if (h.Damage <= 0 || entities.GetPlayerEntity(h.TargetId) is null) return;
+        // the boss and adds can be in the player list too (they once hit with a skill): their "damage taken" is the group's damage
+        if (entities.GetTargetMob(h.TargetId) is { MobCode: > 0 } || entities.IsSummon(h.TargetId)) return;
         var data = AionDpsMeter.Core.GameData.Services.GameDataProvider.Instance;
         if (data.IsHealingSkill(h.SkillCode)) return; // heals come in the same packet as hits
         var source = entities.GetPlayerEntity(h.ActorId)?.Name is { Length: > 0 } player ? player
