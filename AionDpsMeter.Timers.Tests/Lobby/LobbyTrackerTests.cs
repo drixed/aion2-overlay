@@ -56,6 +56,7 @@ public class LobbyTrackerTests
     public void A_member_accepting_updates_the_list_at_once_and_the_start_closes_it()
     {
         var lobby = new LobbyTracker();
+        lobby.OnFrame(T0.AddSeconds(-3), Convert.FromHexString(FinderOpened));
         lobby.OnFrame(T0, Convert.FromHexString(Listed));
         Assert.Equal(T0, lobby.At);
         lobby.OnFrame(T0.AddSeconds(10), Convert.FromHexString("1697AB65020000002205" + "01"));   // Сиель accepts
@@ -64,6 +65,27 @@ public class LobbyTrackerTests
         lobby.OnFrame(T0.AddSeconds(13), Convert.FromHexString("0092" + "00"));                 // the match starts
         Assert.Null(lobby.Party);
         lobby.OnFrame(T0.AddSeconds(24), Convert.FromHexString(InDungeon));                    // the same party in the dungeon
+        Assert.Null(lobby.Party);
+    }
+
+    private const string FinderOpened = "0697" + "00000200000000";      // 0x9706, 16:16:38: the party finder's list asked for
+    private const string ZoneChanged = "2136" + "01000000C4270900";      // 0x3621, 16:16:58: into the dungeon
+
+    [Fact]
+    public void The_party_listed_again_in_the_dungeon_is_not_a_lobby_even_when_the_meter_missed_the_start()
+    {
+        // Nov 2026: the meter restarted after the match started, so the start frame never came, and in the dungeon the
+        // party showed as a lobby with everyone "ждём"
+        var lobby = new LobbyTracker();
+        lobby.OnFrame(T0, Convert.FromHexString(InDungeon));                                   // no finder used since the start
+        Assert.Null(lobby.Party);
+
+        lobby.OnFrame(T0.AddSeconds(1), Convert.FromHexString(FinderOpened));
+        lobby.OnFrame(T0.AddSeconds(2), Convert.FromHexString(Listed));
+        Assert.NotNull(lobby.Party);
+        lobby.OnFrame(T0.AddSeconds(20), Convert.FromHexString(ZoneChanged));                   // a teleport ends the lobby
+        Assert.Null(lobby.Party);
+        lobby.OnFrame(T0.AddSeconds(27), Convert.FromHexString(InDungeon));
         Assert.Null(lobby.Party);
     }
 

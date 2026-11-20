@@ -68,14 +68,20 @@ public static class LobbyParser
 
 /// <summary>
 /// The party finder's party while it gathers: who is in it and who accepted. A member accepting comes at once
-/// (<c>16 97 | character u32 | 00 00 | server u16 | 01</c>); the match starting (0x9200) closes it, and the same party
-/// listed again in the dungeon is not shown.
+/// (<c>16 97 | character u32 | 00 00 | server u16 | 01</c>); the match starting (0x9200) or a zone change (0x3621) closes it.
+/// A party list counts only after the party finder was used (0x9701/06/0A/15/16) since the last zone change: in the
+/// dungeon the game lists the same party again, and a meter started after the match never saw it start.
 /// </summary>
 public sealed class LobbyTracker : IRawPacketListener
 {
     private readonly Lock gate = new();
     private readonly HashSet<long> started = [];
+    private const ushort ZoneOpcode = 0x3621;
     private LobbyParty? party;
+    private bool finderUsed;
+
+    /// <summary>The party finder's own frames: its list, applying, accepting.</summary>
+    private static bool IsFinder(ushort opcode) => opcode is 0x9701 or 0x9706 or 0x970A or 0x9715 or LobbyParser.AcceptedOpcode;
 
     public LobbyParty? Party { get { lock (gate) return party; } }
 
@@ -86,7 +92,7 @@ public sealed class LobbyTracker : IRawPacketListener
 
     public void OnRawPacket(ushort opcode, Packet packet)
     {
-        if (opcode is not (LobbyParser.PartyOpcode or LobbyParser.AcceptedOpcode or LobbyParser.StartOpcode)) return;
+        if (opcode is not (LobbyParser.PartyOpcode or LobbyParser.AcceptedOpcode or LobbyParser.StartOpcode or ZoneOpcode) && !IsFinder(opcode)) return;
         try
         {
             if (!Wire.TryVarint(packet.Data, 0, out _, out var header) || packet.Data.Length < header + 3) return;
@@ -102,10 +108,16 @@ public sealed class LobbyTracker : IRawPacketListener
         var opcode = (ushort)(frame[0] | frame[1] << 8);
         lock (gate)
         {
+            if (IsFinder(opcode)) finderUsed = true;
             switch (opcode)
             {
+                case ZoneOpcode:
+                    finderUsed = false;
+                    if (party is null) return;
+                    party = null;
+                    break;
                 case LobbyParser.PartyOpcode:
-                    if (LobbyParser.Parse(frame) is not { } next || started.Contains(next.Id)) return;
+                    if (!finderUsed || LobbyParser.Parse(frame) is not { } next || started.Contains(next.Id)) return;
                     party = next;
                     break;
                 case LobbyParser.AcceptedOpcode when party is not null && frame.Length >= 11:
