@@ -22,6 +22,8 @@ public static class LobbyParser
     public const ushort PartyOpcode = 0x9702;
     public const ushort AcceptedOpcode = 0x9716;
     public const ushort StartOpcode = 0x9200;
+    /// <summary>A player joined: <c>0b 97 | member</c>, the member laid out as in the party list.</summary>
+    public const ushort JoinedOpcode = 0x970B;
     private const byte Accepted = 0x02;
 
     /// <param name="frame">The frame from its opcode on.</param>
@@ -30,37 +32,53 @@ public static class LobbyParser
         if (frame.Length < 8 || frame[0] != 0x02 || frame[1] != 0x97) return null;
         var body = frame[2..];
         long id = BinaryPrimitives.ReadUInt32LittleEndian(body);
-        if (!TryText(body, 4, out var title, out var at)) return null;
+        if (!TryText(body, 4, 0, out var title, out var at)) return null;
         long leader = at + 11 <= body.Length ? BinaryPrimitives.ReadUInt32LittleEndian(body[(at + 7)..]) : 0;
 
         var members = new List<LobbyMember>();
         for (var p = at; p + 11 < body.Length; p++)
         {
-            int slot = body[p + 1];
-            if (slot is < 1 or > 8 || slot != members.Count + 1 || body[p + 6] != 0 || body[p + 7] != 0) continue;
-            if (!TryText(body, p + 10, out var name, out var end) || end + 8 > body.Length) continue;
-            long character = BinaryPrimitives.ReadUInt32LittleEndian(body[(p + 2)..]);
-            int server = BinaryPrimitives.ReadUInt16LittleEndian(body[(p + 8)..]);
-            int level = (int)BinaryPrimitives.ReadUInt32LittleEndian(body[(end + 4)..]);
-            members.Add(new LobbyMember(slot, character, server, name, level, (body[p] & Accepted) != 0, character == leader));
+            if (!TryMember(body, p, leader, out var member, out var end) || member.Slot != members.Count + 1) continue;
+            members.Add(member);
             p = end - 1;
         }
         return members.Count > 0 ? new LobbyParty(id, title, members) : null;
     }
 
-    private static bool TryText(ReadOnlySpan<byte> b, int at, out string text, out int end)
+    /// <summary>A player who joined the party (0x970B), or null.</summary>
+    public static LobbyMember? Joined(ReadOnlySpan<byte> frame) =>
+        frame.Length > 12 && frame[0] == 0x0B && frame[1] == 0x97 && TryMember(frame[2..], 0, 0, out var member, out _) ? member : null;
+
+    /// <summary><c>state u8 | slot u8 | character u32 | 00 00 | server u16 | name | u32 | level u32</c> at <paramref name="p"/>.</summary>
+    private static bool TryMember(ReadOnlySpan<byte> body, int p, long leader, out LobbyMember member, out int end)
+    {
+        member = null!;
+        end = p;
+        if (p + 11 >= body.Length) return false;
+        int slot = body[p + 1];
+        if (slot is < 1 or > 8 || body[p + 6] != 0 || body[p + 7] != 0) return false;
+        if (!TryText(body, p + 10, 2, out var name, out end) || end + 8 > body.Length) return false;
+        long character = BinaryPrimitives.ReadUInt32LittleEndian(body[(p + 2)..]);
+        int server = BinaryPrimitives.ReadUInt16LittleEndian(body[(p + 8)..]);
+        int level = (int)BinaryPrimitives.ReadUInt32LittleEndian(body[(end + 4)..]);
+        member = new LobbyMember(slot, character, server, name, level, (body[p] & Accepted) != 0, character == leader);
+        return true;
+    }
+
+    /// <summary>Length-prefixed UTF-8 text without control characters ("200K+", "Немедленный старт", names).</summary>
+    private static bool TryText(ReadOnlySpan<byte> b, int at, int minLength, out string text, out int end)
     {
         text = string.Empty;
         end = at;
         if (at >= b.Length) return false;
         int length = b[at];
-        if (length is < 1 or > 48 || at + 1 + length > b.Length) return false;
+        if (length < minLength || length > 64 || at + 1 + length > b.Length) return false;
         try
         {
             text = new UTF8Encoding(false, true).GetString(b.Slice(at + 1, length));
         }
         catch (ArgumentException) { return false; }
-        if (!text.All(c => char.IsLetterOrDigit(c) || c is ' ' or '_' or '-' or '.' or '!' or '?')) return false;
+        if (text.Any(char.IsControl) || (minLength > 0 && text.Trim().Length == 0)) return false;
         end = at + 1 + length;
         return true;
     }
@@ -92,7 +110,7 @@ public sealed class LobbyTracker : IRawPacketListener
 
     public void OnRawPacket(ushort opcode, Packet packet)
     {
-        if (opcode is not (LobbyParser.PartyOpcode or LobbyParser.AcceptedOpcode or LobbyParser.StartOpcode or ZoneOpcode) && !IsFinder(opcode)) return;
+        if (opcode is not (LobbyParser.PartyOpcode or LobbyParser.AcceptedOpcode or LobbyParser.StartOpcode or LobbyParser.JoinedOpcode or ZoneOpcode) && !IsFinder(opcode)) return;
         try
         {
             if (!Wire.TryVarint(packet.Data, 0, out _, out var header) || packet.Data.Length < header + 3) return;
@@ -119,6 +137,10 @@ public sealed class LobbyTracker : IRawPacketListener
                 case LobbyParser.PartyOpcode:
                     if (!finderUsed || LobbyParser.Parse(frame) is not { } next || started.Contains(next.Id)) return;
                     party = next;
+                    break;
+                case LobbyParser.JoinedOpcode when party is not null:
+                    if (LobbyParser.Joined(frame) is not { } joined) return;
+                    party = party with { Members = party.Members.Where(m => m.Slot != joined.Slot && m.CharacterId != joined.CharacterId).Append(joined).OrderBy(m => m.Slot).ToList() };
                     break;
                 case LobbyParser.AcceptedOpcode when party is not null && frame.Length >= 11:
                     long character = BinaryPrimitives.ReadUInt32LittleEndian(frame[2..]);

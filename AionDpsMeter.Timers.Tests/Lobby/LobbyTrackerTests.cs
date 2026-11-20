@@ -89,6 +89,44 @@ public class LobbyTrackerTests
         Assert.Null(lobby.Party);
     }
 
+    /// <summary>16:36: a party made in the finder with the title "200K+", joined by one more player before the start.</summary>
+    private const string Party200K =
+        "02971B8E0B00053230304B2B05C42709000003B24B03000000FE087F0200050C01B24B03000000FE080B4E49434566616E78696E67080000002D0000" +
+        "004C0C0000FE08FE080479740300000000000001020E020F67020000001F05067A6170746571120000002D000000940C00001F051F0504775B030000" +
+        "0000000001010C031E73020000001C05064452495845441A0000002D000000260C00001D051D050467100300000000000001010E047DDD0200000025" +
+        "050653346E6472301E0000002D000000770B0000170517050378B9020000000000000101000500000000000000000000000000000000000000000003" +
+        "00000000000000000000000002";
+
+    private const string Joined =
+        "0B970C05A36E03000000FD080C73757065726E61696C6F6E67230000002D000000420C0000010209020903586E030000000000000102";
+
+    [Fact]
+    public void A_title_with_signs_still_makes_a_party()
+    {
+        // v149 showed nothing for this party: "+" was not allowed in a title
+        var party = LobbyParser.Parse(Convert.FromHexString(Party200K))!;
+        Assert.Equal("200K+", party.Title);
+        Assert.Equal("NICEfanxing", party.Members[0].Name);
+        Assert.True(party.Members[0].Leader);
+        Assert.Contains(party.Members, m => m.Name == "DRIXED");
+    }
+
+    [Fact]
+    public void A_player_joining_is_added_and_accepting_marks_them()
+    {
+        var lobby = new LobbyTracker();
+        lobby.OnFrame(T0, Convert.FromHexString(FinderOpened));
+        lobby.OnFrame(T0.AddSeconds(3), Convert.FromHexString(Party200K));
+        var before = lobby.Party!.Members.Count;
+        lobby.OnFrame(T0.AddSeconds(50), Convert.FromHexString(Joined));
+        var joined = lobby.Party!.Members.Single(m => m.Name == "supernailong");
+        Assert.Equal(before + 1, lobby.Party.Members.Count);
+        Assert.Equal(5, joined.Slot);
+        Assert.False(joined.Ready);
+        lobby.OnFrame(T0.AddSeconds(51), Convert.FromHexString("1697A36E03000000FD0801"));
+        Assert.True(lobby.Party!.Members.Single(m => m.Name == "supernailong").Ready);
+    }
+
     [Fact]
     public void Other_frames_are_not_a_party()
     {
