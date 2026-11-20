@@ -14,7 +14,11 @@
     <div class="boss-panel @PanelClasses @(Options.FocusMode && Fight is not null ? "bp-focus" : "")" @ref="panel" style="zoom:@(Options.UiScale)%;@PanelStyle">
         <div class="bp-header" @onmousedown="ViewModel.BeginDrag">
             <span class="bp-dot @(Fight is not null ? "bp-dot--fight" : "")"></span>
-            <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
+            @if (Compact)
+            {
+                @* the full window shows this in the footer: the header icons left it no room *@
+                <span class="bp-title" title="@HeaderTitle">@HeaderTitle</span>
+            }
             <div class="bp-mode-wrap" @onmousedown:stopPropagation="true">
                 <button type="button" class="bp-mode" @onclick="ToggleModeMenu" title="@ModeHint(Mode)">@ModeLabel(Mode) ▾</button>
             </div>
@@ -304,11 +308,12 @@
                 <span class="bp-farm-ap">● Очки Бездны <b>+@Grouped(Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints))</b> <small>@Grouped((long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints, nowFarm))/ч</small></span>
             </div>
         }
-        @if (!Compact && (Chips.Count > 0 || Energy is not null))
+        @if (!Compact)
         {
             <div class="bp-footer">
                 <div class="bp-footer-line">
                     <span class="bp-events">
+                        <span class="bp-status @(Fight is not null ? "bp-status--fight" : "")" title="@HeaderTitle">@HeaderTitle</span>
                         @foreach (var chip in Chips)
                         {
                             <span class="bp-ev bp-ev--@chip.State.ToString().ToLowerInvariant()" style="--ev:@EventIcons.Color(chip.Icon)" title="@chip.Tooltip">
