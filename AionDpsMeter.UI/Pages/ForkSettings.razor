@@ -281,8 +281,19 @@
         </SettingRow>
 
         <div class="fs-label fs-label--spaced">ОБЪЯВЛЕНИЯ</div>
-        <SettingRow Title="Объявления NCSOFT" Description="Кнопка 📣 в главном окне: официальные новости AION 2 (техработы, сбои, компенсации) и кампании Twitch Drops; метр проверяет их раз в 15 минут" IsLast="true">
+        <SettingRow Title="Объявления NCSOFT" Description="Кнопка 📣 в главном окне: официальные новости AION 2 (техработы, сбои, компенсации) и кампании Twitch Drops; метр проверяет их раз в 15 минут">
             <ValueSlot><ToggleSwitch Checked="@O.ShowNews" CheckedChanged="v => Set(o => o.ShowNews = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Стримы с дропсами: Client ID" Description="Чтобы во вкладке Twitch Drops было видно, кто сейчас в эфире с дропсами, Twitch требует ключ приложения. Создайте своё (бесплатно): dev.twitch.tv → Console → Register Your Application (OAuth Redirect URL — http://localhost, категория — Application Integration), затем «New Secret». Ключ хранится только в настройках метра на этом компьютере">
+            <ValueSlot>
+                <span class="fs-hotkey">
+                    <input class="fs-text" type="text" spellcheck="false" placeholder="Client ID" value="@O.TwitchClientId" @onchange="e => Set(o => o.TwitchClientId = (e.Value?.ToString() ?? string.Empty).Trim())" />
+                    <button type="button" class="fs-segmented__option fs-button" @onclick='() => AionDpsMeter.UI.Services.TimerWindow.NewsWindow.Browse("https://dev.twitch.tv/console/apps")'>Открыть ↗</button>
+                </span>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Стримы с дропсами: Client Secret" Description="Секрет того же приложения. Пусто — список стримов не загружается, вместо него кнопка «AION 2 на Twitch»" IsLast="true">
+            <ValueSlot><input class="fs-text" type="password" spellcheck="false" placeholder="Client Secret" value="@O.TwitchClientSecret" @onchange="e => Set(o => o.TwitchClientSecret = (e.Value?.ToString() ?? string.Empty).Trim())" /></ValueSlot>
         </SettingRow>
         break;
 

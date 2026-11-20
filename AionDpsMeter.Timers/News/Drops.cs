@@ -6,7 +6,46 @@ using System.Text.RegularExpressions;
 namespace AionDpsMeter.Timers.News;
 
 /// <summary>One step of a drops campaign: watch this long, get this many of the item (names as NC writes them, in English).</summary>
-public sealed record DropReward(int Minutes, string Name, int Qty);
+/// <param name="Icon">The item picture NC put in the notice's table row (NC's own CDN), shown from there.</param>
+/// <param name="Contents">What a chest holds, from the notice's "Chest | Contents | Qty" table: "Item ×15, Item ×10".</param>
+public sealed record DropReward(int Minutes, string Name, int Qty, string? Icon = null, string? Contents = null);
+
+/// <summary>A live AION 2 stream with drops on.</summary>
+public sealed record LiveStream(string Login, string Name, int Viewers, string Title, string Language);
+
+/// <summary>
+/// What is live with drops right now: Twitch's streams list for the AION 2 category (Helix API, an app token of the user's own
+/// Twitch app), the streams tagged "Drops…" (localised: DropsEnabled, DropsВключены …). The category id and the tag rule from
+/// SkeeveAN/Aion-DPS-Meter (MIT, twitchDrops.ts liveDrops).
+/// </summary>
+public static class LiveDrops
+{
+    public const string GameId = "771448419";
+    public const string TokenUrl = "https://id.twitch.tv/oauth2/token";
+    public const string StreamsUrl = "https://api.twitch.tv/helix/streams?game_id=" + GameId + "&first=100";
+
+    public static IReadOnlyList<LiveStream> Parse(string json)
+    {
+        var list = new List<LiveStream>();
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != System.Text.Json.JsonValueKind.Array) return list;
+            foreach (var x in data.EnumerateArray())
+            {
+                if (!x.TryGetProperty("tags", out var tags) || tags.ValueKind != System.Text.Json.JsonValueKind.Array) continue;
+                if (!tags.EnumerateArray().Any(t => t.ValueKind == System.Text.Json.JsonValueKind.String && t.GetString()!.StartsWith("drops", StringComparison.OrdinalIgnoreCase))) continue;
+                list.Add(new LiveStream(Str(x, "user_login"), Str(x, "user_name"), x.TryGetProperty("viewer_count", out var v) && v.TryGetInt32(out var n) ? n : 0,
+                    Str(x, "title"), Str(x, "language")));
+            }
+        }
+        catch (System.Text.Json.JsonException) { return []; }
+        return list.Where(s => s.Login.Length > 0).OrderByDescending(s => s.Viewers).ToList();
+    }
+
+    private static string Str(System.Text.Json.JsonElement e, string name) =>
+        e.TryGetProperty(name, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String ? v.GetString() ?? "" : "";
+}
 
 /// <param name="ClaimBy">The last moment the drops can be claimed in the Twitch inventory, when the notice says it.</param>
 public sealed record DropCampaign(string Id, string Name, DateTimeOffset Start, DateTimeOffset End, DateTimeOffset? ClaimBy,
@@ -35,7 +74,7 @@ public static class DropsParser
 
     /// <summary>The page text of a notice body: no tags, entities decoded, one space between words.</summary>
     public static string Text(string html) =>
-        Spaces.Replace(WebUtility.HtmlDecode(Tags.Replace(html, " ")).Replace(' ', ' '), " ").Trim();
+        Spaces.Replace(WebUtility.HtmlDecode(Tags.Replace(html, " ")).Replace(' ', ' ').Replace("\u200B", ""), " ").Trim();
 
     public static (DateTimeOffset? ClaimBy, IReadOnlyList<DropCampaign> Campaigns) Parse(string html, string id, DateTimeOffset posted, string title,
         string url = "")
@@ -50,10 +89,65 @@ public static class DropsParser
         {
             var rewards = Rows(text, at, out var end);
             if (rewards.Count > 0 && Period(text, at) is { } period)
-                campaigns.Add(new DropCampaign($"{id}-{campaigns.Count}", Name(title), period.Start, period.End, claim, rewards, url));
+                campaigns.Add(new DropCampaign($"{id}-{campaigns.Count}", Name(title), period.Start, period.End, claim, Enrich(rewards, html), url));
             at = Math.Max(end, at + 10);
         }
         return (claim, campaigns);
+    }
+
+    private static readonly Regex TableRow = new(@"<tr\b[^>]*>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex Cell = new(@"<t([dh])\b[^>]*>(.*?)</t[dh]>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex Img = new(@"<img\b[^>]*?\bsrc=""(https://[a-z0-9.-]+\.playnccdn\.com/[^""\s<>]+)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex QtyCell = new(@"^x\s?([\d,]{1,7})$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex TimeCell = new(@"^(\d{1,3})\s*(minutes?|mins?|hours?|hrs?)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>The rewards with what the notice's tables add: the icon in the reward's row, and a chest's contents.</summary>
+    private static List<DropReward> Enrich(List<DropReward> rewards, string html)
+    {
+        var icons = new Dictionary<(int, string), string>();
+        var contents = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var inChests = false;
+        string? chest = null;
+        foreach (Match tr in TableRow.Matches(html))
+        {
+            var cells = Cell.Matches(tr.Groups[1].Value).Select(c => (Header: c.Groups[1].Value is "h" or "H", Text: Text(c.Groups[2].Value))).ToList();
+            if (cells.Count == 0) continue;
+            if (cells.Any(c => c.Header))
+            {
+                inChests = cells.Any(c => c.Text.Equals("Contents", StringComparison.OrdinalIgnoreCase));
+                chest = null;
+                continue;
+            }
+            var t = cells.Select(c => c.Text).ToList();
+            if (t.Count >= 3 && TimeCell.Match(t[0]) is { Success: true } time && Img.Match(tr.Value) is { Success: true } img)
+                icons.TryAdd((Minutes(time), t[1].ToLowerInvariant()), img.Groups[1].Value);
+            if (!inChests) continue;
+            if (t.Count >= 3 && QtyCell.Match(t[2]) is { Success: true } q3 && t[0].Length > 0)
+            {
+                chest = t[0];
+                Add(chest, t[1], q3);
+            }
+            else if (chest is not null && t.Count >= 2 && QtyCell.Match(t[1]) is { Success: true } q2)
+                Add(chest, t[0], q2);
+        }
+        return rewards.Select(r => r with
+        {
+            Icon = icons.GetValueOrDefault((r.Minutes, r.Name.ToLowerInvariant())),
+            Contents = contents.TryGetValue(r.Name, out var inside) ? string.Join(", ", inside) : null,
+        }).ToList();
+
+        void Add(string box, string item, Match qty)
+        {
+            if (item.Length == 0) return;
+            if (!contents.TryGetValue(box, out var list)) contents[box] = list = [];
+            list.Add($"{item} ×{qty.Groups[1].Value}");
+        }
+    }
+
+    private static int Minutes(Match time)
+    {
+        var n = int.Parse(time.Groups[1].Value, CultureInfo.InvariantCulture);
+        return time.Groups[2].Value.StartsWith("m", StringComparison.OrdinalIgnoreCase) ? n : n * 60;
     }
 
     /// <summary>The table rows right after the header, one after another; the first gap ends the table.</summary>
@@ -67,8 +161,7 @@ public static class DropsParser
         for (var m = Row.Match(text, pos); m.Success; m = m.NextMatch())
         {
             if (text.AsSpan(end, m.Index - end).Trim().Length > 0) break;
-            var n = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-            var minutes = m.Groups[2].Value.StartsWith("m", StringComparison.OrdinalIgnoreCase) ? n : n * 60;
+            var minutes = Minutes(m);
             var qty = int.Parse(m.Groups[4].Value.Replace(",", ""), CultureInfo.InvariantCulture);
             rows.Add(new DropReward(minutes, m.Groups[3].Value.Trim(), qty));
             end = m.Index + m.Length;

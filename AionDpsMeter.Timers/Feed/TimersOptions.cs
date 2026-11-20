@@ -125,6 +125,9 @@ public sealed class TimersOptions
     public bool ShowNews { get; set; } = true;
     /// <summary>Unix seconds of the newest announcement the user has seen; newer ones are marked "новое".</summary>
     public long NewsSeenEpoch { get; set; }
+    /// <summary>The user's own Twitch app (dev.twitch.tv), for the streams live with drops; empty: not shown.</summary>
+    public string TwitchClientId { get; set; } = "";
+    public string TwitchClientSecret { get; set; } = "";
     /// <summary>The main window's "_" hides the overlay to the tray instead of the taskbar.</summary>
     public bool MinimizeToTray { get; set; }
     /// <summary>The overlay goes to the tray while AION 2 is closed and comes back when it starts.</summary>

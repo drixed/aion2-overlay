@@ -12,7 +12,7 @@
         <b>@(tab == "drops" ? "Twitch Drops" : "Объявления")</b>
         <span class="nw-tabs" @onmousedown:stopPropagation="true">
             <button type="button" class="@(tab == "news" ? "on" : "")" @onclick='() => tab = "news"'>Объявления</button>
-            <button type="button" class="@(tab == "drops" ? "on" : "")" @onclick='() => tab = "drops"'>Twitch Drops</button>
+            <button type="button" class="@(tab == "drops" ? "on" : "")" @onclick="ShowDrops">Twitch Drops</button>
         </span>
         <span class="nw-grow"></span>
         <button type="button" class="nw-x" title="Обновить" @onmousedown:stopPropagation="true" @onclick="Reload">⟳</button>
@@ -76,8 +76,31 @@
                 @Campaign(c, now, true)
             }
 
-            <div class="nw-sec">Сейчас в эфире с дропами</div>
-            <p class="nw-hint">Список стримов прямо в метре показать нельзя: Twitch отдаёт его только по ключу разработчика. Нажмите «AION 2 на Twitch» — стримы с дропсами помечены значком «Drops включены».</p>
+            @if (!News.LiveConfigured)
+            {
+                <div class="nw-sec">Сейчас в эфире с дропами</div>
+                <p class="nw-hint">Чтобы видеть здесь, кто сейчас стримит с дропсами, Twitch требует ключ приложения: создайте своё бесплатно и вставьте Client ID и Client Secret в Настройки → Система → «Стримы с дропсами». Пока — кнопка «AION 2 на Twitch», там такие стримы помечены значком «Drops включены».</p>
+            }
+            else if (News.Live is { } live)
+            {
+                <div class="nw-sec">Сейчас в эфире с дропами: @live.Count @Plural(live.Count, "стрим", "стрима", "стримов") · @live.Sum(s => s.Viewers).ToString("N0", Ru) @Plural(live.Sum(s => s.Viewers), "зритель", "зрителя", "зрителей")</div>
+                @if (live.Count == 0)
+                {
+                    <p class="nw-hint">Сейчас никто не стримит AION 2 с дропсами.</p>
+                }
+                <div class="nw-live">
+                    @foreach (var s in live.Take(12))
+                    {
+                        <button type="button" class="nw-stream" title="@s.Title" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/" + s.Login)'>@s.Name<small>@s.Viewers.ToString("N0", Ru)</small></button>
+                    }
+                </div>
+                @if (News.LiveError is { } err) { <p class="nw-hint">@err</p> }
+            }
+            else
+            {
+                <div class="nw-sec">Сейчас в эфире с дропами</div>
+                <p class="nw-hint">@(News.LiveError ?? "Загружаю список стримов с Twitch…")</p>
+            }
 
             <div class="nw-sec">Как это работает</div>
             <ol class="nw-steps">
@@ -111,6 +134,17 @@
         limit = 30;
     }
 
+    private static readonly System.Globalization.CultureInfo Ru = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
+
+    private static string Plural(int n, string one, string few, string many) =>
+        (n % 100) is >= 11 and <= 14 ? many : (n % 10) switch { 1 => one, >= 2 and <= 4 => few, _ => many };
+
+    private void ShowDrops()
+    {
+        tab = "drops";
+        _ = News.RefreshLiveAsync();
+    }
+
     private static string When(DateTimeOffset t) => t.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
 
     private static string Watch(int minutes) => minutes % 60 == 0 ? $"{minutes / 60} ч" : $"{minutes} мин";
@@ -133,7 +167,7 @@
                 }
             </div>
             <div class="nw-camp-when">
-                @When(c.Start) — @When(c.End)
+                Период: @When(c.Start) — @When(c.End) · @Watch(c.Rewards.Max(r => r.Minutes)) всего
                 @if (c.ClaimBy is { } claim)
                 {
                     <span class="@(claim > now ? "nw-claim" : "")">· Получите награды до @When(claim)</span>
@@ -143,9 +177,13 @@
                 @foreach (var r in c.Rewards)
                 {
                     <div class="nw-reward">
+                        <span class="nw-reward-icon">
+                            @if (r.Icon is { Length: > 0 } icon) { <img src="@icon" alt="" loading="lazy" referrerpolicy="no-referrer" /> }
+                            else { <i>🎁</i> }
+                        </span>
+                        <span class="nw-reward-name">@r.Name@(r.Qty > 1 ? $" ×{r.Qty}" : "")</span>
+                        @if (r.Contents is { Length: > 0 } inside) { <span class="nw-reward-in">Содержит: @inside</span> }
                         <span class="nw-reward-time">@Watch(r.Minutes)</span>
-                        <span class="nw-reward-name">@r.Name</span>
-                        <span class="nw-reward-qty">×@r.Qty</span>
                     </div>
                 }
             </div>
@@ -169,6 +207,7 @@
     protected override void OnInitialized()
     {
         tab = Window.Tab;
+        if (tab == "drops") _ = News.RefreshLiveAsync();
         Remember();
         News.Changed += OnChanged;
         Window.Requested += OnRequested;
@@ -187,11 +226,18 @@
         StateHasChanged();
     });
 
-    private void OnRequested() => InvokeAsync(() => { tab = Window.Tab; Remember(); StateHasChanged(); });
+    private void OnRequested() => InvokeAsync(() =>
+    {
+        tab = Window.Tab;
+        if (tab == "drops") _ = News.RefreshLiveAsync();
+        Remember();
+        StateHasChanged();
+    });
 
     private async Task Reload()
     {
         await News.RefreshAsync();
+        if (tab == "drops") await News.RefreshLiveAsync(force: true);
         Remember();
     }
 

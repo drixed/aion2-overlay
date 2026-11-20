@@ -53,4 +53,52 @@ public class DropsTests
     {
         Assert.Empty(DropsParser.Parse("<p>Maintenance from 07:00 to 10:00</p>", "x", DateTimeOffset.UtcNow, "Maintenance").Campaigns);
     }
+
+    // The real table shape (EU notice "Ludra Awakens"): the reward's icon in a fourth cell, then a "Chest | Contents | Qty" table
+    // where the chest cell spans its contents' rows.
+    private const string WithIcons =
+        "<p>Event Schedule</p><p>PST: November 4, 2026 at 06:00 - November 17, 2026 at 23:59</p><table>" +
+        "<tr><th><strong>Watch Time</strong></th><th><strong>Reward</strong></th><th><strong>Qty</strong></th><th><br></th></tr>" +
+        "<tr><td><div>1 hr</div></td><td><div>Battle Support Chest (Bound)</div></td><td><div>x1</div></td><td><div class=\"fr-image\"><img src=\"https://fizz-download.playnccdn.com/lg/file/AION/download/aaa\" alt=\"chest.png\"></div></td></tr>" +
+        "<tr><td><div>12 hr</div></td><td><div>Pixel Glasses</div></td><td><div>x1</div></td><td><br></td></tr></table><table>" +
+        "<tr><th>Chest</th><th>Contents</th><th>Qty</th><th><br></th></tr>" +
+        "<tr><td rowspan=\"2\"><strong>Battle Support Chest (Bound)</strong></td><td>Resurrection Spiritstone (Bound)</td><td>x15</td><td><img src=\"https://x/1\"></td></tr>" +
+        "<tr><td>Battle Enhance Scroll (Bound)</td><td>x10</td><td><img src=\"https://x/2\"></td></tr></table>";
+
+    [Fact]
+    public void A_reward_takes_its_icon_from_its_row_and_a_chest_lists_what_is_inside()
+    {
+        var c = Assert.Single(DropsParser.Parse(WithIcons, "l", DateTimeOffset.UtcNow, "Ludra Awakens").Campaigns);
+        Assert.Equal("https://fizz-download.playnccdn.com/lg/file/AION/download/aaa", c.Rewards[0].Icon);
+        Assert.Equal("Resurrection Spiritstone (Bound) ×15, Battle Enhance Scroll (Bound) ×10", c.Rewards[0].Contents);
+        Assert.Null(c.Rewards[1].Icon);
+        Assert.Null(c.Rewards[1].Contents);
+    }
+
+    [Fact]
+    public void Only_ncsoft_images_are_taken_as_icons()
+    {
+        var html = WithIcons.Replace("https://fizz-download.playnccdn.com/lg/file/AION/download/aaa", "http://evil.example/x.png");
+        Assert.Null(Assert.Single(DropsParser.Parse(html, "l", DateTimeOffset.UtcNow, "x").Campaigns).Rewards[0].Icon);
+    }
+
+    // helix/streams?game_id=… (Twitch API), trimmed: the streams with a "Drops…" tag (localised: DropsEnabled, DropsВключены) count.
+    private const string Streams = """
+    { "data": [
+        { "user_login": "small", "user_name": "Small", "viewer_count": 39, "title": "drops", "language": "en", "tags": ["DropsEnabled"] },
+        { "user_login": "big", "user_name": "TheBig", "viewer_count": 590, "title": "AION 2!", "language": "en", "tags": ["English", "DropsВключены"] },
+        { "user_login": "nodrops", "user_name": "No", "viewer_count": 5000, "title": "x", "language": "en", "tags": ["English"] },
+        { "user_login": "notags", "user_name": "No2", "viewer_count": 10, "title": "x", "language": "en", "tags": null }
+      ] }
+    """;
+
+    [Fact]
+    public void Live_streams_with_drops_are_the_ones_tagged_drops_most_watched_first()
+    {
+        var live = LiveDrops.Parse(Streams);
+        Assert.Equal(["big", "small"], live.Select(s => s.Login));
+        Assert.Equal(590, live[0].Viewers);
+        Assert.Equal("TheBig", live[0].Name);
+        Assert.Empty(LiveDrops.Parse("nope"));
+    }
 }

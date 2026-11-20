@@ -19,6 +19,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         private static readonly TimeSpan Every = TimeSpan.FromMinutes(15);
         private const int MaxPagesBack = 12;
         private const int MaxBodiesPerRefresh = 40;
+        private const int ParserVersion = 2;
         private static readonly HttpClient Http = CreateClient();
         private readonly SemaphoreSlim busy = new(1, 1);
         private System.Threading.Timer? timer;
@@ -50,6 +51,8 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                 if (File.Exists(ArchivePath)) Items = JsonSerializer.Deserialize<List<Announcement>>(File.ReadAllText(ArchivePath)) ?? [];
                 else if (File.Exists(OldCachePath)) Items = Announcements.Parse(File.ReadAllText(OldCachePath));
                 if (File.Exists(DropsPath)) drops = JsonSerializer.Deserialize<DropsFile>(File.ReadAllText(DropsPath)) ?? new();
+                if (drops.Version < ParserVersion) drops.Scanned.Clear();
+                drops.Version = ParserVersion;
                 Drops = Sorted(drops.Campaigns);
             }
             catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or NotSupportedException)
@@ -154,9 +157,75 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             return http;
         }
 
+        /// <summary>The streams live with drops (the user's own Twitch app in the settings), at most every 5 minutes; null when not set up or failed.</summary>
+        public IReadOnlyList<LiveStream>? Live { get; private set; }
+
+        public DateTimeOffset? LiveCheckedAt { get; private set; }
+
+        public string? LiveError { get; private set; }
+
+        public bool LiveConfigured => options.Current.TwitchClientId.Trim().Length > 0 && options.Current.TwitchClientSecret.Trim().Length > 0;
+
+        private string? twitchToken;
+        private DateTimeOffset twitchTokenUntil;
+        private string? twitchTokenFor;
+
+        public async Task RefreshLiveAsync(bool force = false)
+        {
+            if (!LiveConfigured)
+            {
+                Live = null;
+                LiveError = null;
+                return;
+            }
+            if (!force && LiveCheckedAt is { } at && DateTimeOffset.UtcNow - at < TimeSpan.FromMinutes(5)) return;
+            var id = options.Current.TwitchClientId.Trim();
+            var secret = options.Current.TwitchClientSecret.Trim();
+            try
+            {
+                if (twitchToken is null || twitchTokenFor != id + secret || DateTimeOffset.UtcNow >= twitchTokenUntil)
+                {
+                    using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        ["client_id"] = id, ["client_secret"] = secret, ["grant_type"] = "client_credentials",
+                    });
+                    using var tokenAnswer = await Http.PostAsync(LiveDrops.TokenUrl, form).ConfigureAwait(false);
+                    if (!tokenAnswer.IsSuccessStatusCode)
+                    {
+                        LiveError = "Twitch не принял Client ID / Client Secret — проверьте их в настройках";
+                        LiveCheckedAt = DateTimeOffset.UtcNow;
+                        Changed?.Invoke();
+                        return;
+                    }
+                    using var doc = JsonDocument.Parse(await tokenAnswer.Content.ReadAsStringAsync().ConfigureAwait(false));
+                    twitchToken = doc.RootElement.GetProperty("access_token").GetString();
+                    var seconds = doc.RootElement.TryGetProperty("expires_in", out var e) && e.TryGetInt32(out var s) ? s : 3600;
+                    twitchTokenUntil = DateTimeOffset.UtcNow.AddSeconds(Math.Max(60, seconds - 300));
+                    twitchTokenFor = id + secret;
+                }
+                using var request = new HttpRequestMessage(HttpMethod.Get, LiveDrops.StreamsUrl);
+                request.Headers.Add("Client-Id", id);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", twitchToken);
+                using var answer = await Http.SendAsync(request).ConfigureAwait(false);
+                if ((int)answer.StatusCode == 401) twitchToken = null;
+                answer.EnsureSuccessStatusCode();
+                Live = LiveDrops.Parse(await answer.Content.ReadAsStringAsync().ConfigureAwait(false));
+                LiveError = null;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException)
+            {
+                logger.LogDebug(ex, "Live drops could not be loaded");
+                LiveError = "Не удалось получить стримы с Twitch — попробую ещё раз позже";
+            }
+            LiveCheckedAt = DateTimeOffset.UtcNow;
+            Changed?.Invoke();
+        }
+
         /// <summary>drops.json: the notices already read (id → their title then) and the campaigns found.</summary>
         private sealed class DropsFile
         {
+            /// <summary>Below <see cref="ParserVersion"/>: read every notice again (the reader learned icons and chest contents).</summary>
+            public int Version { get; set; }
             public Dictionary<string, string> Scanned { get; set; } = [];
             public List<DropCampaign> Campaigns { get; set; } = [];
         }

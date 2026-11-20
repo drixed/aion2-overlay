@@ -25,3 +25,5 @@
 .fs-hidden-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 2px 12px; }
 .fs-hidden-item { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 7px; background: #19202a; border: 1px solid #2b3442; font-size: 12px; color: #c9d1d9; }
 .fs-hidden-item button { background: #121820; border: 1px solid #2f3846; color: #5fd4c4; border-radius: 5px; padding: 1px 8px; font: inherit; font-size: 11px; cursor: pointer; }
+.fs-text { width: 210px; background: #0f141c; color: #e6edf3; border: 1px solid var(--line-strong, #2f3846); border-radius: 7px; padding: 5px 8px; font-family: 'Segoe UI', sans-serif; font-size: 12px; outline: none; }
+.fs-text:focus { border-color: rgba(95, 212, 196, .6); }
