@@ -74,6 +74,8 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton(_ => new AionDpsMeter.Timers.Character.InspectedPlayers(TimersPaths.Of("inspected.json")));
+        services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Character.InspectedPlayers>());
         services.AddSingleton(_ =>
         {
             // 0x9702 belongs to upstream's party processor, so the lobby listens to every frame instead of RawForwarder

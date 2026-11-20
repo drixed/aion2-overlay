@@ -95,6 +95,14 @@ namespace AionDpsMeter.UI.Pages
             : $"{(p.Level == 0 ? "сбор" : $"ур. {p.Level}")} · {(p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}")}";
 
         private AionDpsMeter.Timers.Pets.TargetSelection? targetSelection;
+        private AionDpsMeter.Timers.Character.InspectedPlayers? inspected;
+
+        /// <summary>True when this player's character window was opened in the game: the row gets a 👤 to show the gear.</summary>
+        private string? InspectedName(long playerId)
+        {
+            inspected ??= services.GetService(typeof(AionDpsMeter.Timers.Character.InspectedPlayers)) as AionDpsMeter.Timers.Character.InspectedPlayers;
+            return entities.GetPlayerEntity((int)playerId)?.Name is { Length: > 0 } name && inspected?.Find(name) is { } p ? p.Name : null;
+        }
         private AionDpsMeter.Timers.Lobby.LobbyTracker? lobby;
         private AionDpsMeter.Timers.Lobby.LobbyParty? LobbyNow;
         private long lobbyRangFor;

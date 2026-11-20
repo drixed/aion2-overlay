@@ -101,6 +101,64 @@ public class EquipmentParserTests
         Assert.Equal("Справедливость", ItemStats.Lord(7));
     }
 
+    // Another player's character window (0x3650, sent when it is opened in the game): 50 36 00 00 07 | name | class code u32
+    // (4 * class + 1..4) | 01 | faction | level u32 | 4 zero bytes | gear score u32 | … server u16 + legion name … | per piece: item
+    // u32, nine zero bytes, enchant, then the same details block as the login list.
+    private static byte[] InspectFrame()
+    {
+        var f = new List<byte> { 0x50, 0x36, 0, 0, 7, 6 };
+        f.AddRange("Tester"u8.ToArray());
+        f.AddRange(BitConverter.GetBytes(26));            // Sorcerer: (26 - 1) / 4 = 6
+        f.AddRange([1, 2]);
+        f.AddRange(BitConverter.GetBytes(45));
+        f.AddRange([0, 0, 0, 0]);
+        f.AddRange(BitConverter.GetBytes(3110));
+        f.AddRange([0x1C, 0x05, 5, .. "Guild"u8.ToArray(), 0, 0]);
+        f.AddRange(BitConverter.GetBytes(115030053));
+        f.AddRange(new byte[9]);
+        f.Add(18);
+        f.AddRange(new byte[6]);
+        f.AddRange([0x60, 0, 0, 0, 0x00, 1, 0x11, 0x22, 0x33, 0x44, 0x3D, 0x01, 2, 7, 7, 7, 7, 0, 0, 0x1C, 0x05, 1, 3]);
+        f.AddRange(BitConverter.GetBytes(19950001));
+        f.AddRange(new byte[9]);
+        f.AddRange([1, 0x20, 0x00, .. BitConverter.GetBytes(732), 0, 0]);
+        f.AddRange(BitConverter.GetBytes(110120003));
+        f.AddRange(new byte[9]);
+        f.Add(10);
+        f.AddRange(new byte[8]);
+        return [.. f];
+    }
+
+    [Fact]
+    public void An_inspected_player_comes_with_class_level_gear_score_and_gear()
+    {
+        var p = InspectParser.Parse(DateTime.Now, InspectFrame())!;
+        Assert.Equal("Tester", p.Name);
+        Assert.Equal(15, p.ClassId);                       // our Волшебник
+        Assert.Equal(45, p.Level);
+        Assert.Equal(3110, p.GearScore);
+        Assert.Equal("Guild", p.Guild);
+        Assert.Equal(1308, p.Server);
+        var weapon = p.Items.Single(i => i.ItemId == 115030053);
+        Assert.Equal(18, weapon.Enchant);
+        Assert.Equal([new ItemStone(317, 2)], weapon.Stones!);
+        Assert.Equal([new ItemStat(32, 732)], weapon.Stats!);
+        Assert.Equal(19950001, weapon.Godstone);
+        Assert.Equal(10, p.Items.Single(i => i.ItemId == 110120003).Enchant);
+        Assert.Null(InspectParser.Parse(DateTime.Now, [0x50, 0x36, 0, 0, 7]));
+    }
+
+    [Fact]
+    public void Inspected_players_are_kept_by_name_newest_first()
+    {
+        using var dir = new TempDir();
+        var store = new InspectedPlayers(dir.File("inspected.json"));
+        store.OnFrame(new DateTime(2026, 11, 20, 17, 0, 40), InspectFrame());
+        Assert.Equal("Tester", store.Find("tester")!.Name);
+        var again = new InspectedPlayers(dir.File("inspected.json"));
+        Assert.Equal(["Tester"], again.All().Select(p => p.Name));
+    }
+
     [Fact]
     public void The_catalog_knows_items_with_russian_names()
     {

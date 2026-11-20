@@ -7,10 +7,13 @@
 @inject CharacterTracker Character
 @inject CharacterWindow Window
 @inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
+@inject InspectedPlayers Inspected
 
 @{
     var eq = Character.Equipment;
-    var items = eq?.Items.Select(i => (Worn: i, Info: ItemCatalog.Find(i.ItemId))).ToList() ?? [];
+    var other = Window.Viewing is { } viewing ? Inspected.Find(viewing) : null;
+    var recent = Inspected.All().Take(8).ToList();
+    var items = (other?.Items ?? eq?.Items)?.Select(i => (Worn: i, Info: ItemCatalog.Find(i.ItemId))).ToList() ?? [];
     var gear = items.Where(x => x.Worn.Slot < EquipmentParser.ArcanaSlotStart && x.Info?.Slot != "Arcana").ToList();
     var arcana = items.Where(x => x.Worn.Slot >= EquipmentParser.ArcanaSlotStart || x.Info?.Slot == "Arcana").ToList();
     var avg = gear.Where(x => x.Info is not null).Select(x => (double)x.Info!.ItemLevel).DefaultIfEmpty(0).Average();
@@ -22,6 +25,15 @@
     var server = me?.ServerName is { Length: > 0 } s0 ? s0 : who?.Server;
     var power = me?.CombatPower > 0 ? me.CombatPower : who?.CombatPower ?? 0;
     var gs = me?.GearScore > 0 ? me.GearScore : who?.GearScore ?? 0;
+    if (other is not null)
+    {
+        classId = other.ClassId;
+        name = other.Name;
+        level = other.Level;
+        server = other.Server > 0 ? AionDpsMeter.Core.Data.ServerMap.GetName(other.Server) : null;
+        power = 0;
+        gs = other.GearScore;
+    }
 }
 <div class="ch">
     <div class="ch-title" @onmousedown="Window.Drag">
@@ -43,11 +55,29 @@
             @if (gs > 0) { <div class="ch-stat"><b>@gs.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b><small>ГС</small></div> }
         </div>
 
+        @if (recent.Count > 0)
+        {
+            <div class="ch-people">
+                <button type="button" class="@(other is null ? "on" : "")" @onclick="() => Window.ShowPlayer(null)">Мой персонаж</button>
+                @foreach (var p in recent)
+                {
+                    <button type="button" class="@(other?.Name == p.Name ? "on" : "")" title="@($"Осмотрен {p.At:dd.MM HH:mm}")" @onclick="() => Window.ShowPlayer(p.Name)">
+                        <span class="ch-people-icon" style="background-image:url('/images/classes/@(p.ClassId).png')"></span>@p.Name
+                    </button>
+                }
+                <small>осмотренные в игре</small>
+            </div>
+        }
+        @if (other is not null)
+        {
+            <div class="ch-other-note">Осмотрен в игре @other.At.ToString("dd.MM HH:mm")@(other.Guild is { Length: > 0 } g ? $" · легион «{g}»" : "")</div>
+        }
+
         <div class="ch-tabs">
             <button type="button" class="@(tab == "gear" ? "on" : "")" @onclick='() => tab = "gear"'>Экипировка <small>@gear.Count</small></button>
             <button type="button" class="@(tab == "arcana" ? "on" : "")" @onclick='() => tab = "arcana"'>Арканы <small>@arcana.Count</small></button>
             <span class="ch-grow"></span>
-            @if (eq is { } e) { <small class="ch-when">по входу @e.At.ToString("dd.MM HH:mm")</small> }
+            @if (other is null && eq is { } e) { <small class="ch-when">по входу @e.At.ToString("dd.MM HH:mm")</small> }
         </div>
 
         @if (items.Count == 0)
@@ -196,6 +226,8 @@
     protected override void OnInitialized()
     {
         Character.Changed += OnChanged;
+        Inspected.Changed += OnChanged;
+        Window.ViewChanged += OnChanged;
         Remember();
         // the entity marked as me comes with the first fight or login after the window opened
         timer = new Timer(_ => { if (Remember()) OnChanged(); }, null, 2000, 2000);
@@ -217,6 +249,8 @@
     public void Dispose()
     {
         Character.Changed -= OnChanged;
+        Inspected.Changed -= OnChanged;
+        Window.ViewChanged -= OnChanged;
         timer?.Dispose();
     }
 }

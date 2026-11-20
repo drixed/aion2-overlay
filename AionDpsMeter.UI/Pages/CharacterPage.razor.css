@@ -72,3 +72,10 @@
 .ch-row small { color: #7d8898; font-size: 10.5px; }
 .ch-godname { color: #f2cc60 !important; }
 .ch-muted { color: #7d8898 !important; }
+/* the players whose window was opened in the game: switch between them and the own character */
+.ch-people { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 2px; }
+.ch-people button { display: inline-flex; align-items: center; gap: 5px; background: #19202a; border: 1px solid #2a3442; color: #c9d1d9; border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 11.5px; cursor: pointer; }
+.ch-people button.on { color: #5fd4c4; border-color: rgba(95, 212, 196, .55); background: rgba(95, 212, 196, .08); }
+.ch-people small { color: #5f6b7c; font-size: 10.5px; margin-left: 4px; }
+.ch-people-icon { width: 14px; height: 14px; background-size: contain; background-repeat: no-repeat; display: inline-block; }
+.ch-other-note { color: #8b95a5; font-size: 11px; margin: 2px 0 0; }

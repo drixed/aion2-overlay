@@ -66,7 +66,7 @@ public static class EquipmentParser
     /// stones of the piece, stat u16, tier ≤ 4), the owner block of 10 bytes ending in 03, the godstone u32 and 9 more bytes,
     /// then the rolled stats (count ≤ 8, stat u16 + value u32). Null when the block does not look like that.
     /// </summary>
-    private static (IReadOnlyList<ItemStone> Stones, IReadOnlyList<ItemStat>? Stats, int Godstone)? Details(ReadOnlySpan<byte> frame, int size)
+    internal static (IReadOnlyList<ItemStone> Stones, IReadOnlyList<ItemStat>? Stats, int Godstone)? Details(ReadOnlySpan<byte> frame, int size)
     {
         if (size + 8 > frame.Length || frame[size + 1] != 0 || frame[size + 2] != 0 || frame[size + 3] != 0) return null;
         for (var r = size + 4; r <= size + 6 && r + 1 < frame.Length; r++)

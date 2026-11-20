@@ -278,6 +278,10 @@
                     }
                     <span class="bp-row-icon" style="background-image:url('/images/classes/@(player.ClassId).png')"></span>
                     <span class="bp-row-name">@player.PlayerNameDisplay</span>
+                    @if (InspectedName(player.PlayerId) is { } inspectedName)
+                    {
+                        <span class="bp-row-insp" title="Шмот этого игрока (вы осматривали его в игре)" @onclick="() => CharacterWindow.ShowPlayer(inspectedName)" @onclick:stopPropagation="true">👤</span>
+                    }
                     <span class="bp-row-gauge"><i class="@ViewModel.GetPlayerRowClass(player)" style="width:@(bar.ToString("0.##", CultureInfo.InvariantCulture))%"></i></span>
                     @if (player.IsUser && VsBest() is { } vs)
                     {

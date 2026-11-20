@@ -10,6 +10,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
     [PacketOpcode(0x371A)] [PacketOpcode(0x371B)] [PacketOpcode(0x371C)] [PacketOpcode(0x371E)] [PacketOpcode(0x3720)] // movements: the replay
     [PacketOpcode(0x3728)] [PacketOpcode(0x3729)] [PacketOpcode(0x372A)] [PacketOpcode(0x371F)] [PacketOpcode(0x372F)] [PacketOpcode(0x373C)]
     [PacketOpcode(0x3834)] // 34 38: the target the character selected (the pet line before the first hit)
+    [PacketOpcode(0x3650)] // 50 36: another player's character window (inspect)
     internal sealed class RawForwarder(IEnumerable<IRawPacketListener> listeners) : IOpcodeProcessor
     {
         public void Process(Packet packet)
