@@ -18,6 +18,37 @@ public sealed class MeterModesService : IDisposable
     public HealTally Heals { get; } = new();
     public DeathRecaps Deaths { get; } = new();
 
+    // fight-history.json: the fight summaries (healing, damage taken) for the history window, kept over restarts
+    private static string ArchivePath => Path.Combine(AppContext.BaseDirectory, "fight-history.json");
+    private readonly Lock archiveGate = new();
+    private List<FightSummary> archive = [];
+    private Timer? archiveTimer;
+
+    /// <summary>The fight that overlaps a history session: from this run first, else from fight-history.json.</summary>
+    public FightSummary? FightFor(DateTime sessionStart, DateTime sessionEnd)
+    {
+        if (FightArchive.Find(Fight.History(), sessionStart, sessionEnd) is { } live) return live;
+        lock (archiveGate) return FightArchive.Find(archive, sessionStart, sessionEnd);
+    }
+
+    private static (DateTime, TimeSpan, long, long, long, int) Key(FightSummary f) =>
+        (f.Start, f.Duration, f.TotalDamage, f.TotalHeal, f.TotalTaken, f.Players.Count);
+
+    private void SaveFights()
+    {
+        try
+        {
+            lock (archiveGate)
+            {
+                var merged = FightArchive.Merge(archive, Fight.History());
+                if (merged.Select(Key).SequenceEqual(archive.Select(Key))) return; // nothing new: no write
+                archive = merged;
+                File.WriteAllText(ArchivePath, FightArchive.Serialize(archive));
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
+
     private readonly AionDpsMeter.Services.Services.Entity.EntityTracker entities;
 
     public MeterModesService(TimersOptionsStore options, AionDpsMeter.Services.Services.Entity.EntityTracker entities)
@@ -35,6 +66,9 @@ public sealed class MeterModesService : IDisposable
         CombatFeed.Hit += OnHit;
         CombatFeed.Death += OnDeath;
         entities.SummonRegistered += OnSummonRegistered;
+        try { if (File.Exists(ArchivePath)) archive = FightArchive.Parse(File.ReadAllText(ArchivePath)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        archiveTimer = new Timer(_ => SaveFights(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
     }
 
     private void OnSummonRegistered(int summonId, int ownerId)
@@ -112,5 +146,7 @@ public sealed class MeterModesService : IDisposable
         CombatFeed.Death -= OnDeath;
         options.Changed -= OnOptionsChanged;
         entities.SummonRegistered -= OnSummonRegistered;
+        archiveTimer?.Dispose();
+        SaveFights();
     }
 }

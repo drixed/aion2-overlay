@@ -169,7 +169,7 @@
                 }
                 else if (fight is null)
                 {
-                    <p class="hb-empty">Лечение и полученный урон метр собирает с версии с «Итогами боя» и до перезапуска — для этого боя их нет.</p>
+                    <p class="hb-empty">Лечения и полученного урона для этого боя нет: метр сохраняет их начиная с версии 2026.1120.173, более старые бои их не запомнили.</p>
                 }
                 else
                 {
@@ -249,7 +249,7 @@
 
     /// <summary>The fork's fight summary (healing, damage taken) for this fight, when the meter saw it.</summary>
     private FightSummary? Match(HistorySessionSnapshot s) =>
-        Modes.Fight.History().FirstOrDefault(f => f.Start <= s.SessionEnd.AddSeconds(30) && f.Start + f.Duration >= s.SessionStart.AddSeconds(-30));
+        Modes.FightFor(s.SessionStart, s.SessionEnd);
 
     private sealed record RankRow(long Id, string Name, int ClassId, double Value, string Text);
 
