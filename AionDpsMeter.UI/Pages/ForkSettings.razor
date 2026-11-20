@@ -304,7 +304,7 @@
         <SettingRow Title="Без звука, когда игра закрыта" Description="Оповещения по-прежнему показываются, просто без звука">
             <ValueSlot><ToggleSwitch Checked="@O.MuteWhenGameClosed" CheckedChanged="v => Set(o => o.MuteWhenGameClosed = v)" /></ValueSlot>
         </SettingRow>
-        @foreach (var alert in AlertRows)
+        @foreach (var alert in MainWindowRows)
         {
             <SettingRow Title="@alert.Title" Description="@alert.Description">
                 <ValueSlot>
@@ -351,23 +351,5 @@
             </ValueSlot>
         </SettingRow>
 
-        <div class="fs-label fs-label--spaced">ОКНО ТАЙМЕРОВ БОССОВ</div>
-        <SettingRow Title="Окно таймеров боссов" Description="Полевые боссы в отдельном окне; закрыть его можно и крестиком в его шапке" IsLast="true">
-            <ValueSlot><ToggleSwitch Checked="@O.ShowBossTimers" CheckedChanged="v => Set(o => o.ShowBossTimers = v)" /></ValueSlot>
-        </SettingRow>
-        @if (O.HiddenIds.Count > 0)
-        {
-            <SettingRow Title="Убранные из окна таймеров" Description="Боссы и события, которые вы убрали крестиком «×» в окне таймеров боссов. Верните нужные — они снова появятся в окне">
-                <ValueSlot>
-                    <button type="button" class="fs-segmented__option fs-button" @onclick="ShowHidden">Вернуть все (@O.HiddenIds.Count)</button>
-                </ValueSlot>
-            </SettingRow>
-            <div class="fs-hidden-list">
-                @foreach (var id in O.HiddenIds.ToList())
-                {
-                    <span class="fs-hidden-item">@HiddenName(id)<button type="button" title="Вернуть в окно" @onclick="() => Set(o => o.HiddenIds.Remove(id))">вернуть</button></span>
-                }
-            </div>
-        }
         break;
 }

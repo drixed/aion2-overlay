@@ -12,6 +12,10 @@
     {
         <div class="bt-edit">Перетащите панель · @(Buffs.ActivePreset?.Name)</div>
     }
+    @if (tiles.Count == 0)
+    {
+        <div class="bt-empty">Трекер баффов: добавьте баффы в пресет своего класса — Настройки → Баффы</div>
+    }
     <div class="bt-row">
         @foreach (var t in tiles)
         {

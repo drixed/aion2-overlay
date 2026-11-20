@@ -42,3 +42,5 @@
 .fbf-search { background: #0f141b; color: #e6edf3; border: 1px solid #2f3846; border-radius: 6px; padding: 5px 9px; font: inherit; font-size: 12px; outline: none; }
 .fbf-muted { color: #5f6b7c; font-size: 11.5px; }
 .fbf-new { align-self: flex-start; }
+.fbf-on { font-style: normal; color: #7ee787; }
+.fbf-off { font-style: normal; color: #f5c76b; }

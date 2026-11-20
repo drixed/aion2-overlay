@@ -17,7 +17,7 @@
 .fb-arrow { color: #8b95a5; width: 12px; }
 .fb-mini { background: #121820; border: 1px solid #2b3442; color: #8b95a5; border-radius: 6px; padding: 2px 8px; font: inherit; font-size: 11px; cursor: pointer; }
 .fb-mini:hover { color: #5fd4c4; border-color: rgba(95, 212, 196, .5); }
-.fb-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 150px 110px auto; align-items: center; gap: 10px; padding: 6px 12px; border-top: 1px solid rgba(255, 255, 255, .04); }
+.fb-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 170px 120px 30px; align-items: center; gap: 10px; padding: 6px 12px; border-top: 1px solid rgba(255, 255, 255, .04); }
 .fb-row:hover { background: rgba(255, 255, 255, .02); }
 .fb-name { display: flex; flex-direction: column; min-width: 0; }
 .fb-name b { font-size: 12.5px; font-weight: 600; color: #c9d1d9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -27,5 +27,14 @@
 .fb-name small.wait { color: #8b95a5; }
 .fb-name small.soon { color: #f5c76b; }
 .fb-name small.none { color: #5f6b7c; }
-.fb-sound { width: 100%; }
-.fb-volume { width: 100%; }
+.fb-row .fs-select { width: 100%; max-width: none; }
+.fb-range { width: 100%; margin: 0; accent-color: #5fd4c4; height: 4px; }
+.fb-play { width: 28px; height: 26px; display: inline-flex; align-items: center; justify-content: center; background: #121820; border: 1px solid #2f3846; color: #c9d1d9; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 0; }
+.fb-play:hover { border-color: rgba(95, 212, 196, .6); color: #5fd4c4; }
+.fb-place { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+.fb-who { width: 100%; box-sizing: border-box; background: #0f141b; color: #e6edf3; border: 1px solid #2f3846; border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px; outline: none; }
+.fb-who:focus { border-color: #5fd4c4; }
+.fb-pad { padding: 8px 12px 0; }
+.fb-hidden { display: flex; flex-wrap: wrap; gap: 6px; }
+.fb-hidden-item { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 7px; background: #121820; border: 1px solid #2b3442; font-size: 12px; color: #c9d1d9; }
+.fb-hidden-item button { background: #0f141b; border: 1px solid #2f3846; color: #5fd4c4; border-radius: 5px; padding: 1px 8px; font: inherit; font-size: 11px; cursor: pointer; }

@@ -28,6 +28,18 @@
             <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.AllFieldBosses))" CheckedChanged="v => Set(o => o.SetAlert(TimersOptions.AllFieldBosses, v))" />
         </span>
     </div>
+    <div class="fb-line">
+        <span><b>Звук для всех боссов</b><small>У любого босса ниже можно выбрать свой звук и громкость</small></span>
+        <span class="fb-inline">
+            <select class="fs-select" value="@(O.Sounds.GetValueOrDefault(TimersOptions.AllFieldBosses) ?? "")" @onchange="e => SetSound(TimersOptions.AllFieldBosses, e.Value?.ToString())">
+                @foreach (var (value, label) in ForkSettings.WindowsSounds)
+                {
+                    <option value="@value">@label</option>
+                }
+            </select>
+            <button type="button" class="fb-play" title="Прослушать" @onclick="() => Player.Play(O.SoundFor(TimersOptions.AllFieldBosses))">▶</button>
+        </span>
+    </div>
     <p class="fb-hint">Время присылает сама игра, но только для карты, на которой вы находитесь, и пока на ней открыта карта; другие карты покажут своё, когда вы там побываете. Включите босса — он появится в окне таймеров и оповестит о себе своим звуком. Если не включён никто, окно показывает всех.</p>
 </div>
 
@@ -64,11 +76,58 @@
                             <option value="@value">@label</option>
                         }
                     </select>
-                    <input class="fs-range fb-volume" type="range" min="0" max="100" step="5" value="@O.VolumeFor(Item(row))" title="@($"Громкость {O.VolumeFor(Item(row))}%")" @onchange="e => SetVolume(row.Id, e.Value)" />
-                    <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => Player.Play(O.SoundFor(Item(row)), O.VolumeFor(Item(row)))">▶</button>
+                    <input class="fb-range" type="range" min="0" max="100" step="5" value="@O.VolumeFor(Item(row))" title="@($"Громкость {O.VolumeFor(Item(row))}%")" @onchange="e => SetVolume(row.Id, e.Value)" />
+                    <button type="button" class="fb-play" title="Прослушать" @onclick="() => Player.Play(O.SoundFor(Item(row)), O.VolumeFor(Item(row)))">▶</button>
                 </div>
             }
         }
+    </div>
+}
+@{ var unnamed = Tracker.TimersFor(Server.CurrentServerId).Where(b => b.Key < 0).OrderBy(b => b.SlotId).ToList(); }
+@if (unnamed.Count > 0)
+{
+    <div class="fb-region">
+        <div class="fb-region-head">
+            <button type="button" class="fb-fold" @onclick="() => showPlaces = !showPlaces">
+                <span class="fb-arrow">@(showPlaces ? "▾" : "▸")</span><b>Безымянные места</b><small>@unnamed.Count — карты, где метр не знает, какой босс на каком месте</small>
+            </button>
+        </div>
+        @if (showPlaces)
+        {
+            <p class="fb-hint fb-pad">Посмотрите на карте в игре, кто стоит на месте, и выберите его — или убейте босса при открытой карте, метр запомнит сам.</p>
+            <datalist id="fb-boss-names">
+                @foreach (var (code, name) in Catalog.Bosses())
+                {
+                    <option value="@($"{name} ({code})")"></option>
+                }
+            </datalist>
+            @foreach (var b in unnamed)
+            {
+                var slot = b.SlotId;
+                var st = State(new Row($"boss:{b.Key}", b.Key, b.SlotId, ""));
+                <div class="fb-row fb-place">
+                    <span class="fb-name"><b>@EventPanels.PlaceName(slot)</b><small class="@st.Css">@st.Text</small></span>
+                    <input class="fb-who" list="fb-boss-names" placeholder="Кто здесь? — имя босса" @onchange="e => Assign(slot, e.Value?.ToString())" />
+                </div>
+            }
+        }
+    </div>
+}
+@{ var hiddenBosses = O.HiddenIds.Where(i => i.StartsWith("boss:", StringComparison.Ordinal)).ToList(); }
+@if (hiddenBosses.Count > 0)
+{
+    <div class="fb-box">
+        <div class="fb-line">
+            <span><b>Убранные из окна таймеров</b><small>Боссы, которых вы убрали крестиком «×» в окне таймеров</small></span>
+            <button type="button" class="fb-mini" @onclick="ReturnAllBosses">Вернуть всех</button>
+        </div>
+        <div class="fb-hidden">
+            @foreach (var id in hiddenBosses)
+            {
+                var hid = id;
+                <span class="fb-hidden-item">@HiddenName(hid)<button type="button" @onclick="() => Set(o => o.HiddenIds.Remove(hid))">вернуть</button></span>
+            }
+        </div>
     </div>
 }
 @if (!Regions().Any())
@@ -81,6 +140,23 @@
     private sealed record Region(int MapId, string Name, List<Row> Rows);
 
     private string query = "";
+    private bool showPlaces = true;
+
+    private void ReturnAllBosses() => Set(o => o.HiddenIds.RemoveWhere(i => i.StartsWith("boss:", StringComparison.Ordinal)));
+
+    private string HiddenName(string id) =>
+        int.TryParse(id["boss:".Length..], out var key) ? (key > 0 ? Catalog.Name(key) : EventPanels.PlaceName(-key)) : id;
+
+    /// <summary>"Name (code)" from the list, or a name only one boss has.</summary>
+    private void Assign(int slot, string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        var m = System.Text.RegularExpressions.Regex.Match(text, @"\((\d+)\)\s*$");
+        var code = m.Success ? int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+        if (code == 0 && Catalog.Bosses().Where(b => b.Name.Equals(text.Trim(), StringComparison.CurrentCultureIgnoreCase)).ToList() is { Count: 1 } one)
+            code = one[0].Code;
+        if (code > 0) Tracker.AssignSlot(slot, code);
+    }
     private readonly HashSet<int> closed = [];
     private System.Threading.Timer? tick;
 

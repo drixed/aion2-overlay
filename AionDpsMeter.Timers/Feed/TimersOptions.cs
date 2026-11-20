@@ -103,6 +103,8 @@ public sealed class TimersOptions
     public bool BuffSpeak { get; set; }
     public string? BuffVoice { get; set; }
     public int BuffIconSize { get; set; } = 40;
+    /// <summary>The class picked in "Баффы": used until the meter knows the played character's class.</summary>
+    public int? BuffClass { get; set; }
     public double? BuffPanelLeft { get; set; }
     public double? BuffPanelTop { get; set; }
     /// <summary>The 📣 window loads NCSOFT's official announcements every 15 minutes.</summary>

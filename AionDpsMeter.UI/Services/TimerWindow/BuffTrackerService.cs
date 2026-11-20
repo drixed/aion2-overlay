@@ -31,6 +31,9 @@ namespace AionDpsMeter.UI.Services.TimerWindow
 
         public event Action? Changed;
 
+        /// <summary>Whether the panel is on screen now (for the settings page).</summary>
+        public bool Showing => window is { IsVisible: true };
+
         private Window? window;
         private DispatcherTimer? timer;
         private int savedSeen;
@@ -58,7 +61,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         {
             get
             {
-                if (MyClass is not { } cls) return null;
+                if ((MyClass ?? options.Current.BuffClass) is not { } cls) return null;
                 var mine = options.Current.BuffPresets.Where(p => p.ClassId == cls).ToList();
                 return options.Current.ActiveBuffPreset.TryGetValue(cls, out var id) && mine.FirstOrDefault(p => p.Id == id) is { } chosen
                     ? chosen : mine.FirstOrDefault();
@@ -106,14 +109,17 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             var preset = ActivePreset;
             var inFight = sessions.GetActiveTargetSession() is not null;
             var bossOrDummy = sessions.GetActiveTargetInfo() is { MobCode: > 0 } mob && (catalog.IsBoss(mob.MobCode) || catalog.IsDummy(mob.MobCode));
-            var show = o.BuffTrackersOn && preset is { BuffIds.Count: > 0 } && (Editing || BuffTracker.Shows(o.BuffTrackersShow, inFight, bossOrDummy));
+            // On screen whenever it should show, even with an empty preset (it then says what to do); "Расставить" always.
+            var show = o.BuffTrackersOn && (Editing || BuffTracker.Shows(o.BuffTrackersShow, inFight, bossOrDummy));
 
             if (preset is not null)
                 foreach (var gone in Tracker.Expired(preset, DateTimeOffset.Now))
                     if (show && !Editing) Announce(gone.Name);
 
-            if (show) ShowPanel(preset!);
+            var was = Showing;
+            if (show) ShowPanel(preset);
             else if (window is { IsVisible: true }) window.Hide();
+            if (was != Showing) Changed?.Invoke();
 
             var seen = Tracker.Seen();
             if (seen.Count != savedSeen && DateTime.Now - lastSave > TimeSpan.FromSeconds(30))
@@ -125,11 +131,12 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             }
         }
 
-        private void ShowPanel(BuffPreset preset)
+        private void ShowPanel(BuffPreset? preset)
         {
             var o = options.Current;
             var size = Math.Clamp(o.BuffIconSize, 24, 80);
-            var width = Math.Max(1, preset.BuffIds.Count) * (size + 6) + 16;
+            var count = preset?.BuffIds.Count ?? 0;
+            var width = count == 0 ? 280 : count * (size + 6) + 16;
             var height = size + 36;
             if (window is null)
             {

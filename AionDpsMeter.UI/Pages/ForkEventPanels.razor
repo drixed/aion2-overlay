@@ -110,37 +110,6 @@
                         </div>
                     }
                 </div>
-                @{ var unnamed = Tracker.TimersFor(Server.CurrentServerId).Where(b => b.Key < 0).OrderBy(b => b.SlotId).ToList(); }
-                @if (unnamed.Count > 0)
-                {
-                    <div class="pe-box pe-places">
-                        <button type="button" class="pe-places-head" @onclick="() => showPlaces = !showPlaces">
-                            <span class="pe-sub">БЕЗЫМЯННЫЕ МЕСТА НА КАРТЕ · @unnamed.Count</span><span>@(showPlaces ? "свернуть ⌃" : "показать ⌄")</span>
-                        </button>
-                        @if (showPlaces)
-                        {
-                            <p class="pe-hint">Метр видит время этих мест, но не знает, какой там босс. Посмотрите на карте в игре и выберите его — или убейте босса при открытой карте, метр запомнит сам. После этого босса можно поставить на панель.</p>
-                            <datalist id="pe-boss-names">
-                                @foreach (var (code, name) in Catalog.Bosses())
-                                {
-                                    <option value="@($"{name} ({code})")"></option>
-                                }
-                            </datalist>
-                            <div class="pe-place-list">
-                                @foreach (var b in unnamed)
-                                {
-                                    var slot = b.SlotId;
-                                    <div class="pe-place">
-                                        <span class="pe-place-name">@MapName(b.MapId) · место @(slot % 100)</span>
-                                        <span class="pe-place-state @(b.Alive ? "alive" : "")">@PlaceState(b)</span>
-                                        <input class="pe-filter" list="pe-boss-names" placeholder="Кто здесь?" @onchange="e => Assign(slot, e.Value?.ToString())" />
-                                    </div>
-                                }
-                            </div>
-                            @if (assignError is not null) { <p class="pe-hint pe-error">@assignError</p> }
-                        }
-                    </div>
-                }
                 <div class="pe-box">
                     <div class="pe-sub">СТИЛЬ</div>
                     <div class="pe-row">
@@ -199,34 +168,9 @@
 @code {
     private string? selectedId;
     private string bossFilter = string.Empty;
-    private bool showPlaces;
-    private string? assignError;
 
     private string MapName(int mapId) =>
         Schedule.Current.FieldBossMaps.TryGetValue(mapId, out var map) && map.Name.Length > 0 ? map.Name : $"Карта {mapId}";
-
-    private static string PlaceState(AionDpsMeter.Timers.Bosses.BossTimer b)
-    {
-        if (b.Alive) return "жив";
-        if (b.NextSpawn is { } next && next > DateTimeOffset.Now) return "через " + EventPanels.Clock(next - DateTimeOffset.Now);
-        return "—";
-    }
-
-    /// <summary>"Name (code)" from the list, or a name that only one boss has.</summary>
-    private void Assign(int slot, string? text)
-    {
-        assignError = null;
-        if (string.IsNullOrWhiteSpace(text)) return;
-        var match = System.Text.RegularExpressions.Regex.Match(text, @"\((\d+)\)\s*$");
-        var code = match.Success ? int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
-        if (code == 0)
-        {
-            var same = Catalog.Bosses().Where(b => b.Name.Equals(text.Trim(), StringComparison.CurrentCultureIgnoreCase)).ToList();
-            if (same.Count == 1) code = same[0].Code;
-        }
-        if (code == 0) { assignError = "Выберите босса из подсказки списка."; return; }
-        Tracker.AssignSlot(slot, code);
-    }
 
     /// <summary>The field bosses and map places the meter knows on this server, by zone: the freshest map first, places
     /// whose boss is not named yet as "Место N" (they have their own time too); old data says from when.</summary>

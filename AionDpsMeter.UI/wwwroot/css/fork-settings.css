@@ -118,4 +118,7 @@ html body .settings-shell.settings-shell .fs-segmented__option.is-selected { bac
     box-shadow: inset 0 0 0 1px rgba(95, 212, 196, .6); }
 html body .settings-shell.settings-shell .fs-range { width: 170px; accent-color: var(--accent); }
 html body .settings-shell.settings-shell .fs-select { max-width: 200px; background: #0f141c; border-color: var(--line-strong); padding: 5px 8px; border-radius: 7px; }
+/* readable on every tab: a select took the page's dark text on the fork's own tabs (Боссы, Баффы) */
+html body .settings-shell.settings-shell .fs-select { color: #e6edf3; font-family: 'Segoe UI', sans-serif; font-size: 12px; }
+html body .settings-shell.settings-shell .fs-select option { background: #0f141c; color: #e6edf3; }
 html body .settings-shell.settings-shell .fs-label { color: var(--text-dim); font-size: 10.5px; letter-spacing: .7px; }

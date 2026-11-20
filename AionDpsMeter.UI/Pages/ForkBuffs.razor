@@ -10,7 +10,8 @@
 <div class="fs-label">ОТСЛЕЖИВАНИЕ БАФФОВ</div>
 <div class="fbf-box">
     <div class="fbf-line">
-        <span><b>Трекеры баффов</b><small>Панель с баффами выбранного пресета: сколько осталось, а спавший бафф горит красным</small></span>
+        <span><b>Трекеры баффов</b><small>Панель с баффами выбранного пресета: сколько осталось, а спавший бафф горит красным.
+            @if (O.BuffTrackersOn) { <em class="@(Buffs.Showing ? "fbf-on" : "fbf-off")">@(Buffs.Showing ? " Сейчас панель на экране." : " Сейчас панель скрыта — " + (O.BuffTrackersShow == "always" ? "откройте её кнопкой «Расставить панель»." : "появится в бою" + (O.BuffTrackersShow == "bosses" ? " с боссом или манекеном" : "") + "; чтобы увидеть и передвинуть её сейчас, нажмите «Расставить панель»."))</em> }</small></span>
         <ToggleSwitch Checked="@O.BuffTrackersOn" CheckedChanged="v => Set(o => o.BuffTrackersOn = v)" />
     </div>
     <div class="fbf-line">
@@ -56,7 +57,7 @@
     @foreach (var (id, name) in Classes)
     {
         var cls = id;
-        <button type="button" class="@(selected == cls ? "on" : "")" @onclick="() => selected = cls">
+        <button type="button" class="@(selected == cls ? "on" : "")" @onclick="() => PickClass(cls)">
             <span class="fbf-cls" style="background-image:url('/images/classes/@(cls).png')"></span>@name
             @if (Buffs.MyClass == cls) { <i class="fbf-me" title="Ваш персонаж"></i> }
         </button>
@@ -132,7 +133,7 @@
 
     protected override void OnInitialized()
     {
-        selected = Buffs.MyClass ?? selected;
+        selected = Buffs.MyClass ?? O.BuffClass ?? selected;
         voices = Speech.Voices();
         Buffs.Changed += Refresh;
     }
@@ -148,6 +149,12 @@
     private void SetInt(object? value, Func<int, Action<TimersOptions>> change)
     {
         if (int.TryParse(value?.ToString(), out var v)) Set(change(v));
+    }
+
+    private void PickClass(int cls)
+    {
+        selected = cls;
+        if (Buffs.MyClass is null) Set(o => o.BuffClass = cls); // until the meter knows your class, the panel follows this tab
     }
 
     private void NewPreset()
