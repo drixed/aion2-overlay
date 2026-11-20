@@ -299,20 +299,30 @@
             }
             }
         </div>
-        @if (!Compact && Options.ShowFarmIncome && (Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.Kina) > 0 || Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints) > 0))
-        {
-            var nowFarm = DateTime.Now;
-            <div class="bp-farm" title="Доход с фарма с @(Farm.Since?.ToString("HH:mm") ?? "—"); нажмите, чтобы начать отсчёт заново" @onclick="() => Farm.Reset(DateTime.Now)">
-                <span class="bp-farm-kina">● Кинары <b>+@Grouped(Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.Kina))</b> <small>@Grouped((long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.Kina, nowFarm))/ч</small></span>
-                <span class="bp-farm-ap">● Очки Бездны <b>+@Grouped(Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints))</b> <small>@Grouped((long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints, nowFarm))/ч</small></span>
-            </div>
-        }
         @if (!Compact)
         {
             <div class="bp-footer">
                 <div class="bp-footer-line">
                     <span class="bp-events">
                         <span class="bp-status @(Fight is not null ? "bp-status--fight" : "")" title="@HeaderTitle">@HeaderTitle</span>
+                        @if (Options.ShowFarmIncome && (Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.Kina) > 0 || Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints) > 0))
+                        {
+                            var nowFarm = DateTime.Now;
+                            var kina = Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.Kina);
+                            var ap = Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints);
+                            var kinaHour = (long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.Kina, nowFarm);
+                            var apHour = (long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints, nowFarm);
+                            <span class="bp-farm" title="@($"Доход с фарма с {Farm.Since?.ToString("HH:mm") ?? "—"}: кинары +{Grouped(kina)} ({Grouped(kinaHour)}/ч), очки Бездны +{Grouped(ap)} ({Grouped(apHour)}/ч). Нажмите, чтобы начать отсчёт заново")" @onclick="() => Farm.Reset(DateTime.Now)">
+                                @if (kina > 0)
+                                {
+                                    <span class="bp-farm-item"><svg class="bp-farm-ico" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#f5c76b" /><circle cx="8" cy="8" r="4.6" fill="none" stroke="#a87a1e" stroke-width="1.4" /><circle cx="8" cy="8" r="1.6" fill="#a87a1e" /></svg><b>+@Grouped(kina)</b><small>@Grouped(kinaHour)/ч</small></span>
+                                }
+                                @if (ap > 0)
+                                {
+                                    <span class="bp-farm-item"><svg class="bp-farm-ico" viewBox="0 0 16 16"><path d="M8 1 L14 8 L8 15 L2 8 Z" fill="#c4a0ff" /><path d="M8 1 L14 8 L8 8 Z" fill="#e2d2ff" /><path d="M2 8 L8 15 L8 8 Z" fill="#8f66d6" /></svg><b>+@Grouped(ap)</b><small>@Grouped(apHour)/ч</small></span>
+                                }
+                            </span>
+                        }
                         @foreach (var chip in Chips)
                         {
                             <span class="bp-ev bp-ev--@chip.State.ToString().ToLowerInvariant()" style="--ev:@EventIcons.Color(chip.Icon)" title="@chip.Tooltip">

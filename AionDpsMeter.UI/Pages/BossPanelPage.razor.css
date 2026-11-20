@@ -174,9 +174,11 @@
 .bp-news { position: relative; }
 .bp-news-dot { position: absolute; top: 1px; right: 1px; width: 6px; height: 6px; border-radius: 50%; background: #f5c76b; box-shadow: 0 0 4px #f5c76b; }
 /* aion2-overlay fork: farm income under the list */
-.bp-farm { display: flex; gap: 14px; padding: 3px 10px; font-size: 11.5px; cursor: pointer; opacity: .9; font-variant-numeric: tabular-nums; }
+/* farm income in the footer line, after the status: own drawn coin and crystal, no game images */
+.bp-farm { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; opacity: .9; font-size: 11.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bp-farm:hover { opacity: 1; }
-.bp-farm small { opacity: .65; }
-.bp-farm-kina { color: #f5c76b; }
-.bp-farm-ap { color: #c4a0ff; }
-.bp-farm b { color: #fff; }
+.bp-farm-item { display: inline-flex; align-items: center; gap: 3px; }
+.bp-farm-ico { width: 12px; height: 12px; display: block; flex: 0 0 12px; }
+.bp-farm b { color: #fff; font-weight: 700; }
+.bp-farm small { opacity: .6; font-size: 10.5px; margin-left: 2px; }
+.bp-theme-light .bp-farm b { color: #111; }
