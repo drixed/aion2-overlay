@@ -46,4 +46,13 @@ public class EntityTrackerAdaptersTests
     {
         Assert.Equal(0, new EntityTrackerServerContext(new EntityTracker(), Log).CurrentServerId);
     }
+
+    [Fact]
+    public void European_servers_have_names_so_boss_timers_are_kept_per_server()
+    {
+        // Seen on EU (Nov 2026): the played character's server id 1308 was not in RATmeter's table.
+        Assert.Equal("MES", AionDpsMeter.Core.Data.ServerMap.GetName(1308));   // Meslamtaeda, Elyos
+        Assert.Equal("ZIK", AionDpsMeter.Core.Data.ServerMap.GetName(2302));   // Zikel, Asmodians
+        Assert.Equal("SIE", AionDpsMeter.Core.Data.ServerMap.GetName(1001));   // upstream's own entries stay
+    }
 }
