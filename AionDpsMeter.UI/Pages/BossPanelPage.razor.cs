@@ -104,6 +104,18 @@ namespace AionDpsMeter.UI.Pages
             return entities.GetPlayerEntity((int)playerId)?.Name is { Length: > 0 } name && inspected?.Find(name) is { } p ? p.Name : null;
         }
         private AionDpsMeter.Timers.Lobby.LobbyTracker? lobby;
+        private AionDpsMeter.Timers.Character.CharacterTracker? character;
+
+        /// <summary>Keeps who I am (name, class, server, power) whenever the game has named me, without the 👤 window open:
+        /// after a restart in the dungeon my row gets the name from it.</summary>
+        private void RememberMe()
+        {
+            character ??= services.GetService(typeof(AionDpsMeter.Timers.Character.CharacterTracker)) as AionDpsMeter.Timers.Character.CharacterTracker;
+            if (character is null || entities.PlayerEntities.FirstOrDefault(p => p.IsUser && p.IsIdentified) is not { Name.Length: > 0 } me) return;
+            var profile = new AionDpsMeter.Timers.Character.CharacterProfile(me.Name, me.CharacterClass?.Id ?? 0, me.CharacterLevel,
+                me.ServerName is { Length: > 0 } server ? server : null, me.CombatPower, me.GearScore);
+            if (character.Profile != profile) character.RememberProfile(profile);
+        }
         private AionDpsMeter.Timers.Lobby.LobbyParty? LobbyNow;
         private long lobbyRangFor;
 
@@ -475,6 +487,7 @@ namespace AionDpsMeter.UI.Pages
                 targetIsDummy = target?.IsDummy == true;
                 PetLine = Options.ShowPets ? SelectedPet() ?? pets.Current() : null;
                 RecomputeLobby();
+                RememberMe();
                 if (target is not null || ViewModel?.HasActiveTarget == true) lastFightAt = DateTime.Now;
                 Fight = target is { HpTotal: > 0, HpCurrent: > 0 } && (fightIsBoss || options.Current.CardForAllTargets)
                     ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),
