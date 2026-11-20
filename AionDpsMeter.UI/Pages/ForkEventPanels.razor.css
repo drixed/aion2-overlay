@@ -62,3 +62,5 @@
 .pe-place-state { color: #8b95a5; font-variant-numeric: tabular-nums; }
 .pe-place-state.alive { color: #7ee787; }
 .pe-error { color: #ff8f8f; }
+.pe-add-watched { display: block; width: 100%; margin: 0 0 6px; text-align: left; }
+.pe-add-watched:disabled { opacity: .5; cursor: default; }

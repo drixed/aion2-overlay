@@ -46,8 +46,8 @@ public static class EventPanels
 
     private static readonly TimeSpan BossSoon = TimeSpan.FromMinutes(5);
 
-    /// <summary>The panel's tiles in its own order; events the schedule no longer has, and bosses the meter does not know
-    /// on this server, are left out.</summary>
+    /// <summary>The panel's tiles in its own order; events the schedule no longer has, and unnamed places the meter does not
+    /// know on this server, are left out. A named boss with no time yet shows "—".</summary>
     public static IReadOnlyList<EventTile> Tiles(DateTimeOffset now, ScheduleData data, EventPanel panel,
         IReadOnlyCollection<AionDpsMeter.Timers.Bosses.BossTimer>? bosses = null, Func<int, string>? bossName = null)
     {
@@ -60,6 +60,8 @@ public static class EventPanels
                 if (int.TryParse(id[BossPrefix.Length..], out var key)
                     && (bosses?.FirstOrDefault(b => b.Key == key) ?? (key < 0 ? bosses?.FirstOrDefault(b => b.SlotId == -key) : null)) is { } boss)
                     tiles.Add(BossTile(now, id, boss.Key > 0 ? bossName?.Invoke(boss.Key) ?? $"Босс {boss.Key}" : PlaceName(boss.SlotId), boss));
+                else if (key > 0 && bossName is not null) // picked from the full list before its map was opened: the name, no time yet
+                    tiles.Add(new EventTile(id, bossName(key), "boss", ChipState.Idle, "—", 0));
                 continue;
             }
             if (data.Events.FirstOrDefault(e => e.Id == id) is not { } e || ScheduleCalculator.Next(e, now) is not { } o) continue;

@@ -103,8 +103,13 @@ public class EventPanelsTests
     }
 
     [Fact]
-    public void A_boss_the_meter_does_not_know_on_this_server_is_left_out() =>
-        Assert.Empty(EventPanels.Tiles(At, Data, new EventPanel { EventIds = ["boss:99"] }, [], k => "x"));
+    public void A_boss_added_before_its_map_was_opened_shows_its_name_with_no_time_yet() =>
+        Assert.Equal(new EventTile("boss:99", "Босс 99", "boss", ChipState.Idle, "—", 0),
+            EventPanels.Tiles(At, Data, new EventPanel { EventIds = ["boss:99"] }, [], k => $"Босс {k}").Single());
+
+    [Fact]
+    public void An_unnamed_place_the_meter_does_not_know_on_this_server_is_left_out() =>
+        Assert.Empty(EventPanels.Tiles(At, Data, new EventPanel { EventIds = ["boss:-101016"] }, [], k => "x"));
     // Shugo festival: entry opens on the hour, the festival itself starts 3 minutes later (game: "02:28 Войти").
     private static readonly ScheduleData WithEntry = ScheduleJson.Parse("""
     { "events": [ { "id": "shugo-festival", "name": "Фестиваль шуго", "kind": "interval", "anchor": "2026-11-01T00:00:00Z",

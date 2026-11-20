@@ -91,6 +91,14 @@
                     }
                     else
                     {
+                        var watched = O.WatchedBosses.Where(w => !panel.EventIds.Contains(w)).ToList();
+                        if (O.WatchedBosses.Count > 0)
+                        {
+                            <button type="button" class="pe-add pe-add-watched" disabled="@(watched.Count == 0)" title="Боссы, включённые во вкладке «Боссы»"
+                                    @onclick="() => Edit(panel, x => x.EventIds.AddRange(watched))">
+                                ＋ Включённые во вкладке «Боссы»@(watched.Count > 0 ? $" ({watched.Count})" : " — уже на панели")
+                            </button>
+                        }
                         <input class="pe-filter" placeholder="Найти босса…" value="@bossFilter" @oninput="e => bossFilter = e.Value?.ToString() ?? string.Empty" />
                     }
                     @foreach (var (zone, bosses) in zones)
@@ -172,19 +180,35 @@
     private string MapName(int mapId) =>
         Schedule.Current.FieldBossMaps.TryGetValue(mapId, out var map) && map.Name.Length > 0 ? map.Name : $"Карта {mapId}";
 
-    /// <summary>The field bosses and map places the meter knows on this server, by zone: the freshest map first, places
-    /// whose boss is not named yet as "Место N" (they have their own time too); old data says from when.</summary>
-    private List<(string Zone, List<(int Key, string Name)> Bosses)> BossZones() =>
-        Tracker.TimersFor(Server.CurrentServerId)
-            .GroupBy(b => b.MapId)
-            .OrderByDescending(g => g.Max(b => b.ListedAt ?? DateTimeOffset.MinValue))
-            .Select(g => (ZoneLabel(g.Key, g.Max(b => b.ListedAt)),
-                g.OrderBy(b => b.Key > 0 ? 0 : 1).ThenBy(b => b.Key > 0 ? Catalog.Name(b.Key) : "", StringComparer.CurrentCulture).ThenBy(b => b.SlotId)
-                    .Select(b => (b.Key, b.Key > 0 ? Catalog.Name(b.Key) : $"Место {b.SlotId % 100}")).DistinctBy(b => b.Key).ToList()))
+    /// <summary>Every field boss by zone, the same list as the "Боссы" tab: the bosses of schedule.json's map places (known
+    /// before their map is opened) and the bosses and unnamed places the tracker saw on this server ("Место N", they have
+    /// their own time too). The freshest map first; old data says from when, a map never opened says so.</summary>
+    private List<(string Zone, List<(int Key, string Name)> Bosses)> BossZones()
+    {
+        var timers = Tracker.TimersFor(Server.CurrentServerId);
+        var slots = Schedule.Current.FieldBossSlots ?? new Dictionary<int, int>();
+        return slots.Keys.Select(s => s / 100).Concat(timers.Select(t => t.MapId)).Distinct()
+            .Select(mapId =>
+            {
+                var seen = timers.Where(t => t.MapId == mapId).ToList();
+                var listed = seen.Max(t => t.ListedAt);
+                var bosses = slots.Where(kv => kv.Key / 100 == mapId).Select(kv => kv.Value)
+                    .Concat(seen.Where(t => t.Key > 0).Select(t => t.Key)).Distinct()
+                    .Select(k => (Key: k, Name: Catalog.Name(k))).OrderBy(b => b.Name, StringComparer.CurrentCulture)
+                    .Concat(seen.Where(t => t.Key < 0 && !slots.ContainsKey(t.SlotId)).OrderBy(t => t.SlotId)
+                        .Select(t => (Key: t.Key, Name: $"Место {t.SlotId % 100}")))
+                    .DistinctBy(b => b.Key).ToList();
+                return (Listed: listed, Zone: ZoneLabel(mapId, listed, seen.Count > 0), Bosses: bosses);
+            })
+            .Where(z => z.Bosses.Count > 0)
+            .OrderByDescending(z => z.Listed ?? DateTimeOffset.MinValue)
+            .Select(z => (z.Zone, z.Bosses))
             .ToList();
+    }
 
-    private string ZoneLabel(int mapId, DateTimeOffset? listed) =>
-        MapName(mapId) + (listed is { } at && DateTimeOffset.Now - at > TimeSpan.FromDays(1) ? $" · данные от {at.ToLocalTime():dd.MM}, откройте карту" : "");
+    private string ZoneLabel(int mapId, DateTimeOffset? listed, bool seen) =>
+        MapName(mapId) + (!seen ? " · время появится, когда откроете карту"
+            : listed is { } at && DateTimeOffset.Now - at > TimeSpan.FromDays(1) ? $" · данные от {at.ToLocalTime():dd.MM}, откройте карту" : "");
 
     private string ItemName(string id) =>
         id.StartsWith(EventPanels.BossPrefix, StringComparison.Ordinal) && int.TryParse(id[EventPanels.BossPrefix.Length..], out var key)
