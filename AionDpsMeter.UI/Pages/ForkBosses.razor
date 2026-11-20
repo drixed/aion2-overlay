@@ -1,0 +1,169 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Боссы" tab of the settings window: every field boss by region
+   with its time, a switch (timers window + alert), its own sound and volume. Like the reference meters' world boss page. *@
+@using AionDpsMeter.Timers.Bosses
+@using AionDpsMeter.Timers.Feed
+@using AionDpsMeter.Timers.Overlay
+@using AionDpsMeter.Timers.Runtime
+@implements IDisposable
+@inject TimersOptionsStore Store
+@inject FieldBossTracker Tracker
+@inject BossCatalog Catalog
+@inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
+@inject IServerContext Server
+@inject AionDpsMeter.UI.Services.TimerWindow.AlertSoundPlayer Player
+
+<div class="fs-label">ПОЛЕВЫЕ БОССЫ</div>
+<div class="fb-box">
+    <div class="fb-line">
+        <span><b>Окно таймеров боссов</b><small>Отдельное окно поверх игры со временем включённых боссов</small></span>
+        <ToggleSwitch Checked="@O.ShowBossTimers" CheckedChanged="v => Set(o => o.ShowBossTimers = v)" />
+    </div>
+    <div class="fb-line">
+        <span><b>Оповещения о боссах</b><small>Звук и жёлтая строка за @O.BossLeadMinutes мин до появления включённых боссов</small></span>
+        <span class="fb-inline">
+            <span class="number-field-wrap">
+                <input class="number-field" type="number" min="1" max="60" value="@O.BossLeadMinutes" @onchange="e => SetLead(e.Value)" />
+                <span class="number-field__suffix">мин</span>
+            </span>
+            <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.AllFieldBosses))" CheckedChanged="v => Set(o => o.SetAlert(TimersOptions.AllFieldBosses, v))" />
+        </span>
+    </div>
+    <p class="fb-hint">Время присылает сама игра, но только для карты, на которой вы находитесь, и пока на ней открыта карта; другие карты покажут своё, когда вы там побываете. Включите босса — он появится в окне таймеров и оповестит о себе своим звуком. Если не включён никто, окно показывает всех.</p>
+</div>
+
+<input class="fb-search" type="search" placeholder="Найти босса…" value="@query" @oninput="e => query = e.Value?.ToString() ?? string.Empty" />
+
+@foreach (var region in Regions())
+{
+    var rows = region.Rows.Where(r => query.Length == 0 || r.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)).ToList();
+    if (rows.Count == 0) continue;
+    var open = query.Length > 0 || !closed.Contains(region.MapId);
+    var on = region.Rows.Count(r => O.WatchedBosses.Contains(r.Id));
+    var mapId = region.MapId;
+    <div class="fb-region">
+        <div class="fb-region-head">
+            <button type="button" class="fb-fold" @onclick="() => { if (!closed.Remove(mapId)) closed.Add(mapId); }">
+                <span class="fb-arrow">@(open ? "▾" : "▸")</span><b>@region.Name</b><small>@on из @region.Rows.Count включено</small>
+            </button>
+            <button type="button" class="fb-mini" @onclick="() => SetAll(region, true)">включить всех</button>
+            <button type="button" class="fb-mini" @onclick="() => SetAll(region, false)">выключить</button>
+        </div>
+        @if (open)
+        {
+            @foreach (var r in rows)
+            {
+                var row = r;
+                var state = State(row);
+                <div class="fb-row @(O.WatchedBosses.Contains(row.Id) ? "on" : "")">
+                    <ToggleSwitch Checked="@O.WatchedBosses.Contains(row.Id)" CheckedChanged="v => Watch(row.Id, v)" />
+                    <span class="fb-name"><b>@row.Name</b><small class="@state.Css">@state.Text</small></span>
+                    <select class="fs-select fb-sound" value="@(O.Sounds.GetValueOrDefault(row.Id) ?? "")" @onchange="e => SetSound(row.Id, e.Value?.ToString())" title="Звук этого босса">
+                        <option value="">Как у всех боссов</option>
+                        @foreach (var (value, label) in ForkSettings.WindowsSounds.Where(s => s.Value.Length > 0))
+                        {
+                            <option value="@value">@label</option>
+                        }
+                    </select>
+                    <input class="fs-range fb-volume" type="range" min="0" max="100" step="5" value="@O.VolumeFor(Item(row))" title="@($"Громкость {O.VolumeFor(Item(row))}%")" @onchange="e => SetVolume(row.Id, e.Value)" />
+                    <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => Player.Play(O.SoundFor(Item(row)), O.VolumeFor(Item(row)))">▶</button>
+                </div>
+            }
+        }
+    </div>
+}
+@if (!Regions().Any())
+{
+    <p class="fb-hint">Боссов пока нет. Откройте карту в игре — метр увидит боссов этой зоны и их время.</p>
+}
+
+@code {
+    private sealed record Row(string Id, int Key, int Slot, string Name);
+    private sealed record Region(int MapId, string Name, List<Row> Rows);
+
+    private string query = "";
+    private readonly HashSet<int> closed = [];
+    private System.Threading.Timer? tick;
+
+    private TimersOptions O => Store.Current;
+
+    /// <summary>Maps with named places (schedule.json) first, then maps only the tracker knows; the map seen last on top.</summary>
+    private List<Region> Regions()
+    {
+        var data = Schedule.Current;
+        var timers = Tracker.TimersFor(Server.CurrentServerId);
+        var regions = new List<Region>();
+        var slots = data.FieldBossSlots ?? new Dictionary<int, int>();
+        foreach (var mapId in slots.Keys.Select(s => s / 100).Concat(timers.Select(t => t.MapId)).Distinct())
+        {
+            var rows = new List<Row>();
+            foreach (var (slot, code) in slots.Where(kv => kv.Key / 100 == mapId).OrderBy(kv => kv.Key))
+                rows.Add(new Row($"boss:{code}", code, slot, Catalog.Name(code)));
+            foreach (var t in timers.Where(t => t.MapId == mapId).OrderBy(t => t.SlotId))
+                if (rows.All(r => r.Key != t.Key && r.Slot != t.SlotId))
+                    rows.Add(new Row($"boss:{t.Key}", t.Key, t.SlotId, t.Key > 0 ? Catalog.Name(t.Key) : EventPanels.PlaceName(t.SlotId)));
+            if (rows.Count == 0) continue;
+            var name = data.FieldBossMaps.TryGetValue(mapId, out var map) && map.Name.Length > 0 ? map.Name : $"Карта {mapId}";
+            regions.Add(new Region(mapId, name, rows));
+        }
+        return regions
+            .OrderByDescending(r => timers.Where(t => t.MapId == r.MapId).Select(t => t.ListedAt ?? DateTimeOffset.MinValue).DefaultIfEmpty(DateTimeOffset.MinValue).Max())
+            .ToList();
+    }
+
+    private (string Text, string Css) State(Row row)
+    {
+        var now = DateTimeOffset.Now;
+        var t = Tracker.TimersFor(Server.CurrentServerId).FirstOrDefault(x => x.Key == row.Key || (x.SlotId == row.Slot && row.Slot > 0));
+        if (t is null) return ("нет данных — откройте карту", "none");
+        if (t.Alive) return ("сейчас", "alive");
+        if (t.NextSpawn is { } next && next > now) return ($"{next.ToLocalTime():HH:mm:ss} · через {FeedText.Span(next - now)}", "wait");
+        if (t.NextSpawn is { } passed && now - passed < TimersFeed.OverdueWindow) return ("вот-вот появится", "soon");
+        return ("нет свежих данных — откройте карту", "none");
+    }
+
+    private static FeedItem Item(Row r) => new(r.Id, r.Id, FeedKind.Boss, r.Name, null, FeedStatus.Unknown, null, true, r.Key);
+
+    private void Set(Action<TimersOptions> change)
+    {
+        change(O);
+        Store.Save();
+    }
+
+    private void Watch(string id, bool on) => Set(o => { if (on) o.WatchedBosses.Add(id); else o.WatchedBosses.Remove(id); });
+
+    private void SetAll(Region region, bool on) => Set(o =>
+    {
+        foreach (var r in region.Rows)
+            if (on) o.WatchedBosses.Add(r.Id); else o.WatchedBosses.Remove(r.Id);
+    });
+
+    private void SetSound(string id, string? value) => Set(o =>
+    {
+        if (string.IsNullOrEmpty(value)) o.Sounds.Remove(id); else o.Sounds[id] = value;
+    });
+
+    private void SetVolume(string id, object? value)
+    {
+        if (!int.TryParse(value?.ToString(), out var v)) return;
+        Set(o => { if (v == o.AlertVolume) o.Volumes.Remove(id); else o.Volumes[id] = Math.Clamp(v, 0, 100); });
+    }
+
+    private void SetLead(object? value)
+    {
+        if (int.TryParse(value?.ToString(), out var v)) Set(o => o.BossLeadMinutes = Math.Clamp(v, 1, 60));
+    }
+
+    protected override void OnInitialized()
+    {
+        Tracker.Changed += Refresh;
+        tick = new System.Threading.Timer(_ => Refresh(), null, 1000, 1000); // the countdowns
+    }
+
+    private void Refresh() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Tracker.Changed -= Refresh;
+        tick?.Dispose();
+    }
+}

@@ -170,8 +170,21 @@ public sealed class TimersOptions
     /// <summary>Events (schedule ids, or <see cref="AllFieldBosses"/>) the user does not want alerts for; they stay shown.</summary>
     public HashSet<string> MutedIds { get; set; } = [];
 
+    /// <summary>Field bosses switched on in "Боссы" ("boss:{key}"): only they are in the timers window and alert.
+    /// None switched on means all of them, as before the list existed.</summary>
+    public HashSet<string> WatchedBosses { get; set; } = [];
+
+    public bool Watches(FeedItem item) => item.Kind != FeedKind.Boss || WatchedBosses.Count == 0 || WatchedBosses.Contains(item.Id);
+
+    /// <summary>Volume per alert key or boss id, 0–100; anything without one plays at <see cref="AlertVolume"/>.</summary>
+    public Dictionary<string, int> Volumes { get; set; } = [];
+
+    public int VolumeFor(FeedItem item) =>
+        Volumes.TryGetValue(item.Id, out var own) || Volumes.TryGetValue(AlertKey(item), out own) ? Math.Clamp(own, 0, 100) : AlertVolume;
+
     public bool Notifies(FeedItem item) =>
         Shows(item)
+        && Watches(item)
         && LeadFor(item) > 0
         && !MutedIds.Contains(AlertKey(item))
         && (item.AlertByDefault || EnabledIds.Contains(AlertKey(item)));
@@ -194,7 +207,9 @@ public sealed class TimersOptions
     /// <summary>Alert keys (see <see cref="AlertKey"/>) to the sound they play, as <see cref="AlertSound"/> text.</summary>
     public Dictionary<string, string> Sounds { get; set; } = [];
 
-    public AlertSound SoundFor(FeedItem item) => SoundFor(AlertKey(item));
+    /// <summary>A boss's own sound ("boss:{key}") first, then the one for all field bosses or the event's.</summary>
+    public AlertSound SoundFor(FeedItem item) =>
+        item.Kind == FeedKind.Boss && Sounds.ContainsKey(item.Id) ? SoundFor(item.Id) : SoundFor(AlertKey(item));
 
     public AlertSound SoundFor(string key) => AlertSound.Parse(Sounds.GetValueOrDefault(key));
 

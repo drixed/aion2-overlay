@@ -59,7 +59,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                     .Concat(closing.Select(d => $"{d.Title} — закроется через {Math.Max(1, (int)Math.Round((d.At!.Value - now).TotalSeconds))} с")));
                 due = [.. due, .. opened, .. closing];
                 until = now + ShowFor;
-                if (o.Sound) sounds.Play(o.SoundFor(due[0])); // each event (or all field bosses) can have its own sound
+                if (o.Sound) sounds.Play(o.SoundFor(due[0]), o.VolumeFor(due[0])); // each event (or all field bosses) can have its own sound
             }
             catch (Exception ex)
             {

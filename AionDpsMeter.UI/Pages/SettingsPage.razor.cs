@@ -47,6 +47,7 @@ namespace AionDpsMeter.UI.Pages
         new("tracking", "Tracking", "&#9881;"),
         new("overlays", "Overlays", "&#9635;"),
         new("fork-timers", "Timers", "&#9200;"), // aion2-overlay fork
+        new("fork-bosses", "Bosses", "&#9760;"), // aion2-overlay fork
         new("fork-records", "Records", "&#127942;"), // aion2-overlay fork
         new("fork-pets", "Pets", "&#128062;"), // aion2-overlay fork
     };

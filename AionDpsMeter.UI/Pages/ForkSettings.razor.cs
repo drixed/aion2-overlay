@@ -44,7 +44,7 @@ namespace AionDpsMeter.UI.Pages
 
         private const string PickFile = "pick-file";
 
-        private static readonly (string Value, string Label)[] WindowsSounds =
+        internal static readonly (string Value, string Label)[] WindowsSounds =
         [
             ("", "Стандартный"),
             (AlertSound.System(WindowsSound.Asterisk).ToString(), "Звёздочка"),

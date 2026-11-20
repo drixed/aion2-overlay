@@ -122,4 +122,38 @@ public class TimersOptionsTests
         Assert.DoesNotContain(FeedKind.Boss, store.Current.HiddenKinds);
         Assert.Contains(FeedKind.Rift, store.Current.HiddenKinds);
     }
+    private static FeedItem Boss(int key) => new($"boss:{key}", "k", FeedKind.Boss, "B", null, FeedStatus.Upcoming, null, true, key);
+
+    [Fact]
+    public void Switched_on_bosses_are_the_only_ones_shown_and_alerted_none_switched_on_means_all()
+    {
+        var o = new TimersOptions();
+        Assert.True(o.Watches(Boss(2100877)));
+        Assert.True(o.Notifies(Boss(2100877)));
+
+        o.WatchedBosses.Add("boss:2100877");
+        Assert.True(o.Watches(Boss(2100877)));
+        Assert.False(o.Watches(Boss(2100003)));
+        Assert.False(o.Notifies(Boss(2100003)));
+        var rift = Boss(1) with { Id = "rift", Kind = FeedKind.Rift, BossKey = null };
+        Assert.True(o.Watches(rift)); // schedule events are not field bosses
+    }
+
+    [Fact]
+    public void A_boss_can_have_its_own_sound_and_volume_else_the_field_boss_ones()
+    {
+        var o = new TimersOptions { AlertVolume = 70 };
+        var own = AlertSound.System(WindowsSound.Beep);
+        var all = AlertSound.System(WindowsSound.Hand);
+        o.SetSound(TimersOptions.AllFieldBosses, all);
+        Assert.Equal(all, o.SoundFor(Boss(2100877)));
+        o.SetSound("boss:2100877", own);
+        Assert.Equal(own, o.SoundFor(Boss(2100877)));
+        Assert.Equal(all, o.SoundFor(Boss(2100003)));
+
+        Assert.Equal(70, o.VolumeFor(Boss(2100877)));
+        o.Volumes["boss:2100877"] = 30;
+        Assert.Equal(30, o.VolumeFor(Boss(2100877)));
+        Assert.Equal(70, o.VolumeFor(Boss(2100003)));
+    }
 }

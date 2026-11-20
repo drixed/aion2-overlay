@@ -14,9 +14,10 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         /// <summary>Kept in a field: a MediaPlayer that is collected stops mid-sound.</summary>
         private MediaPlayer? media;
 
-        public void Play(AlertSound sound)
+        /// <param name="ownVolume">A boss's or event's own volume (0–100); the general alert volume when null.</param>
+        public void Play(AlertSound sound, int? ownVolume = null)
         {
-            var volume = Math.Clamp(options.Current.AlertVolume, 0, 100);
+            var volume = Math.Clamp(ownVolume ?? options.Current.AlertVolume, 0, 100);
             if (volume == 0 || options.Current.MuteWhenGameClosed && !ForkRuntime.GameRunning()) return;
             try
             {

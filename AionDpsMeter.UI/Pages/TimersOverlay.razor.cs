@@ -69,7 +69,7 @@ namespace AionDpsMeter.UI.Pages
         {
             now = time.GetUtcNow();
             var bosses = tracker.TimersFor(server.CurrentServerId);
-            visible = TimersFeed.BuildBosses(now, schedule.Current, bosses, catalog).Where(Options.Shows).ToList();
+            visible = TimersFeed.BuildBosses(now, schedule.Current, bosses, catalog).Where(Options.Shows).Where(Options.Watches).ToList();
             toast = alertRunner.ActiveText; // alerts (with sound) come from AlertRunner, whether this window is open or not
         }
 
