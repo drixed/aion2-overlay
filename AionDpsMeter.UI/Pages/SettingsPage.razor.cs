@@ -15,7 +15,6 @@ namespace AionDpsMeter.UI.Pages
         private int _windowOpacityPercent;
         private double _playerRowScale;
         private bool _capturingHotkey;
-        private bool _developerExpanded;
         private string _activeGroup = "appearance";
         private string _version = "1.0.0";
 
@@ -51,6 +50,7 @@ namespace AionDpsMeter.UI.Pages
         new("fork-buffs", "Buffs", "&#9201;"), // aion2-overlay fork
         new("fork-records", "Records", "&#127942;"), // aion2-overlay fork
         new("fork-pets", "Pets", "&#128062;"), // aion2-overlay fork
+        new("fork-diag", "Diagnostics", "&#128295;"), // aion2-overlay fork
     };
 
         private readonly List<UiStyleOption> _uiStyles = new()
@@ -118,7 +118,6 @@ namespace AionDpsMeter.UI.Pages
         {
         }
 
-        private void ToggleDeveloperSection() => _developerExpanded = !_developerExpanded;
 
         private void OnWindowOpacityInput(ChangeEventArgs e)
         {

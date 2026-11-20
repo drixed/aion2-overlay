@@ -1,0 +1,32 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Диагностика" settings tab: everything that writes logs for working
+   out a problem or a new feature — the packet recording, the healing log, the Logs folder. *@
+@using AionDpsMeter.Timers.Feed
+@using AionDpsMeter.UI.Pages.Components
+@inject TimersOptionsStore Store
+
+<ForkPacketRecorder />
+
+<div class="fs-label fs-label--spaced">ЖУРНАЛЫ</div>
+<SettingRow Title="Журнал лечения" Description="Пишет в Logs\heal-probe.txt каждое умение, попавшее по игроку: по нему видно, какое лечение метр ещё не считает. Включайте, только если лечение показывается неверно (не больше 4000 строк в день)">
+    <ValueSlot>
+        <ToggleSwitch Checked="Store.Current.HealProbe" CheckedChanged="v => { Store.Current.HealProbe = v; Store.Save(); }" />
+    </ValueSlot>
+</SettingRow>
+<SettingRow Title="Папка с журналами" Description="Logs рядом с метром: записи пакетов, журнал лечения, журнал работы метра" IsLast="true">
+    <ValueSlot>
+        <button type="button" class="fs-segmented__option fs-button" @onclick="OpenLogs">📂 Открыть</button>
+    </ValueSlot>
+</SettingRow>
+
+@code {
+    private static void OpenLogs()
+    {
+        var dir = System.IO.Path.Combine(AppContext.BaseDirectory, "Logs");
+        try
+        {
+            System.IO.Directory.CreateDirectory(dir);
+            System.Diagnostics.Process.Start("explorer.exe", $"\"{dir}\"");
+        }
+        catch (Exception) { }
+    }
+}

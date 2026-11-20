@@ -55,6 +55,25 @@ public class TimersOptionsTests
     }
 
     [Fact]
+    public void The_healing_log_is_off_until_turned_on_and_follows_the_setting()
+    {
+        using var dir = new TempDir();
+        var store = new TimersOptionsStore(dir.File("timers-settings.json"));
+        store.Load();
+        Assert.False(store.Current.HealProbe);
+        store.ApplyDiagnostics();
+        Assert.False(AionDpsMeter.Services.PacketProcessing.Fork.HealProbe.Enabled);
+
+        store.Current.HealProbe = true;
+        store.Save();                                   // saving applies it at once
+        Assert.True(AionDpsMeter.Services.PacketProcessing.Fork.HealProbe.Enabled);
+
+        store.Current.HealProbe = false;
+        store.Save();
+        Assert.False(AionDpsMeter.Services.PacketProcessing.Fork.HealProbe.Enabled);
+    }
+
+    [Fact]
     public void Map_opacity_and_point_size_stay_in_range()
     {
         var map = new MapOptions { Opacity = 3, PointSize = 900 };

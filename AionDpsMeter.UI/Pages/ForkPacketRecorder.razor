@@ -5,7 +5,7 @@
 @implements IDisposable
 @inject PacketRecorder Recorder
 
-<div class="fs-label fs-label--spaced">ДИАГНОСТИКА</div>
+<div class="fs-label fs-label--spaced">ЗАПИСЬ ПАКЕТОВ</div>
 <SettingRow Title="Записать пакеты игры" Description="@Description()" IsLast="true">
     <ValueSlot>
         <span class="fs-hotkey">
@@ -37,7 +37,7 @@
             return $"Идёт запись: {Recorder.Count:N0} пакетов, до {Recorder.Until:HH:mm}. Делайте в игре то, что нужно записать (например, соберите группу через поиск — заявки, вход, готовность).";
         if (Recorder.File is { } file)
             return $"Записано {Recorder.Count:N0} пакетов в Logs\\{System.IO.Path.GetFileName(file)}. Файл остаётся у вас на компьютере; в нём могут быть ники и чат.";
-        return "Для новых функций (например, заявки в поиске группы): метр записывает всё, что присылает игра, в папку Logs. Ничего никуда не отправляется.";
+        return "Для новых функций (лобби: кто в группе и кто принял игру; чек-лист; крафт): метр записывает всё, что присылает игра, в папку Logs. Включите запись, сделайте в игре нужное и напишите, что и во сколько делали. Ничего никуда не отправляется.";
     }
 
     private void ShowFile()

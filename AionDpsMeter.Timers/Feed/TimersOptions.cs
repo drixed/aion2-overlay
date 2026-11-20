@@ -30,6 +30,8 @@ public sealed class TimersOptions
     public bool ShowFarmIncome { get; set; } = true;
     /// <summary>The 🗺 window's own look and layers, kept between runs.</summary>
     public MapOptions Map { get; set; } = new();
+    /// <summary>"Диагностика": Logs/heal-probe.txt, the healing check log; off unless a healing problem is looked into.</summary>
+    public bool HealProbe { get; set; }
     /// <summary>Marks in the skill table: skills that rarely crit or are often parried.</summary>
     public bool ShowSkillWarnings { get; set; } = true;
     /// <summary>Rows, shares, party DPS and the summary count only me and my party.</summary>
@@ -303,6 +305,7 @@ public sealed class TimersOptionsStore(string path)
         {
             Current = new();
         }
+        ApplyDiagnostics();
     }
 
     /// <summary>At startup: load, and write the defaults only when there is no file yet — never over a file the
@@ -316,8 +319,12 @@ public sealed class TimersOptionsStore(string path)
     /// <summary>Raised after every save, so hotkeys and windows pick up new settings at once.</summary>
     public event Action? Changed;
 
+    /// <summary>Hands the diagnostic switches to the packet side, which does not know these settings.</summary>
+    public void ApplyDiagnostics() => AionDpsMeter.Services.PacketProcessing.Fork.HealProbe.Enabled = Current.HealProbe;
+
     public void Save()
     {
+        ApplyDiagnostics();
         try
         {
             File.WriteAllText(path, JsonSerializer.Serialize(Current, Json));

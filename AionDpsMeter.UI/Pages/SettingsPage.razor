@@ -247,24 +247,7 @@
                 </ValueSlot>
             </SettingRow>
 
-            <div class="settings-subsection">
-                <button type="button" class="collapsible-toggle" @onclick="ToggleDeveloperSection">
-                    <span class="collapsible-toggle__arrow @(_developerExpanded ? "is-open" : "")">▸</span>
-                    <span>Developer</span>
-                </button>
-
-                @if (_developerExpanded)
-                {
-                    <div class="settings-subsection__body">
-                        <SettingRow Title="Log Raw Packets" Description="Save incoming network packets to the PacketLogs folder" IsLast="true">
-                            <ValueSlot>
-                                <ToggleSwitch Checked="settings.IsPacketLoggingEnabled" CheckedChanged="v => { settings.IsPacketLoggingEnabled = v; }" />
-                            </ValueSlot>
-                        </SettingRow>
-                    </div>
-                }
-            </div>
-
+            @* aion2-overlay fork: "Developer" (raw packet logging) moved to the "Диагностика" tab *@
             <ForkSettings Section="tracking" /> @* aion2-overlay fork *@
         </section>
 
@@ -511,6 +494,16 @@
         <section class="settings-group @(_activeGroup == "fork-timers" ? "" : "is-hidden")"><ForkSettings Section="timers" /></section> @* aion2-overlay fork *@
         <section class="settings-group @(_activeGroup == "fork-bosses" ? "" : "is-hidden")"><ForkBosses /></section> @* aion2-overlay fork *@
         <section class="settings-group @(_activeGroup == "fork-buffs" ? "" : "is-hidden")"><ForkBuffs /></section> @* aion2-overlay fork *@
+        @* aion2-overlay fork: "Диагностика" — the fork's logs and upstream's raw packet logging in one tab *@
+        <section class="settings-group @(_activeGroup == "fork-diag" ? "" : "is-hidden")">
+            <ForkDiagnostics />
+            <div class="fs-label fs-label--spaced">СЫРЫЕ ПАКЕТЫ</div>
+            <SettingRow Title="Log Raw Packets" Description="Save incoming network packets to the PacketLogs folder" IsLast="true">
+                <ValueSlot>
+                    <ToggleSwitch Checked="settings.IsPacketLoggingEnabled" CheckedChanged="v => { settings.IsPacketLoggingEnabled = v; }" />
+                </ValueSlot>
+            </SettingRow>
+        </section>
         <section class="settings-group @(_activeGroup == "fork-records" ? "" : "is-hidden")"><ForkRecords /></section> @* aion2-overlay fork *@
         <section class="settings-group @(_activeGroup == "fork-pets" ? "" : "is-hidden")"><ForkPets /></section> @* aion2-overlay fork *@
 

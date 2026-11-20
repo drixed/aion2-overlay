@@ -15,9 +15,12 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
         private static DateOnly day;
         private static int lines;
 
+        /// <summary>Settings → «Диагностика» → «Журнал лечения»; off by default.</summary>
+        public static volatile bool Enabled;
+
         public static void Record(string source, int actorId, int targetId, int skillCode, long type, long amount, bool targetIsPlayer)
         {
-            if (!targetIsPlayer && actorId != targetId) return;
+            if (!Enabled || (!targetIsPlayer && actorId != targetId)) return;
             try
             {
                 var data = GameDataProvider.Instance;
