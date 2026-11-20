@@ -39,7 +39,19 @@ public class FarmIncomeTests
 
         Assert.Equal(12_000, f.Gained(FarmIncome.Kina));
         Assert.Equal(166, f.Gained(FarmIncome.AbyssPoints));
-        Assert.Equal(12_000, f.PerHour(FarmIncome.Kina, T0.AddMinutes(60)), 1);
+        Assert.Equal(12_000, f.PerHour(FarmIncome.Kina, T0.AddMinutes(60))!.Value, 1);
+    }
+
+    [Fact]
+    public void A_big_drop_soon_after_the_start_gives_no_rate_per_hour_yet()
+    {
+        // Nov 2026: a boss chest worth 960 000 kina seven minutes after the start showed "5 710 757/ч"
+        var f = new FarmIncome();
+        f.OnChange(InventoryRecords.Read(Frame(Record(1, FarmIncome.Kina, 1_000_000, 1, 3))), T0);
+        f.OnChange(InventoryRecords.Read(Frame(Record(1, FarmIncome.Kina, 1_960_000, 1, 3))), T0.AddMinutes(7));
+        Assert.Equal(960_000, f.Gained(FarmIncome.Kina));
+        Assert.Null(f.PerHour(FarmIncome.Kina, T0.AddMinutes(10)));
+        Assert.Equal(960_000 / 0.5, f.PerHour(FarmIncome.Kina, T0.AddMinutes(30))!.Value, 1);
     }
 
     [Fact]

@@ -330,16 +330,16 @@
                             var nowFarm = DateTime.Now;
                             var kina = Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.Kina);
                             var ap = Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints);
-                            var kinaHour = (long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.Kina, nowFarm);
-                            var apHour = (long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints, nowFarm);
-                            <span class="bp-farm" title="@($"Доход с фарма с {Farm.Since?.ToString("HH:mm") ?? "—"}: кинары +{Grouped(kina)} ({Grouped(kinaHour)}/ч), очки Бездны +{Grouped(ap)} ({Grouped(apHour)}/ч). Нажмите, чтобы начать отсчёт заново")" @onclick="() => Farm.Reset(DateTime.Now)">
+                            var kinaHour = Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.Kina, nowFarm) is { } kh ? (long?)kh : null;
+                            var apHour = Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints, nowFarm) is { } ah ? (long?)ah : null;
+                            <span class="bp-farm" title="@($"Доход с фарма с {Farm.Since?.ToString("HH:mm") ?? "—"}: кинары +{Grouped(kina)}{(kinaHour is { } k1 ? $" ({Grouped(k1)}/ч)" : "")}, очки Бездны +{Grouped(ap)}{(apHour is { } a1 ? $" ({Grouped(a1)}/ч)" : "")}{(kinaHour is null ? ". В час — через 15 минут отсчёта" : "")}. Нажмите, чтобы начать отсчёт заново")" @onclick="() => Farm.Reset(DateTime.Now)">
                                 @if (kina > 0)
                                 {
-                                    <span class="bp-farm-item"><svg class="bp-farm-ico" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#f5c76b" /><circle cx="8" cy="8" r="4.6" fill="none" stroke="#a87a1e" stroke-width="1.4" /><circle cx="8" cy="8" r="1.6" fill="#a87a1e" /></svg><b>+@Grouped(kina)</b><small>@Grouped(kinaHour)/ч</small></span>
+                                    <span class="bp-farm-item"><svg class="bp-farm-ico" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#f5c76b" /><circle cx="8" cy="8" r="4.6" fill="none" stroke="#a87a1e" stroke-width="1.4" /><circle cx="8" cy="8" r="1.6" fill="#a87a1e" /></svg><b>+@Grouped(kina)</b>@if (kinaHour is { } kph) { <small>@Grouped(kph)/ч</small> }</span>
                                 }
                                 @if (ap > 0)
                                 {
-                                    <span class="bp-farm-item"><svg class="bp-farm-ico" viewBox="0 0 16 16"><path d="M8 1 L14 8 L8 15 L2 8 Z" fill="#c4a0ff" /><path d="M8 1 L14 8 L8 8 Z" fill="#e2d2ff" /><path d="M2 8 L8 15 L8 8 Z" fill="#8f66d6" /></svg><b>+@Grouped(ap)</b><small>@Grouped(apHour)/ч</small></span>
+                                    <span class="bp-farm-item"><svg class="bp-farm-ico" viewBox="0 0 16 16"><path d="M8 1 L14 8 L8 15 L2 8 Z" fill="#c4a0ff" /><path d="M8 1 L14 8 L8 8 Z" fill="#e2d2ff" /><path d="M2 8 L8 15 L8 8 Z" fill="#8f66d6" /></svg><b>+@Grouped(ap)</b>@if (apHour is { } aph) { <small>@Grouped(aph)/ч</small> }</span>
                                 }
                             </span>
                         }

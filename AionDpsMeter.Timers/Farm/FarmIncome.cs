@@ -63,13 +63,17 @@ public sealed class FarmIncome : IRawPacketListener
         lock (gate) return item == Kina ? gained.GetValueOrDefault(Kina) + gained.GetValueOrDefault(KinaBound) : gained.GetValueOrDefault(item);
     }
 
-    public double PerHour(int item, DateTime now)
+    /// <summary>How long the count must run before a rate per hour means something: one boss chest a few minutes after the
+    /// start made millions "per hour".</summary>
+    public static readonly TimeSpan RateAfter = TimeSpan.FromMinutes(15);
+
+    /// <summary>What came in per hour since the start, null until the count has run <see cref="RateAfter"/>.</summary>
+    public double? PerHour(int item, DateTime now)
     {
         DateTime? start;
         lock (gate) start = since;
-        if (start is not { } s) return 0;
-        var hours = Math.Max(1 / 60.0, (now - s).TotalHours);
-        return Gained(item) / hours;
+        if (start is not { } s || now - s < RateAfter) return null;
+        return Gained(item) / (now - s).TotalHours;
     }
 
     public DateTime? Since { get { lock (gate) return since; } }
