@@ -43,7 +43,24 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
 
     public IReadOnlyList<BossTimer> TimersFor(int serverId)
     {
-        lock (gate) return timers.Values.Where(t => t.ServerId == serverId).ToList();
+        lock (gate)
+        {
+            Adopt(serverId);
+            return timers.Values.Where(t => t.ServerId == serverId).ToList();
+        }
+    }
+
+    /// <summary>Timers kept while the server was unknown (id 0; EU before its servers were in the table) belong to the
+    /// first server that becomes known; the server's own timers win where both exist.</summary>
+    private void Adopt(int serverId)
+    {
+        if (serverId == 0) return;
+        foreach (var t in timers.Values.Where(t => t.ServerId == 0).ToList())
+        {
+            timers.Remove((0, t.Key));
+            timers.TryAdd((serverId, t.Key), t with { ServerId = serverId });
+        }
+        if (unplacedKills.Remove(0, out var kills) && !unplacedKills.ContainsKey(serverId)) unplacedKills[serverId] = kills;
     }
 
     public int RespawnMinutesOf(int code)
@@ -63,6 +80,7 @@ public sealed class FieldBossTracker(BossCatalog catalog, Func<ScheduleData> dat
         {
             // Sent about once a second while the map is open: an unchanged list changes nothing.
             if (lastLists.TryGetValue((serverId, list.MapId), out var previous) && previous.List.SameAs(list)) return;
+            Adopt(serverId);
             var now = time.GetUtcNow();
             lastLists[(serverId, list.MapId)] = (list, now);
             Apply(serverId, list, now);

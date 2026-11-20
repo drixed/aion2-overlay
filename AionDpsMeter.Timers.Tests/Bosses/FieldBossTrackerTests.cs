@@ -50,6 +50,20 @@ public class FieldBossTrackerTests
     }
 
     [Fact]
+    public void Timers_kept_while_the_server_was_unknown_move_to_the_server_once_it_is_known()
+    {
+        // EU before its servers were in the table: everything was filed under server 0.
+        var t = Tracker();
+        t.OnList(0, List(1110, 3, Slot(1110, 1, true, time.GetUtcNow()), Slot(1110, 2, false, time.GetUtcNow().AddHours(1))));
+        t.OnList(1308, List(1110, 3, Slot(1110, 1, false, time.GetUtcNow().AddHours(2))));
+
+        var timers = t.TimersFor(1308);
+        Assert.Equal(2, timers.Count);
+        Assert.False(timers.Single(x => x.Key == 2400017).Alive);     // the server's own newer list wins
+        Assert.Empty(t.TimersFor(0));
+    }
+
+    [Fact]
     public void Servers_do_not_share_timers()
     {
         var t = Tracker();
