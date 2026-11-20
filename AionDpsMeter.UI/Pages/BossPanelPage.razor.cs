@@ -91,7 +91,19 @@ namespace AionDpsMeter.UI.Pages
             schedule.Current.PetName(line.Pet.Pet) ?? line.Name; // names live in schedule.json
 
         private static string PetStat(AionDpsMeter.Timers.Pets.PetView p) =>
-            $"{(p.Level == 0 ? "сбор" : $"ур. {p.Level}")} · {(p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}")}";
+            p.Level >= AionDpsMeter.Timers.Pets.PetBook.MaxLevel ? "★ макс."
+            : $"{(p.Level == 0 ? "сбор" : $"ур. {p.Level}")} · {(p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}")}";
+
+        private AionDpsMeter.Timers.Pets.TargetSelection? targetSelection;
+
+        /// <summary>The pet of the monster clicked on (selected in the game) within the last two minutes, maxed ones too:
+        /// the pet is known before the first hit.</summary>
+        private (AionDpsMeter.Timers.Pets.PetView Pet, string Name)? SelectedPet()
+        {
+            targetSelection ??= services.GetService(typeof(AionDpsMeter.Timers.Pets.TargetSelection)) as AionDpsMeter.Timers.Pets.TargetSelection;
+            if (targetSelection is not { Entity: { } id, At: { } at } || DateTime.Now - at > TimeSpan.FromMinutes(2)) return null;
+            return entities.GetTargetMob(id) is { MobCode: > 0 } mob ? pets.ForCode(mob.MobCode, includeMaxed: true) : null;
+        }
 
         private string PetTitle((AionDpsMeter.Timers.Pets.PetView Pet, string Name) line) =>
             $"{PetName(line)} — души падают с «{line.Name}». «?» — число придёт при следующем входе персонажа. Все питомцы — в настройках, вкладка «Питомцы»";
@@ -436,7 +448,7 @@ namespace AionDpsMeter.UI.Pages
                 var target = sessions.GetActiveTargetInfo();
                 fightIsBoss = target is { IsBoss: true, IsDummy: false };
                 targetIsDummy = target?.IsDummy == true;
-                PetLine = Options.ShowPets ? pets.Current() : null;
+                PetLine = Options.ShowPets ? SelectedPet() ?? pets.Current() : null;
                 if (target is not null || ViewModel?.HasActiveTarget == true) lastFightAt = DateTime.Now;
                 Fight = target is { HpTotal: > 0, HpCurrent: > 0 } && (fightIsBoss || options.Current.CardForAllTargets)
                     ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),

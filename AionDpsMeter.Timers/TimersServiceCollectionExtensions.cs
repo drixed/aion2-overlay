@@ -73,6 +73,8 @@ public static class TimersServiceCollectionExtensions
             return recorder;
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
+        services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Pets.TargetSelection>());
         services.AddSingleton<AionDpsMeter.Timers.Farm.FarmIncome>();
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Farm.FarmIncome>());
         services.AddHostedService<TimersHostedService>();

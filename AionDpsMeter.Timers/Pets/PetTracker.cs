@@ -53,8 +53,12 @@ public sealed class PetTracker : IPetListener, IDisposable
             if (lastHitCode == 0 || DateTime.Now - lastHitAt > ShowFor) return null;
             code = lastHitCode;
         }
-        return book.ForMonster(code) is { } view ? (view, NameOf(code)) : null;
+        return ForCode(code);
     }
+
+    /// <summary>The pet of a monster by its code: what drops taught the meter, else the map table's pet.</summary>
+    public (PetView Pet, string Name)? ForCode(int monsterCode, bool includeMaxed = false) =>
+        book.ForMonster(monsterCode, AionDpsMeter.Timers.Map.WorldMap.PetOf(monsterCode), includeMaxed) is { } view ? (view, NameOf(monsterCode)) : null;
 
     /// <summary>Every pet for the Pets tab, with the Russian name of the monster its souls come from.</summary>
     public IReadOnlyList<(PetView View, string? Monster)> All() =>

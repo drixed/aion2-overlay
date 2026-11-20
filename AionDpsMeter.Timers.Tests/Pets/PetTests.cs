@@ -145,3 +145,51 @@ public class PetListTests
         Assert.Null(all.Single(p => p.View.Pet == 1001).Monster);
     }
 }
+
+/// <summary>EU capture 2026-11-20 15:49: five clicks on one monster, then on another, each click followed by Esc.</summary>
+public class TargetSelectionTests
+{
+    private static readonly DateTime T0 = new(2026, 11, 20, 15, 49, 20);
+
+    [Fact]
+    public void A_click_on_a_monster_names_it_and_esc_clears_it()
+    {
+        var target = new TargetSelection();
+        target.OnFrame(T0, Convert.FromHexString("343800000" + "0B9CF01"));
+        Assert.Equal(26553, target.Entity);
+        Assert.Equal(T0, target.At);
+
+        target.OnFrame(T0.AddSeconds(6), Convert.FromHexString("3438000000" + "00"));
+        Assert.Null(target.Entity);
+
+        target.OnFrame(T0.AddSeconds(30), Convert.FromHexString("34380000008D9701"));
+        Assert.Equal(19341, target.Entity);
+    }
+
+    [Fact]
+    public void Other_and_cut_frames_change_nothing()
+    {
+        var target = new TargetSelection();
+        target.OnFrame(T0, Convert.FromHexString("3538B9CF010000"));    // 0x3835, the frame next to it
+        target.OnFrame(T0, Convert.FromHexString("3438"));
+        Assert.Null(target.Entity);
+    }
+
+    [Fact]
+    public void A_monster_the_meter_never_saw_drop_a_soul_still_names_its_pet_from_the_map_table()
+    {
+        var book = new PetBook();
+        book.OnList([new PetLevel(1026, 1, 7)]);
+        Assert.Null(book.ForMonster(2000000));                         // nothing learned from drops yet
+        var view = book.ForMonster(2000000, tablePet: 1026);
+        Assert.Equal(new PetView(1026, 1, 7, 25, 0), view);
+
+        var fresh = book.ForMonster(2000000, tablePet: 1001);           // a pet not in the login list: not collected yet
+        Assert.Equal(0, fresh!.Level);
+
+        book.OnList([new PetLevel(1026, 3, null)]);
+        Assert.Null(book.ForMonster(2000000, tablePet: 1026));
+        Assert.Equal(3, book.ForMonster(2000000, tablePet: 1026, includeMaxed: true)!.Level);
+    }
+}
+

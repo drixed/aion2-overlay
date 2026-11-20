@@ -152,8 +152,10 @@ public sealed class PetBook
         }
     }
 
-    /// <summary>The pet this monster gives souls to, while it is not maxed; null otherwise.</summary>
-    public PetView? ForMonster(int monsterCode)
+    /// <summary>The pet this monster gives souls to, while it is not maxed; null otherwise. What the meter learned from drops
+    /// comes first; <paramref name="tablePet"/> (the map table's pet of this monster) covers monsters it has not seen yet, a
+    /// pet missing from the login list being one not collected yet (level 0).</summary>
+    public PetView? ForMonster(int monsterCode, int? tablePet = null, bool includeMaxed = false)
     {
         lock (gate)
         {
@@ -161,7 +163,9 @@ public sealed class PetBook
                 .Where(p => p.Monsters.TryGetValue(monsterCode, out var n) && n == p.Monsters.Values.Max())
                 .OrderByDescending(p => p.Monsters[monsterCode])
                 .FirstOrDefault();
-            if (e is null || e.Level >= MaxLevel) return null;
+            if (e is null && tablePet is { } pet)
+                e = pets.GetValueOrDefault(pet) ?? new Entry { Pet = pet, Level = 0, Souls = pets.Count > 0 ? 0 : null };
+            if (e is null || (e.Level >= MaxLevel && !includeMaxed)) return null;
             return new PetView(e.Pet, e.Level, e.Souls, Need(e.Level), session.GetValueOrDefault(e.Pet));
         }
     }
