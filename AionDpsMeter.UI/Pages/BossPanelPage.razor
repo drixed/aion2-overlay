@@ -3,6 +3,8 @@
 @using AionDpsMeter.Timers.Feed
 @implements IDisposable
 @inject AionDpsMeter.UI.Services.TimerWindow.HistoryBrowserWindow HistoryWindow
+@inject AionDpsMeter.UI.Services.TimerWindow.NewsWindow NewsWindow
+@inject AionDpsMeter.UI.Services.TimerWindow.NewsService News
 
 @if (ViewModel != null)
 {
@@ -18,6 +20,7 @@
             <div class="bp-controls">
                 <button type="button" @onclick="() => HistoryWindow.Open()" @onmousedown:stopPropagation="true" title="История боёв: урон по умениям, итоги, лечение, полученный урон, смерти">☰</button>
                 <button type="button" @onclick="ViewModel.OpenStatEffCalc" @onmousedown:stopPropagation="true" title="Калькулятор статов">⚔</button>
+                <button type="button" class="bp-news" @onclick="() => NewsWindow.Open()" @onmousedown:stopPropagation="true" title="@(News.HasNew ? "Объявления NCSOFT — есть новые" : "Объявления NCSOFT и Twitch Drops")">📣@if (News.HasNew) { <i class="bp-news-dot"></i> }</button>
                 <button type="button" @onclick="ToggleCubeMap" @onmousedown:stopPropagation="true" title="Карта кубов">🗺</button>
                 <button type="button" @onclick="ViewModel.OpenSettings" @onmousedown:stopPropagation="true" title="Настройки">⚙</button>
                 <button type="button" @onclick="ViewModel.Minimize" @onmousedown:stopPropagation="true" title="Свернуть">_</button>

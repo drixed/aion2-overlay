@@ -146,6 +146,9 @@
         <SettingRow Title="Запускать вместе с Windows" Description="Метр стартует сам при входе в Windows">
             <ValueSlot><ToggleSwitch Checked="@O.StartWithWindows" CheckedChanged="v => Set(o => o.StartWithWindows = v)" /></ValueSlot>
         </SettingRow>
+        <SettingRow Title="Объявления NCSOFT" Description="Кнопка 📣 в главном окне: официальные новости AION 2 (техработы, сбои, компенсации) и кампании Twitch Drops; метр проверяет их раз в 15 минут">
+            <ValueSlot><ToggleSwitch Checked="@O.ShowNews" CheckedChanged="v => Set(o => o.ShowNews = v)" /></ValueSlot>
+        </SettingRow>
         <SettingRow Title="Сворачивать в трей" Description="Кнопка «_» убирает метр в трей (значок возле часов); двойной клик по значку — вернуть">
             <ValueSlot><ToggleSwitch Checked="@O.MinimizeToTray" CheckedChanged="v => Set(o => o.MinimizeToTray = v)" /></ValueSlot>
         </SettingRow>

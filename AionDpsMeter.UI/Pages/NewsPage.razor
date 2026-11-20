@@ -1,0 +1,116 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The 📣 window: NCSOFT's official AION 2 announcements with a kind
+   filter and a "новое" mark, and the Twitch Drops campaigns NC announces. *@
+@using AionDpsMeter.Timers.News
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject NewsService News
+@inject NewsWindow Window
+
+<div class="nw">
+    <div class="nw-head" @onmousedown="Window.Drag">
+        <b>@(tab == "drops" ? "Twitch Drops" : "Объявления")</b>
+        <span class="nw-tabs" @onmousedown:stopPropagation="true">
+            <button type="button" class="@(tab == "news" ? "on" : "")" @onclick='() => tab = "news"'>Объявления</button>
+            <button type="button" class="@(tab == "drops" ? "on" : "")" @onclick='() => tab = "drops"'>Twitch Drops</button>
+        </span>
+        <span class="nw-grow"></span>
+        <button type="button" class="nw-x" title="Обновить" @onmousedown:stopPropagation="true" @onclick="Reload">⟳</button>
+        <button type="button" class="nw-x" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
+    </div>
+    <div class="nw-body">
+        @if (tab == "news")
+        {
+            <div class="nw-chips">
+                <button type="button" class="@(kind is null ? "on" : "")" @onclick="() => kind = null">Все</button>
+                @foreach (var k in News.Items.Select(i => i.Kind).Distinct().OrderBy(k => k))
+                {
+                    var kk = k;
+                    <button type="button" class="nw-kind k-@k.ToString().ToLowerInvariant() @(kind == k ? "on" : "")" @onclick="() => kind = kind == kk ? null : kk">@Announcements.Label(k)</button>
+                }
+            </div>
+            @foreach (var a in News.Items.Where(i => kind is null || i.Kind == kind))
+            {
+                @Card(a)
+            }
+            @if (News.Items.Count == 0)
+            {
+                <p class="nw-empty">Объявлений пока нет: метр загружает их с официального сайта NCSOFT раз в 15 минут.</p>
+            }
+            <p class="nw-note">Официальные объявления AION 2 от NCSOFT — на английском, на русском NCSOFT их не публикует. Нажмите на карточку — откроется полный текст на сайте.</p>
+        }
+        else
+        {
+            var drops = News.Items.Where(i => i.Kind == NewsKind.TwitchDrops).ToList();
+            <div class="nw-drops-head">
+                <span>Смотрите стримы AION 2 с включёнными Drops и получайте награды в игре. Привяжите аккаунт NC к Twitch на странице кампаний.</span>
+                <span class="nw-actions">
+                    <button type="button" class="nw-btn primary" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/directory/category/aion-2")'>Стримы AION 2 ↗</button>
+                    <button type="button" class="nw-btn" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/drops/campaigns")'>Кампании и награды ↗</button>
+                </span>
+            </div>
+            @foreach (var a in drops)
+            {
+                @Card(a)
+            }
+            @if (drops.Count == 0)
+            {
+                <p class="nw-empty">Среди последних объявлений NCSOFT нет кампаний Twitch Drops. Когда кампания начнётся, она появится здесь.</p>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private string tab = "news";
+    private NewsKind? kind;
+    private HashSet<string> unseen = [];
+
+    private RenderFragment Card(Announcement a) => __builder =>
+    {
+        <div class="nw-card" @onclick="() => NewsWindow.Browse(a.Url)" title="Открыть на сайте NCSOFT">
+            <div class="nw-card-top">
+                <span class="nw-kind k-@a.Kind.ToString().ToLowerInvariant()">@Announcements.Label(a.Kind)</span>
+                @if (a.Done) { <span class="nw-done">завершено</span> }
+                @if (unseen.Contains(a.Id)) { <span class="nw-new">НОВОЕ</span> }
+                <span class="nw-date">@a.Posted.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+            </div>
+            <b>@a.Title</b>
+            @if (a.Summary.Length > 0) { <p>@(a.Summary.Length > 220 ? a.Summary[..220] + "…" : a.Summary)</p> }
+        </div>
+    };
+
+    protected override void OnInitialized()
+    {
+        tab = Window.Tab;
+        Remember();
+        News.Changed += OnChanged;
+        Window.Requested += OnRequested;
+    }
+
+    /// <summary>The new ones stay marked while the window is open; opening it counts as seen.</summary>
+    private void Remember()
+    {
+        unseen = News.Items.Where(News.IsNew).Select(i => i.Id).ToHashSet();
+        News.MarkSeen();
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        foreach (var a in News.Items.Where(News.IsNew)) unseen.Add(a.Id);
+        StateHasChanged();
+    });
+
+    private void OnRequested() => InvokeAsync(() => { tab = Window.Tab; Remember(); StateHasChanged(); });
+
+    private async Task Reload()
+    {
+        await News.RefreshAsync();
+        Remember();
+    }
+
+    public void Dispose()
+    {
+        News.Changed -= OnChanged;
+        Window.Requested -= OnRequested;
+    }
+}
