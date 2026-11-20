@@ -3,6 +3,7 @@
 @using AionDpsMeter.Timers.Feed
 @using AionDpsMeter.Timers.Overlay
 @using AionDpsMeter.UI.Pages.Components
+@inject AionDpsMeter.UI.Services.TimerWindow.StatCalcWindow StatCalc
 
 @switch (Section)
 {
@@ -193,6 +194,13 @@
         break;
 
     case "tracking":
+        <div class="fs-label fs-label--spaced">ИНСТРУМЕНТЫ</div>
+        <SettingRow Title="Калькулятор статов" Description="Сколько урона даёт каждый стат и что выгоднее качать. Раньше — кнопка ⚔ в главном окне" IsLast="true">
+            <ValueSlot>
+                <button type="button" class="fs-segmented__option fs-button" @onclick="() => StatCalc.Open()">Открыть</button>
+            </ValueSlot>
+        </SettingRow>
+
         <div class="fs-label fs-label--spaced">ЧИСЛА</div>
         <SettingRow Title="Расчёт DPS" Description="eDPS — урон за всё время боя; aDPS — только за твоё активное время, от первого удара до последнего">
             <ValueSlot>
