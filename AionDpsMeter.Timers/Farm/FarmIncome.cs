@@ -18,7 +18,10 @@ public static class InventoryRecords
 {
     private static readonly HashSet<int> Containers = [1, 2, 4, 11, 15, 17];
 
-    public static IReadOnlyList<InventoryRecord> Read(ReadOnlySpan<byte> frame)
+    public static IReadOnlyList<InventoryRecord> Read(ReadOnlySpan<byte> frame) => Read(frame, FarmIncome.Tracks);
+
+    /// <summary>The records of the items <paramref name="known"/> takes (an unknown id is no anchor).</summary>
+    public static IReadOnlyList<InventoryRecord> Read(ReadOnlySpan<byte> frame, Func<int, bool> known)
     {
         var records = new List<InventoryRecord>();
         var body = frame.Length > 2 ? frame[2..] : default;
@@ -28,7 +31,7 @@ public static class InventoryRecords
             var item = unchecked((int)BinaryPrimitives.ReadUInt32LittleEndian(body[i..]));
             var container = body[i + 12];
             if (item < 100_000_000 || body[i - 10] > 2 || !Containers.Contains(container)
-                || body[i + 9] != 0 || body[i + 10] != 0 || body[i + 11] != 0 || !FarmIncome.Tracks(item)) continue;
+                || body[i + 9] != 0 || body[i + 10] != 0 || body[i + 11] != 0 || !known(item)) continue;
             var quantity = unchecked((long)BinaryPrimitives.ReadUInt64LittleEndian(body[(i + 4)..]));
             int slot = body[i + 13];
             if (seen.Add((container, slot))) records.Add(new InventoryRecord(body[i - 10], container, slot, item, quantity));

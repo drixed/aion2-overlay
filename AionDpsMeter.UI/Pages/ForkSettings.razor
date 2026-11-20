@@ -4,6 +4,7 @@
 @using AionDpsMeter.Timers.Overlay
 @using AionDpsMeter.UI.Pages.Components
 @inject AionDpsMeter.UI.Services.TimerWindow.StatCalcWindow StatCalc
+@inject AionDpsMeter.UI.Services.TimerWindow.CraftWindow Craft
 
 @switch (Section)
 {
@@ -195,9 +196,14 @@
 
     case "tracking":
         <div class="fs-label fs-label--spaced">ИНСТРУМЕНТЫ</div>
-        <SettingRow Title="Калькулятор статов" Description="Сколько урона даёт каждый стат и что выгоднее качать. Раньше — кнопка ⚔ в главном окне" IsLast="true">
+        <SettingRow Title="Калькулятор статов" Description="Сколько урона даёт каждый стат и что выгоднее качать. Раньше — кнопка ⚔ в главном окне">
             <ValueSlot>
                 <button type="button" class="fs-segmented__option fs-button" @onclick="() => StatCalc.Open()">Открыть</button>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Крафт" Description="Отметьте рецепты — метр посчитает, сколько руды, трав и прочего нужно и чего ещё не хватает в инвентаре и хранилищах. Тоже в меню значка в трее" IsLast="true">
+            <ValueSlot>
+                <button type="button" class="fs-segmented__option fs-button" @onclick="() => Craft.Open()">Открыть</button>
             </ValueSlot>
         </SettingRow>
 

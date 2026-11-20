@@ -74,6 +74,9 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton(_ => new AionDpsMeter.Timers.Craft.CraftStock(AionDpsMeter.Timers.Craft.CraftBook.Default.Knows));
+        services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Craft.CraftStock>());
+        services.AddSingleton(_ => new AionDpsMeter.Timers.Craft.CraftPlan(TimersPaths.Of("craft-plan.json")));
         services.AddSingleton(_ =>
         {
             // 0x610C belongs to the energy forwarder, so the checklist listens to every frame like the lobby

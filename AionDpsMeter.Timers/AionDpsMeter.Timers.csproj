@@ -21,6 +21,7 @@
     <EmbeddedResource Include="Data\maps.ru.json" LogicalName="maps.ru.json" WithCulture="false" />
     <EmbeddedResource Include="Data\item_stats.ru.json" LogicalName="item_stats.ru.json" WithCulture="false" />
     <EmbeddedResource Include="Data\tickets.ru.json" LogicalName="tickets.ru.json" WithCulture="false" />
+    <EmbeddedResource Include="Data\craft.ru.json" LogicalName="craft.ru.json" WithCulture="false" />
   </ItemGroup>
 
   <ItemGroup>

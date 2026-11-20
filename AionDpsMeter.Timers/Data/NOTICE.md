@@ -43,3 +43,8 @@ Copyright (c) 2026 SkeeveTV. Разбор камней, статов и арка
 коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV. Разбор пакетов счётчиков (0B 61, 0C 61), подписки (3B E3) и
 обязательных заданий (1C 8D) — по `Aion2Tickets` того же проекта, код написан заново. Данные игры © NCSOFT.
 
+`craft.ru.json` — рецепты крафта (что делается, из чего, уровень, ремесло) и русские названия предметов в них. Собрано из
+`Client/assets/aion2/craft/recipes.json` и `item_names.json` проекта [SkeeveAN/Aion-DPS-Meter](https://github.com/SkeeveAN/Aion-DPS-Meter),
+коммит `f6ef644`, MIT License, Copyright (c) 2026 SkeeveTV. Расчёт материалов — по `Aion2Craft.CraftCalc`, запасы в пакете входа — по
+`Aion2Stock` того же проекта, код написан заново. Данные игры © NCSOFT.
+

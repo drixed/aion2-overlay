@@ -1,0 +1,142 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The "Крафт" window: mark recipes, see what they need down to the raw
+   materials and what is still missing — the stock is the inventory and both storages as the game sent them at login. *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Craft
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject CraftWindow Window
+@inject CraftStock Stock
+@inject CraftPlan Plan
+@inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
+
+@{
+    var book = CraftBook.Default;
+    var elyos = Elyos();
+    var stock = Stock.All();
+    var results = CraftCalc.Compute(book, Plan.Entries, stock, resolve, elyos);
+    var total = CraftCalc.Total(results).Where(l => l.Missing > 0).ToList();
+    var found = Found(book, elyos);
+}
+<div class="cr">
+    <div class="cr-title" @onmousedown="Window.Drag">
+        <b>Крафт</b>
+        <small>@(Stock.LoginAt is { } at ? $"запасы: инвентарь и оба хранилища по входу {at:dd.MM HH:mm}, инвентарь обновляется сам" : "запасы появятся после входа персонажа в игру")</small>
+        <span class="cr-grow"></span>
+        <button type="button" class="cr-x" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
+    </div>
+    <div class="cr-body">
+        <aside class="cr-side">
+            <input class="cr-search" placeholder="Найти рецепт: что делаем" value="@query" @oninput="e => query = e.Value?.ToString() ?? string.Empty" />
+            <div class="cr-cats">
+                @foreach (var (key, label) in Categories)
+                {
+                    <button type="button" class="@(category == key ? "on" : "")" @onclick="() => category = key">@label</button>
+                }
+            </div>
+            <div class="cr-list">
+                @foreach (var r in found)
+                {
+                    var inPlan = Plan.Entries.Any(e => e.Recipe == r.Id);
+                    <button type="button" class="cr-recipe g@(book.Grade(r.Product)) @(inPlan ? "in" : "")" title="@($"{CategoryName(r.Category)}, ур. {r.Level} — нажмите, чтобы добавить в план")" @onclick="() => Add(r.Id)">
+                        <span>@book.Name(r.Product)@(r.Count > 1 ? $" ×{r.Count}" : "")</span>
+                        <small>@CategoryName(r.Category) · ур. @r.Level</small>
+                        <i>@(inPlan ? "✓" : "+")</i>
+                    </button>
+                }
+                @if (found.Count == 0) { <div class="cr-hint">Ничего не найдено.</div> }
+            </div>
+        </aside>
+
+        <main class="cr-main">
+            <div class="cr-tools">
+                <label><input type="checkbox" checked="@resolve" @onchange="e => resolve = e.Value is true" /> Раскладывать слитки и порошок до сырья</label>
+            </div>
+            @if (results.Count == 0)
+            {
+                <div class="cr-hint">Отметьте слева рецепты, которые хотите сделать: здесь будет видно, сколько чего нужно и чего ещё не хватает. Порядок в плане — кому запасы достаются первыми.</div>
+            }
+            @foreach (var res in results)
+            {
+                <section class="cr-plan">
+                    <div class="cr-plan-head">
+                        <b class="g@(book.Grade(res.Recipe.Product))">@book.Name(res.Recipe.Product)</b>
+                        <span class="cr-step">
+                            <button type="button" @onclick="() => Plan.Set(res.Recipe.Id, res.Entry.Count - 1)">−</button>
+                            <em>@res.Entry.Count</em>
+                            <button type="button" @onclick="() => Plan.Set(res.Recipe.Id, res.Entry.Count + 1)">+</button>
+                        </span>
+                        <span class="cr-pct @(res.Percent == 100 ? "full" : "")">@res.Percent%</span>
+                        <button type="button" class="cr-del" title="Убрать из плана" @onclick="() => Plan.Set(res.Recipe.Id, 0)">✕</button>
+                    </div>
+                    <i class="cr-bar"><i style="width:@res.Percent%"></i></i>
+                    @foreach (var line in res.Materials.OrderByDescending(l => l.Missing))
+                    {
+                        <div class="cr-line @(line.Missing > 0 ? "miss" : "ok")">
+                            <span class="g@(book.Grade(line.Item))">@book.Name(line.Item)</span>
+                            <b>@Num(line.Have) / @Num(line.Needed)</b>
+                        </div>
+                    }
+                    @if (res.Intermediates.Count > 0)
+                    {
+                        <div class="cr-first">Сначала сделать: @string.Join(", ", res.Intermediates.Select(i => $"{book.Name(i.Item)} ×{i.Crafts}"))</div>
+                    }
+                </section>
+            }
+            @if (total.Count > 0)
+            {
+                <section class="cr-total">
+                    <h5>Ещё нужно собрать</h5>
+                    @foreach (var line in total)
+                    {
+                        <div class="cr-line miss"><span class="g@(book.Grade(line.Item))">@book.Name(line.Item)</span><b>@Num(line.Have) / @Num(line.Needed)</b></div>
+                    }
+                </section>
+            }
+            <p class="cr-note">Рецепты и названия — из открытой таблицы SkeeveAN/Aion-DPS-Meter (MIT). Перекладывание между инвентарём и хранилищем игра не сообщает: хранилища точны на момент входа.</p>
+        </main>
+    </div>
+</div>
+
+@code {
+    private string query = string.Empty;
+    private string category = "";
+    private bool resolve = true;
+
+    private static readonly (string Key, string Label)[] Categories =
+        [("", "Все"), ("Blacksmithing", "Оружие"), ("Tailoring", "Доспехи"), ("Jewelcrafting", "Украшения"), ("Alchemy", "Алхимия"), ("Cooking", "Кулинария")];
+
+    private static string CategoryName(string key) => Categories.FirstOrDefault(c => c.Key == key).Label ?? key;
+
+    private static string Num(long v) => v.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"));
+
+    /// <summary>The faction's recipes: the player's server says it (2xxx Asmodians), Elyos while it is unknown.</summary>
+    private bool Elyos() => Entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is not { ServerId: > 0 } me || me.ServerId / 1000 != 2;
+
+    private List<CraftRecipe> Found(CraftBook book, bool elyos) =>
+        book.Recipes
+            .Where(r => r.Elyos == elyos && !r.Hidden && (category.Length == 0 || r.Category == category))
+            .Where(r => query.Length == 0 || book.Name(r.Product).Contains(query, StringComparison.CurrentCultureIgnoreCase))
+            .OrderByDescending(r => r.Level).ThenBy(r => book.Name(r.Product), StringComparer.CurrentCulture)
+            .Take(120)
+            .ToList();
+
+    private void Add(int recipe)
+    {
+        var have = Plan.Entries.FirstOrDefault(e => e.Recipe == recipe);
+        Plan.Set(recipe, (have?.Count ?? 0) + 1);
+    }
+
+    protected override void OnInitialized()
+    {
+        Stock.Changed += OnChanged;
+        Plan.Changed += OnChanged;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Stock.Changed -= OnChanged;
+        Plan.Changed -= OnChanged;
+    }
+}
