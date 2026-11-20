@@ -74,6 +74,15 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp =>
+        {
+            var entities = sp.GetRequiredService<AionDpsMeter.Services.Services.Entity.EntityTracker>();
+            var places = sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>();
+            return new AionDpsMeter.Timers.Lobby.PartyLinker(
+                () => entities.PlayerEntities.Where(p => !p.IsUser).Select(p => (p.Id, p.IsIdentified && !string.IsNullOrEmpty(p.Name), p.GlobalId)),
+                places.Last,
+                entities.LinkSessionToGlobalPlayer);
+        });
         services.AddSingleton(_ => new AionDpsMeter.Timers.Character.InspectedPlayers(TimersPaths.Of("inspected.json")));
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Character.InspectedPlayers>());
         services.AddSingleton(_ =>

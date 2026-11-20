@@ -134,3 +134,69 @@ public class LobbyTrackerTests
         Assert.Null(LobbyParser.Parse(Convert.FromHexString("3438000000B9CF01")));
     }
 }
+
+/// <summary>EU 2026-11-20: after a restart in the dungeon the meter showed "Player_9022": the link of character to entity comes only
+/// on entering. The party's positions (0x921C: character u32 | 00 00 | server u16 | class u32 | zone u32 | u32 | u32 | x f32 | y f32 | z f32)
+/// against the entities' own positions give it back.</summary>
+public class PartyLinkerTests
+{
+    private static readonly DateTime T0 = new(2026, 11, 20, 17, 16, 0);
+
+    private static byte[] PartyPosition(uint character, float x, float y)
+    {
+        var f = new List<byte> { 0x1C, 0x92 };
+        f.AddRange(BitConverter.GetBytes(character));
+        f.AddRange([0, 0, 0x22, 0x05]);
+        f.AddRange(BitConverter.GetBytes(34));
+        f.AddRange(BitConverter.GetBytes(0x0927C4));
+        f.AddRange(new byte[8]);
+        f.AddRange(BitConverter.GetBytes(x));
+        f.AddRange(BitConverter.GetBytes(y));
+        f.AddRange(BitConverter.GetBytes(-660f));
+        f.AddRange(BitConverter.GetBytes(45));
+        return [.. f];
+    }
+
+    [Fact]
+    public void A_party_member_standing_alone_is_linked_to_the_entity_at_their_place()
+    {
+        var links = new List<(int Character, int Entity)>();
+        var linker = new PartyLinker(
+            () => [(9022, false, null), (6320, false, null), (100, true, 0x11111)],
+            e => e switch
+            {
+                9022 => new(T0, -24640, 34120),
+                6320 => new(T0, -20000, 30000),
+                100 => new(T0, -24600, 34100),
+                _ => null,
+            },
+            (character, entity) => links.Add((character, entity)));
+
+        linker.OnFrame(T0.AddSeconds(1), PartyPosition(0x0265AB, -24630, 34125));
+        Assert.Equal([(0x0265AB, 9022)], links);              // the named entity nearby (100) does not count
+
+        linker.OnFrame(T0.AddSeconds(2), PartyPosition(0x11111, -24600, 34100));   // already linked: nothing to do
+        Assert.Single(links);
+    }
+
+    [Fact]
+    public void Two_unnamed_players_side_by_side_are_left_alone()
+    {
+        var links = new List<(int, int)>();
+        var linker = new PartyLinker(
+            () => [(1, false, null), (2, false, null)],
+            e => new(T0, -24640 + e * 50, 34120),
+            (c, e) => links.Add((c, e)));
+        linker.OnFrame(T0.AddSeconds(1), PartyPosition(7, -24600, 34120));
+        Assert.Empty(links);
+    }
+
+    [Fact]
+    public void An_old_position_is_no_match()
+    {
+        var links = new List<(int, int)>();
+        var linker = new PartyLinker(() => [(1, false, null)], _ => new(T0, -24640, 34120), (c, e) => links.Add((c, e)));
+        linker.OnFrame(T0.AddMinutes(1), PartyPosition(7, -24640, 34120));
+        Assert.Empty(links);
+    }
+}

@@ -160,3 +160,53 @@ public sealed class LobbyTracker : IRawPacketListener
         Changed?.Invoke();
     }
 }
+
+/// <summary>
+/// Gives party members their names back when the meter missed the character → entity link (sent only on entering a zone,
+/// so a restart in the dungeon left "Player_9022"): the game keeps sending every party member's place
+/// (<c>1c 92 | character u32 | 00 00 | server u16 | class u32 | zone u32 | u32 | u32 | x f32 | y f32 | z f32 | …</c>), and an
+/// unnamed player standing there alone — within 4 m, no other unnamed one within twice that — is that character.
+/// </summary>
+public sealed class PartyLinker(
+    Func<IEnumerable<(int Entity, bool Named, int? Character)>> players,
+    Func<int, AionDpsMeter.Timers.Replay.Fix?> lastPlace,
+    Action<int, int> link) : IRawPacketListener
+{
+    public const ushort Opcode = 0x921C;
+    private const float Near = 400, Apart = 800;
+    private static readonly TimeSpan Fresh = TimeSpan.FromSeconds(10);
+
+    public void OnRawPacket(ushort opcode, Packet packet)
+    {
+        if (opcode != Opcode) return;
+        try
+        {
+            if (!Wire.TryVarint(packet.Data, 0, out _, out var header) || packet.Data.Length < header + 3) return;
+            OnFrame(DateTime.Now, packet.Data.AsSpan(header));
+        }
+        catch (Exception) { }
+    }
+
+    /// <param name="frame">The frame from its opcode on.</param>
+    public void OnFrame(DateTime at, ReadOnlySpan<byte> frame)
+    {
+        if (frame.Length < 36 || frame[0] != 0x1C || frame[1] != 0x92 || frame[6] != 0 || frame[7] != 0) return;
+        var character = (int)BinaryPrimitives.ReadUInt32LittleEndian(frame[2..]);
+        var x = BinaryPrimitives.ReadSingleLittleEndian(frame[26..]);
+        var y = BinaryPrimitives.ReadSingleLittleEndian(frame[30..]);
+        if (character <= 0 || !float.IsFinite(x) || !float.IsFinite(y)) return;
+
+        var all = players().ToList();
+        if (all.Any(p => p.Character == character)) return;
+        var near = all.Where(p => !p.Named)
+            .Select(p => (p.Entity, Place: lastPlace(p.Entity)))
+            .Where(p => p.Place is { } f && (at - f.At).Duration() <= Fresh)
+            .Select(p => (p.Entity, Distance: MathF.Sqrt((p.Place!.Value.X - x) * (p.Place.Value.X - x) + (p.Place.Value.Y - y) * (p.Place.Value.Y - y))))
+            .OrderBy(p => p.Distance)
+            .Take(2)
+            .ToList();
+        if (near.Count == 0 || near[0].Distance > Near) return;
+        if (near.Count > 1 && near[1].Distance < Math.Max(Apart, near[0].Distance * 2)) return;
+        link(character, near[0].Entity);
+    }
+}
