@@ -91,7 +91,9 @@ namespace AionDpsMeter.Services.Services.Entity
         {
             if (sessionPlayers.TryGetValue(sessionId, out var player))
             {
-                player.CharacterClass ??= characterClass;
+                // aion2-overlay fork: the class follows the skills the player uses (a skill code names its class); the first class
+                // used to win for good, and one taken over from a wrong party link made a Gladiator a Sorcerer (see FORK_CHANGES.md)
+                if (characterClass != null) player.CharacterClass = characterClass;
                 return player;
             }
 

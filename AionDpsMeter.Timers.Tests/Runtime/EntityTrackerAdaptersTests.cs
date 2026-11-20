@@ -55,4 +55,18 @@ public class EntityTrackerAdaptersTests
         Assert.Equal("ZIK", AionDpsMeter.Core.Data.ServerMap.GetName(2302));   // Zikel, Asmodians
         Assert.Equal("SIE", AionDpsMeter.Core.Data.ServerMap.GetName(1001));   // upstream's own entries stay
     }
+
+    [Fact]
+    public void A_players_class_follows_the_skills_they_use()
+    {
+        // Nov 2026: a Gladiator and a Chanter showed as Sorcerers — a class taken over from a wrong party link was kept for good,
+        // the first class won and their own hits never corrected it
+        var entities = new EntityTracker();
+        var sorcerer = new AionDpsMeter.Core.Models.CharacterClass { Id = 15, Name = "Sorcerer" };
+        var gladiator = new AionDpsMeter.Core.Models.CharacterClass { Id = 11, Name = "Gladiator" };
+        entities.GetOrCreateSessionPlayer(4431, sorcerer);
+        Assert.Equal(11, entities.GetOrCreateSessionPlayer(4431, gladiator).CharacterClass!.Id);
+        Assert.Equal(11, entities.GetOrCreateSessionPlayer(4431).CharacterClass!.Id);   // no class given: the known one stays
+    }
 }
+

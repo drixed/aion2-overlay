@@ -89,7 +89,7 @@ public static class TimersServiceCollectionExtensions
             var entities = sp.GetRequiredService<AionDpsMeter.Services.Services.Entity.EntityTracker>();
             var places = sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>();
             return new AionDpsMeter.Timers.Lobby.PartyLinker(
-                () => entities.PlayerEntities.Where(p => !p.IsUser).Select(p => (p.Id, p.IsIdentified && !string.IsNullOrEmpty(p.Name), p.GlobalId)),
+                () => entities.PlayerEntities.Where(p => !p.IsUser).Select(p => (p.Id, p.IsIdentified && !string.IsNullOrEmpty(p.Name), p.GlobalId, p.CharacterClass is { } k ? (int?)k.Id : null)),
                 places.Last,
                 entities.LinkSessionToGlobalPlayer);
         });

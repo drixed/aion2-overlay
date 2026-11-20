@@ -169,7 +169,7 @@ public sealed class LobbyTracker : IRawPacketListener
 /// one within twice that — is that character. A place up to two minutes old counts: someone standing still sends no moves.
 /// </summary>
 public sealed class PartyLinker(
-    Func<IEnumerable<(int Entity, bool Named, int? Character)>> players,
+    Func<IEnumerable<(int Entity, bool Named, int? Character, int? ClassId)>> players,
     Func<int, AionDpsMeter.Timers.Replay.Fix?> lastPlace,
     Action<int, int> link) : IRawPacketListener
 {
@@ -193,13 +193,15 @@ public sealed class PartyLinker(
     {
         if (frame.Length < 36 || frame[0] != 0x1C || frame[1] != 0x92 || frame[6] != 0 || frame[7] != 0) return;
         var character = (int)BinaryPrimitives.ReadUInt32LittleEndian(frame[2..]);
+        // the member's class (4 * class + 1..4, as in the party list): a player whose skills say another class is someone else
+        var classId = AionDpsMeter.Timers.Character.InspectParser.ClassOf((int)BinaryPrimitives.ReadUInt32LittleEndian(frame[10..]));
         var x = BinaryPrimitives.ReadSingleLittleEndian(frame[26..]);
         var y = BinaryPrimitives.ReadSingleLittleEndian(frame[30..]);
         if (character <= 0 || !float.IsFinite(x) || !float.IsFinite(y)) return;
 
         var all = players().ToList();
         if (all.Any(p => p.Character == character)) return;
-        var near = all.Where(p => !p.Named)
+        var near = all.Where(p => !p.Named && (classId == 0 || p.ClassId is null || p.ClassId == classId))
             .Select(p => (p.Entity, Place: lastPlace(p.Entity)))
             .Where(p => p.Place is { } f && (at - f.At).Duration() <= Fresh)
             .Select(p => (p.Entity, Distance: MathF.Sqrt((p.Place!.Value.X - x) * (p.Place.Value.X - x) + (p.Place.Value.Y - y) * (p.Place.Value.Y - y))))

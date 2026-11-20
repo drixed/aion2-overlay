@@ -162,7 +162,7 @@ public class PartyLinkerTests
     {
         var links = new List<(int Character, int Entity)>();
         var linker = new PartyLinker(
-            () => [(9022, false, null), (6320, false, null), (100, true, 0x11111)],
+            () => [(9022, false, null, null), (6320, false, null, null), (100, true, 0x11111, null)],
             e => e switch
             {
                 9022 => new(T0, -24640, 34120),
@@ -180,11 +180,24 @@ public class PartyLinkerTests
     }
 
     [Fact]
+    public void A_player_of_another_class_is_no_match()
+    {
+        // the party frame names the member's class (34: Chanter); a Sorcerer standing there is someone else
+        var links = new List<(int, int)>();
+        var linker = new PartyLinker(
+            () => [(1, false, null, 15), (2, false, null, 18)],
+            e => e == 1 ? new(T0, -24600, 34120) : new(T0, -24600 + 500, 34120),
+            (c, e) => links.Add((c, e)));
+        linker.OnFrame(T0.AddSeconds(1), PartyPosition(7, -24600, 34120));
+        Assert.Equal([(7, 2)], links);
+    }
+
+    [Fact]
     public void Two_unnamed_players_side_by_side_are_left_alone()
     {
         var links = new List<(int, int)>();
         var linker = new PartyLinker(
-            () => [(1, false, null), (2, false, null)],
+            () => [(1, false, null, null), (2, false, null, null)],
             e => new(T0, -24640 + e * 50, 34120),
             (c, e) => links.Add((c, e)));
         linker.OnFrame(T0.AddSeconds(1), PartyPosition(7, -24600, 34120));
@@ -197,12 +210,12 @@ public class PartyLinkerTests
         // v155 linked one member of four: a place more than 10 s old (someone standing still) or 4 m off (the party frame
         // comes every two seconds, a runner is further by then) did not count
         var links = new List<(int, int)>();
-        var linker = new PartyLinker(() => [(1, false, null)], _ => new(T0, -24640, 34120), (c, e) => links.Add((c, e)));
+        var linker = new PartyLinker(() => [(1, false, null, null)], _ => new(T0, -24640, 34120), (c, e) => links.Add((c, e)));
         linker.OnFrame(T0.AddMinutes(1), PartyPosition(7, -24640 + 600, 34120));
         Assert.Equal([(7, 1)], links);
 
         var late = new List<(int, int)>();
-        var linker2 = new PartyLinker(() => [(1, false, null)], _ => new(T0, -24640, 34120), (c, e) => late.Add((c, e)));
+        var linker2 = new PartyLinker(() => [(1, false, null, null)], _ => new(T0, -24640, 34120), (c, e) => late.Add((c, e)));
         linker2.OnFrame(T0.AddMinutes(5), PartyPosition(7, -24640, 34120));
         Assert.Empty(late);
     }
