@@ -195,18 +195,6 @@
         break;
 
     case "tracking":
-        <div class="fs-label fs-label--spaced">ИНСТРУМЕНТЫ</div>
-        <SettingRow Title="Калькулятор статов" Description="Сколько урона даёт каждый стат и что выгоднее качать. Раньше — кнопка ⚔ в главном окне">
-            <ValueSlot>
-                <button type="button" class="fs-segmented__option fs-button" @onclick="() => StatCalc.Open()">Открыть</button>
-            </ValueSlot>
-        </SettingRow>
-        <SettingRow Title="Крафт" Description="Отметьте рецепты — метр посчитает, сколько руды, трав и прочего нужно и чего ещё не хватает в инвентаре и хранилищах. Тоже в меню значка в трее" IsLast="true">
-            <ValueSlot>
-                <button type="button" class="fs-segmented__option fs-button" @onclick="() => Craft.Open()">Открыть</button>
-            </ValueSlot>
-        </SettingRow>
-
         <div class="fs-label fs-label--spaced">ЧИСЛА</div>
         <SettingRow Title="Расчёт DPS" Description="eDPS — урон за всё время боя; aDPS — только за твоё активное время, от первого удара до последнего">
             <ValueSlot>
@@ -292,6 +280,27 @@
                 </ValueSlot>
             </SettingRow>
         }
+        break;
+
+    case "calc":
+        <div class="fs-label">КАЛЬКУЛЯТОР СТАТОВ</div>
+        <SettingRow Title="Калькулятор статов" Description="Сколько урона даёт каждый стат и что выгоднее качать: характеристики берутся из игры, их можно поправить вручную. Тоже в меню значка в трее" IsLast="true">
+            <ValueSlot>
+                <button type="button" class="fs-segmented__option fs-button" @onclick="() => StatCalc.Open()">Открыть</button>
+            </ValueSlot>
+        </SettingRow>
+        break;
+
+    case "craft":
+        <div class="fs-label">КРАФТ</div>
+        <SettingRow Title="Окно крафта" Description="Отметьте рецепты — метр посчитает, сколько руды, трав и прочего нужно и чего ещё не хватает в инвентаре и обоих хранилищах (запасы — по входу персонажа, инвентарь обновляется сам). Тоже в меню значка в трее">
+            <ValueSlot>
+                <button type="button" class="fs-segmented__option fs-button" @onclick="() => Craft.Open()">Открыть</button>
+            </ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Оверлей «Ещё нужно»" Description="Маленькое окно поверх игры: чего по плану ещё не хватает, «есть / нужно», обновляется само при сборе. Перетаскивается за заголовок" IsLast="true">
+            <ValueSlot><ToggleSwitch Checked="@Craft.OverlayOpen" CheckedChanged="v => { if (v != Craft.OverlayOpen) Craft.ToggleOverlay(); }" /></ValueSlot>
+        </SettingRow>
         break;
 
     case "timers":

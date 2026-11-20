@@ -112,6 +112,10 @@ public sealed class TimersOptions
     /// <summary>The class picked in "Баффы": used until the meter knows the played character's class.</summary>
     public int? BuffClass { get; set; }
     public double? BuffPanelLeft { get; set; }
+    /// <summary>The craft overlay "Ещё нужно" is open (it opens again with the meter) and where it stands.</summary>
+    public bool CraftOverlay { get; set; }
+    public double? CraftOverlayLeft { get; set; }
+    public double? CraftOverlayTop { get; set; }
     public double? BuffPanelTop { get; set; }
     /// <summary>The 📣 window loads NCSOFT's official announcements every 15 minutes.</summary>
     public bool ShowNews { get; set; } = true;

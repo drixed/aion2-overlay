@@ -9,7 +9,7 @@
         "MY STYLE": "МОЙ СТИЛЬ", "My Nickname Style": "Стиль моего ника", "Customize your own player name color": "Цвет своего ника в списке",
         "My Progress Bar Style": "Стиль моей полосы", "Customize your own row fill in the DPS list": "Заливка своей строки в списке DPS",
         "Default": "Обычный", "Color": "Цвет", "Gradient": "Градиент", "Color 1": "Цвет 1", "Color 2": "Цвет 2",
-        "Skill cooldown overlay settings are coming soon.": "Настройки оверлея перезарядок появятся позже.", "Timers": "Таймеры", "Bosses": "Боссы", "Buffs": "Баффы", "Records": "Рекорды", "Pets": "Питомцы", "Diagnostics": "Диагностика",
+        "Skill cooldown overlay settings are coming soon.": "Настройки оверлея перезарядок появятся позже.", "Timers": "Таймеры", "Bosses": "Боссы", "Buffs": "Баффы", "Records": "Рекорды", "Pets": "Питомцы", "Diagnostics": "Диагностика", "Craft": "Крафт", "Calculator": "Калькулятор",
         "Window layout": "Расположение окон", "WINDOW LAYOUT": "РАСПОЛОЖЕНИЕ ОКОН", "WINDOW": "ОКНО",
         "PLAYER LIST": "СПИСОК ИГРОКОВ", "HISTORY": "ИСТОРИЯ", "BUFF OVERLAY": "ОВЕРЛЕЙ БАФФОВ",
         "SKILL COOLDOWNS": "ПЕРЕЗАРЯДКА УМЕНИЙ", "Settings groups": "Разделы настроек",

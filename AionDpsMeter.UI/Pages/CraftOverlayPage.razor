@@ -1,0 +1,60 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The small "Ещё нужно" overlay over the game: what the craft plan still
+   misses, have / need, updated as loot comes in. Drag it by its header; ✕ closes it (the craft window opens it again). *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Craft
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject CraftWindow Window
+@inject CraftStock Stock
+@inject CraftPlan Plan
+@inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
+
+@{
+    var book = CraftBook.Default;
+    var elyos = Entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is not { ServerId: > 0 } me || me.ServerId / 1000 != 2;
+    var results = CraftCalc.Compute(book, Plan.Entries, Stock.All(), true, elyos);
+    var missing = CraftCalc.Total(results).Where(l => l.Missing > 0).ToList();
+}
+<div class="co">
+    <div class="co-head" @onmousedown="Window.DragOverlay">
+        <b>Ещё нужно</b>
+        <small>@(results.Count == 0 ? "" : $"{results.Count(r => r.Percent == 100)} / {results.Count} готово")</small>
+        <span class="co-grow"></span>
+        <button type="button" @onmousedown:stopPropagation="true" @onclick="Window.CloseOverlay" title="Закрыть (открыть снова — в окне «Крафт» или в настройках)">✕</button>
+    </div>
+    <div class="co-list">
+        @if (results.Count == 0)
+        {
+            <div class="co-hint">План крафта пуст — отметьте рецепты в окне «Крафт».</div>
+        }
+        else if (missing.Count == 0)
+        {
+            <div class="co-done">✓ Всего хватает</div>
+        }
+        @foreach (var line in missing)
+        {
+            <div class="co-line">
+                <span class="g@(book.Grade(line.Item))">@book.Name(line.Item)</span>
+                <b>@Num(line.Have) / @Num(line.Needed)</b>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private static string Num(long v) => v.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"));
+
+    protected override void OnInitialized()
+    {
+        Stock.Changed += OnChanged;
+        Plan.Changed += OnChanged;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Stock.Changed -= OnChanged;
+        Plan.Changed -= OnChanged;
+    }
+}

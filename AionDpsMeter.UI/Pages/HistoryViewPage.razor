@@ -562,6 +562,13 @@
     /// <summary>Dragging the chart moves along the fight; dragging the zoom bar moves its window.</summary>
     private void DragMove(MouseEventArgs e)
     {
+        if (mapDragging)
+        {
+            var k = mapSpan / Math.Max(1, Math.Min(mapW, mapH));
+            mapCx = mapDragCx - (e.ClientX - mapDragX) * k;
+            mapCy = mapDragCy - (e.ClientY - mapDragY) * k;
+            return;
+        }
         if (!dragging) { skipRender = true; return; }
         var dx = e.ClientX - dragX;
         if (!moved && Math.Abs(dx) <= 3) { skipRender = true; return; }
@@ -571,6 +578,7 @@
 
     private void DragEnd()
     {
+        if (mapDragging) { mapDragging = false; return; }
         if (!dragging) { skipRender = true; return; }
         dragging = false;
     }
@@ -628,7 +636,11 @@
     private double replayT;
     private bool playing;
     private double speed = 1;
-    private double zoom = 1;
+    // the replay map: centre and size in map units (x right, y = -world y down), the element's size in pixels, follow and drag
+    private double mapCx, mapCy, mapSpan, mapW = 900, mapH = 520;
+    private bool follow = true, mapDragging;
+    private double mapDragX, mapDragY, mapDragCx, mapDragCy;
+    private ElementReference mapRef;
     private System.Threading.Timer? player;
 
     private Dictionary<int, List<AionDpsMeter.Timers.Replay.Fix>> Tracks(Ctx c)
@@ -673,7 +685,51 @@
     private void SetReplayT(ChangeEventArgs e) =>
         replayT = double.TryParse(e.Value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0;
 
-    private void ZoomMap(WheelEventArgs e) => zoom = Math.Clamp(zoom * (e.DeltaY > 0 ? 0.85 : 1.18), 0.5, 12);
+    private async Task<double[]?> MapBox()
+    {
+        try
+        {
+            var r = await JS.InvokeAsync<double[]>("forkBox", mapRef);
+            if (r is { Length: 4 } && r[2] > 10 && r[3] > 10) { mapW = r[2]; mapH = r[3]; }
+            return r;
+        }
+        catch (Exception) { return null; }
+    }
+
+    /// <summary>The wheel zooms around the cursor (around the group while following it).</summary>
+    private async Task ZoomMap(WheelEventArgs e)
+    {
+        var r = await MapBox();
+        var k = mapSpan / Math.Min(mapW, mapH);
+        var px = follow || r is not { Length: 4 } ? mapW / 2 : e.ClientX - r[0];
+        var py = follow || r is not { Length: 4 } ? mapH / 2 : e.ClientY - r[1];
+        var wx = mapCx + (px - mapW / 2) * k;
+        var wy = mapCy + (py - mapH / 2) * k;
+        mapSpan = Math.Clamp(mapSpan * (e.DeltaY > 0 ? 1.2 : 1 / 1.2), 300, 400_000);
+        var k2 = mapSpan / Math.Min(mapW, mapH);
+        mapCx = wx - (px - mapW / 2) * k2;
+        mapCy = wy - (py - mapH / 2) * k2;
+    }
+
+    private async Task MapDragStart(MouseEventArgs e)
+    {
+        if (e.Button != 0) return;
+        await MapBox();
+        mapDragging = true;
+        follow = false;
+        (mapDragX, mapDragY, mapDragCx, mapDragCy) = (e.ClientX, e.ClientY, mapCx, mapCy);
+    }
+
+    /// <summary>"Показать всех": everyone's whole path of the fight in view.</summary>
+    private void FitAll(List<AionDpsMeter.Timers.Replay.Fix> fixes)
+    {
+        if (fixes.Count == 0) return;
+        var minX = fixes.Min(f => f.X); var maxX = fixes.Max(f => f.X);
+        var minY = fixes.Min(f => -f.Y); var maxY = fixes.Max(f => -f.Y);
+        mapCx = (minX + maxX) / 2.0;
+        mapCy = (minY + maxY) / 2.0;
+        mapSpan = Math.Max(1500, Math.Max(maxX - minX, maxY - minY)) * 1.15;
+    }
 
     private string ClassColor(int classId) =>
         TimerOptions.Current.ClassColors.TryGetValue(classId.ToString(CultureInfo.InvariantCulture), out var col) ? col : classId switch
@@ -691,29 +747,39 @@
             <p class="hv-empty">Для этого боя нет позиций. Повтор записывается для боёв с боссом начиная с этой версии метра: игра присылает места игроков вместе с их движениями и умениями.</p>
             return;
         }
-        var minX = fixesAll.Min(f => f.X);
-        var maxX = fixesAll.Max(f => f.X);
-        var minY = fixesAll.Min(f => f.Y);
-        var maxY = fixesAll.Max(f => f.Y);
-        var span = Math.Max(1500, Math.Max(maxX - minX, maxY - minY)) / zoom;
-        var cx = (minX + maxX) / 2;
-        var cy = (minY + maxY) / 2;
-        var vb = $"{F(cx - span / 2 - span * .08)} {F(-(cy + span / 2 + span * .08))} {F(span * 1.16)} {F(span * 1.16)}";
         var t = c.Start.AddSeconds(replayT);
+        if (mapSpan <= 0) FitAll(fixesAll);
+        if (follow)
+        {
+            // the group (not the boss) where it is now, the view keeps it in the middle
+            var now = all.Where(kv => kv.Key != c.S.TargetId).Select(kv => PlaceAt(kv.Value, t)).OfType<(float X, float Y)>().ToList();
+            if (now.Count > 0) { mapCx = now.Average(p => p.X); mapCy = now.Average(p => -p.Y); }
+        }
+        var span = mapSpan;
+        var kk = span / Math.Min(mapW, mapH);
+        var vbW = mapW * kk;
+        var vbH = mapH * kk;
+        var x0 = mapCx - vbW / 2;
+        var y0 = mapCy - vbH / 2;
+        var vb = $"{F(x0)} {F(y0)} {F(vbW)} {F(vbH)}";
         var hp = BossHp(c);
         var hpNow = hp.LastOrDefault(p => p.Sec <= replayT).Hp;
         var players = c.S.PlayerStats.ToDictionary(p => (int)p.PlayerId);
         var r = span / 90;
         var grid = Math.Pow(10, Math.Floor(Math.Log10(span / 4)));
+        var cx = mapCx;
+        var cy = -mapCy;
         <div class="hv-body">
             <div class="hv-who">
                 <b class="hv-boss">@Target(c.S)</b><span class="hv-bar"></span>
                 <span>@Clock(TimeSpan.FromSeconds(replayT)) / @Clock(c.End - c.Start)</span>
                 @if (hp.Count > 1) { <span class="teal">HP босса @Pc(hpNow)</span> }
                 <span class="hv-grow"></span>
-                <span class="mute">колесо — масштаб</span>
+                <label class="hv-follow"><input type="checkbox" checked="@follow" @onchange="e => follow = e.Value is true" /> Следить за группой</label>
+                <span class="mute">колесо — масштаб · тянуть мышью — сдвиг</span>
             </div>
-            <svg class="hv-map" viewBox="@vb" @onwheel="ZoomMap" @onwheel:preventDefault="true">
+            <svg class="hv-map @(mapDragging ? "drag" : "")" @ref="mapRef" viewBox="@vb" preserveAspectRatio="xMidYMid meet"
+                 @onwheel="ZoomMap" @onwheel:preventDefault="true" @onmousedown="MapDragStart" @onmousedown:stopPropagation="true">
                 @for (var gx = Math.Floor((cx - span) / grid) * grid; gx < cx + span; gx += grid)
                 {
                     <line x1="@F(gx)" x2="@F(gx)" y1="@F(-(cy + span))" y2="@F(-(cy - span))" class="hv-map-grid" style="stroke-width:@F(span / 900)" />
@@ -754,7 +820,7 @@
                     }
                     <input type="range" min="0" max="@F(c.Dur)" step="0.1" value="@F(replayT)" @oninput="SetReplayT" />
                 </span>
-                <button type="button" class="hv-fit" @onclick="() => zoom = 1">Вписать</button>
+                <button type="button" class="hv-fit" title="Весь путь группы и босса за бой" @onclick="() => { follow = false; FitAll(fixesAll); }">Показать всех</button>
             </div>
             <p class="hv-note">Места — показания самой игры: она присылает их с движениями и умениями, не постоянно, поэтому путь между двумя показаниями нарисован прямой. Показаны только игроки этого боя и босс.</p>
         </div>

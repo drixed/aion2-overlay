@@ -161,3 +161,7 @@
 .hv-replay-track polyline { fill: none; stroke: #d65c97; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .hv-replay-track input { position: absolute; inset: 0; width: 100%; margin: 0; accent-color: #5fd4c4; }
 .hv-note { color: #5f6b7c; font-size: 11px; margin: 0; }
+.hv-map { cursor: grab; }
+.hv-map.drag { cursor: grabbing; }
+.hv-follow { display: inline-flex; align-items: center; gap: 5px; color: #aeb8c5; font-size: 11.5px; cursor: pointer; margin-right: 10px; }
+.hv-follow input { accent-color: #5fd4c4; margin: 0; }

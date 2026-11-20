@@ -50,6 +50,7 @@
         <main class="cr-main">
             <div class="cr-tools">
                 <label><input type="checkbox" checked="@resolve" @onchange="e => resolve = e.Value is true" /> Раскладывать слитки и порошок до сырья</label>
+                <button type="button" class="cr-ov @(Window.OverlayOpen ? "on" : "")" @onclick="Window.ToggleOverlay" title="Маленькое окно поверх игры: чего ещё не хватает по плану">@(Window.OverlayOpen ? "✓ Оверлей «Ещё нужно»" : "Оверлей «Ещё нужно» поверх игры")</button>
             </div>
             @if (results.Count == 0)
             {
@@ -130,6 +131,7 @@
     {
         Stock.Changed += OnChanged;
         Plan.Changed += OnChanged;
+        Window.OverlayChanged += OnChanged;
     }
 
     private void OnChanged() => InvokeAsync(StateHasChanged);
@@ -138,5 +140,6 @@
     {
         Stock.Changed -= OnChanged;
         Plan.Changed -= OnChanged;
+        Window.OverlayChanged -= OnChanged;
     }
 }
