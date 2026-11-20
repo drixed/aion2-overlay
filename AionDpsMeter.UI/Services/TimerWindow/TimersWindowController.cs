@@ -9,7 +9,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
 {
     /// <summary>The field boss timers window: dragged by its header like upstream's main window, folds down to the
     /// header (▾), and ⚙ opens filters, notification settings and the per-row buttons.</summary>
-    public sealed class TimersWindowController(IWindowManagerService windowManager, TimersOptionsStore options, OverlayRuntime runtime, AlertRunner alertRunner, WindowBoundsKeeper bounds, AionDpsMeter.Services.Services.Settings.IAppSettingsService settings, AionDpsMeter.Timers.Pets.PetTracker pets, AlertSoundPlayer sounds, EventPanelsController eventPanels, TrayService tray, NewsService news, BuffTrackerService buffs, CraftWindow craft, Microsoft.Extensions.Logging.ILogger<TimersWindowController> logger)
+    public sealed class TimersWindowController(IWindowManagerService windowManager, TimersOptionsStore options, OverlayRuntime runtime, AlertRunner alertRunner, WindowBoundsKeeper bounds, AionDpsMeter.Services.Services.Settings.IAppSettingsService settings, AionDpsMeter.Timers.Pets.PetTracker pets, AlertSoundPlayer sounds, EventPanelsController eventPanels, TrayService tray, NewsService news, BuffTrackerService buffs, CraftWindow craft, BossCastPanel castPanel, Microsoft.Extensions.Logging.ILogger<TimersWindowController> logger)
     {
         /// <summary>Deliberately not a member of upstream's WindowKey enum (no edit to their file): the window manager
         /// keys windows by value and saves bounds under key.ToString(), i.e. "1001".</summary>
@@ -50,6 +50,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             news.Start();
             buffs.Start();
             craft.Start();
+            castPanel.Start();
             DisposedWebViewGuard.Install(logger);
             UpdaterSelfUpdate.Apply(logger);
             if (!petSound)

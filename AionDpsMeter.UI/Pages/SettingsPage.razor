@@ -495,7 +495,7 @@
 
         </section>
         <section class="settings-group @(_activeGroup == "fork-timers" ? "" : "is-hidden")"><ForkSettings Section="timers" /></section> @* aion2-overlay fork *@
-        <section class="settings-group @(_activeGroup == "fork-bosses" ? "" : "is-hidden")"><ForkBosses /></section> @* aion2-overlay fork *@
+        <section class="settings-group @(_activeGroup == "fork-bosses" ? "" : "is-hidden")"><ForkSettings Section="casts" /><ForkBosses /></section> @* aion2-overlay fork *@
         <section class="settings-group @(_activeGroup == "fork-buffs" ? "" : "is-hidden")"><ForkBuffs /></section> @* aion2-overlay fork *@
         <section class="settings-group @(_activeGroup == "fork-calc" ? "" : "is-hidden")"><ForkSettings Section="calc" /></section> @* aion2-overlay fork *@
         <section class="settings-group @(_activeGroup == "fork-craft" ? "" : "is-hidden")"><ForkSettings Section="craft" /></section> @* aion2-overlay fork *@

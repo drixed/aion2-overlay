@@ -12,6 +12,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
     [PacketOpcode(0x3834)] // 34 38: the target the character selected (the pet line before the first hit)
     [PacketOpcode(0x3650)] // 50 36: another player's character window (inspect)
     [PacketOpcode(0x921C)] // 1C 92: a party member's place (names after a restart in the dungeon)
+    [PacketOpcode(0x3809)] // 09 38: a skill being wound up (the boss cast overlay)
     internal sealed class RawForwarder(IEnumerable<IRawPacketListener> listeners) : IOpcodeProcessor
     {
         public void Process(Packet packet)

@@ -1,0 +1,81 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The boss cast overlay: the skills the boss winds up, the time left, at whom,
+   and "СМЕРТЕЛЬНО" when the skill once took about all of my HP. Draggable while "Расставить" is on. *@
+@using System.Globalization
+@using AionDpsMeter.Timers.Bosses
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject BossCastPanel Panel
+@inject BossCastTracker Casts
+@inject BossCatalog Catalog
+@inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
+
+<div class="bc @(Panel.Editing ? "editing" : "")" @onmousedown="Panel.Drag">
+    @if (Panel.Editing)
+    {
+        <div class="bc-edit">Перетащите окно кастов · клики сейчас не проходят в игру</div>
+    }
+    @{
+        var now = DateTime.Now;
+        var list = Casts.Active(now);
+        if (Panel.Editing && list.Count == 0)
+            list = [new BossCast(0, 0, 0, now.AddSeconds(-0.6), TimeSpan.FromSeconds(1.5))];
+        var hp = MyMaxHp();
+    }
+    @foreach (var c in list.Take(4))
+    {
+        var left = c.End - now;
+        var share = Math.Clamp((now - c.Start).TotalMilliseconds / Math.Max(1, c.Duration.TotalMilliseconds), 0, 1);
+        var danger = c.Skill == 0 ? CastDanger.Lethal : Casts.Danger(c.Skill, hp);
+        <div class="bc-cast @(danger == CastDanger.Lethal ? "lethal" : danger == CastDanger.Dangerous ? "danger" : "") @(left <= TimeSpan.Zero ? "done" : "")">
+            <span class="bc-mark">!</span>
+            <span class="bc-text">
+                <b>@SkillName(c.Skill)</b><em>@TargetText(c)</em>
+                <small>@CasterName(c.Caster)</small>
+            </span>
+            @if (danger == CastDanger.Lethal) { <i class="bc-tag">СМЕРТЕЛЬНО</i> }
+            else if (danger == CastDanger.Dangerous) { <i class="bc-tag">опасно</i> }
+            <span class="bc-time">@(left > TimeSpan.Zero ? left.TotalSeconds.ToString("0.0", CultureInfo.GetCultureInfo("ru-RU")) : "!")</span>
+            <i class="bc-bar"><i style="width:@((share * 100).ToString("0.#", CultureInfo.InvariantCulture))%"></i></i>
+        </div>
+    }
+</div>
+
+@code {
+    private System.Threading.Timer? tick;
+
+    private static string SkillName(int skill) =>
+        skill == 0 ? "Атака босса (пример)" :
+        AionDpsMeter.Core.GameData.Services.GameDataProvider.Instance.GetSkillOrDefault(skill).Name is { Length: > 0 } n ? n : $"Умение {skill}";
+
+    private string CasterName(int caster) =>
+        caster == 0 ? "Босс" : Entities.GetTargetMob(caster) is { MobCode: > 0 } mob ? Catalog.NameOrNull(mob.MobCode) ?? mob.Name : "Босс";
+
+    private string TargetText(BossCast c)
+    {
+        if (c.Skill == 0 || c.AroundCaster) return "→ вокруг себя";
+        if (Entities.IsCurrentPlayer(c.Target)) return "→ Вы";
+        return Entities.GetPlayerEntity(c.Target) is { Name.Length: > 0 } p ? $"→ {p.Name}" : "→ игрок";
+    }
+
+    /// <summary>My maximum HP from the stat frame: HP (193) with its percent bonus (196, hundredths of a percent).</summary>
+    private static long MyMaxHp()
+    {
+        var hp = AionDpsMeter.Services.PacketProcessing.Fork.StatsMemory.Value(193) ?? 0;
+        var bonus = AionDpsMeter.Services.PacketProcessing.Fork.StatsMemory.Value(196) ?? 0;
+        return (long)(hp * (1 + bonus / 10_000.0));
+    }
+
+    protected override void OnInitialized()
+    {
+        Panel.Changed += OnChanged;
+        tick = new System.Threading.Timer(_ => OnChanged(), null, 100, 100);
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Panel.Changed -= OnChanged;
+        tick?.Dispose();
+    }
+}

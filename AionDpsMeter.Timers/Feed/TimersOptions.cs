@@ -114,6 +114,10 @@ public sealed class TimersOptions
     public double? BuffPanelLeft { get; set; }
     /// <summary>The craft overlay "Ещё нужно" is open (it opens again with the meter) and where it stands.</summary>
     public bool CraftOverlay { get; set; }
+    /// <summary>The boss cast overlay (casts with the time left, "СМЕРТЕЛЬНО") is on, and where it stands.</summary>
+    public bool BossCasts { get; set; } = true;
+    public double? BossCastsLeft { get; set; }
+    public double? BossCastsTop { get; set; }
     public double? CraftOverlayLeft { get; set; }
     public double? CraftOverlayTop { get; set; }
     public double? BuffPanelTop { get; set; }

@@ -5,6 +5,7 @@
 @using AionDpsMeter.UI.Pages.Components
 @inject AionDpsMeter.UI.Services.TimerWindow.StatCalcWindow StatCalc
 @inject AionDpsMeter.UI.Services.TimerWindow.CraftWindow Craft
+@inject AionDpsMeter.UI.Services.TimerWindow.BossCastPanel CastPanel
 
 @switch (Section)
 {
@@ -332,6 +333,21 @@
                     </select>
                     <button type="button" class="fs-segmented__option fs-button" title="Прослушать" @onclick="() => PlaySound(TimersOptions.LobbyReadyKey)">▶</button>
                     <ToggleSwitch Checked="@(!O.MutedIds.Contains(TimersOptions.LobbyReadyKey))" CheckedChanged="v => SetAlert(TimersOptions.LobbyReadyKey, v)" />
+                </span>
+            </ValueSlot>
+        </SettingRow>
+        break;
+
+    case "casts":
+        <div class="fs-label">КАСТЫ БОССА</div>
+        <SettingRow Title="Показывать касты босса" Description="Окно поверх игры: каждое умение, которое босс начал кастовать, — сколько осталось, по кому («→ Вы», «→ вокруг себя») и «СМЕРТЕЛЬНО», если этим умением босс раньше снимал вам почти всё здоровье («опасно» — больше трети). Клики проходят сквозь окно в игру">
+            <ValueSlot><ToggleSwitch Checked="@O.BossCasts" CheckedChanged="v => Set(o => o.BossCasts = v)" /></ValueSlot>
+        </SettingRow>
+        <SettingRow Title="Место окна" Description="«Расставить» показывает пример каста — перетащите его, куда удобно, и нажмите «Готово»" IsLast="true">
+            <ValueSlot>
+                <span class="fs-hotkey">
+                    <button type="button" class="fs-segmented__option fs-button @(CastPanel.Editing ? "is-selected" : "")" @onclick="CastPanel.ToggleEditing">@(CastPanel.Editing ? "Готово" : "Расставить")</button>
+                    <button type="button" class="fs-segmented__option fs-button" @onclick="CastPanel.ResetPlace">Сбросить</button>
                 </span>
             </ValueSlot>
         </SettingRow>

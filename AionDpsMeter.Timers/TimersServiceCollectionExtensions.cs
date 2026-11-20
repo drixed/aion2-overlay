@@ -74,6 +74,20 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton(sp =>
+        {
+            // the boss cast overlay: casts of bosses only (adds wind up a lot), and the hardest hit each boss skill dealt me
+            var entities = sp.GetRequiredService<AionDpsMeter.Services.Services.Entity.EntityTracker>();
+            var catalog = sp.GetRequiredService<BossCatalog>();
+            bool Boss(int entity) => entities.GetTargetMob(entity) is { MobCode: > 0 } mob && catalog.IsBoss(mob.MobCode);
+            var casts = new BossCastTracker(Boss, TimersPaths.Of("boss-hits.json"));
+            AionDpsMeter.Services.PacketProcessing.Fork.CombatFeed.Hit += hit =>
+            {
+                if (entities.IsCurrentPlayer(hit.TargetId) && Boss(hit.ActorId)) casts.OnHitOnMe(hit.SkillCode, hit.Damage);
+            };
+            return casts;
+        });
+        services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<BossCastTracker>());
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp =>
         {
             var entities = sp.GetRequiredService<AionDpsMeter.Services.Services.Entity.EntityTracker>();

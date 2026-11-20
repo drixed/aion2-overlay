@@ -36,6 +36,10 @@ namespace AionDpsMeter.Services.PacketProcessing.Fork
             }
         }
 
+        /// <summary>One raw value of the last stat frame (HP is 193), null when it was not sent.</summary>
+        public static int? Value(ushort id) =>
+            Last?.Stats is { } stats && ValuesField?.GetValue(stats) is IReadOnlyDictionary<ushort, int> values && values.TryGetValue(id, out var v) ? v : null;
+
         public static void Remember(PlayerCharacterStats stats, DateTime capturedAt)
         {
             lock (Gate)
