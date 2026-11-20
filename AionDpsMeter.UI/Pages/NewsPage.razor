@@ -1,5 +1,6 @@
-@* aion2-overlay fork: new file (see FORK_CHANGES.md). The 📣 window: NCSOFT's official AION 2 announcements with a kind
-   filter and a "новое" mark, and the Twitch Drops campaigns NC announces. *@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). The 📣 window: NCSOFT's official AION 2 announcements with the kinds as
+   checkboxes (counts over the kept history) and a "новое" mark, and the Twitch Drops campaigns read from NC's notices:
+   the running or coming ones with their rewards, how drops work, and the past campaigns. *@
 @using AionDpsMeter.Timers.News
 @using AionDpsMeter.UI.Services.TimerWindow
 @implements IDisposable
@@ -20,41 +21,79 @@
     <div class="nw-body">
         @if (tab == "news")
         {
+            var counts = News.Items.GroupBy(i => i.Kind).ToDictionary(g => g.Key, g => g.Count());
+            var shown = News.Items.Where(i => !hidden.Contains(i.Kind)).ToList();
             <div class="nw-chips">
-                <button type="button" class="@(kind is null ? "on" : "")" @onclick="() => kind = null">Все</button>
-                @foreach (var k in News.Items.Select(i => i.Kind).Distinct().OrderBy(k => k))
+                <button type="button" class="nw-all @(hidden.Count == 0 ? "on" : "")" @onclick="() => hidden.Clear()">Все · @News.Items.Count</button>
+                @foreach (var k in Enum.GetValues<NewsKind>())
                 {
                     var kk = k;
-                    <button type="button" class="nw-kind k-@k.ToString().ToLowerInvariant() @(kind == k ? "on" : "")" @onclick="() => kind = kind == kk ? null : kk">@Announcements.Label(k)</button>
+                    var on = !hidden.Contains(k);
+                    <button type="button" class="nw-check k-@k.ToString().ToLowerInvariant() @(on ? "on" : "")" @onclick="() => Toggle(kk)">
+                        <i>@(on ? "✓" : "")</i>@Announcements.Label(k)<small>@counts.GetValueOrDefault(k)</small>
+                    </button>
                 }
             </div>
-            @foreach (var a in News.Items.Where(i => kind is null || i.Kind == kind))
+            @foreach (var a in shown.Take(limit))
             {
                 @Card(a)
+            }
+            @if (shown.Count > limit)
+            {
+                <button type="button" class="nw-more" @onclick="() => limit += 30">Показать ещё (@(shown.Count - limit))</button>
             }
             @if (News.Items.Count == 0)
             {
                 <p class="nw-empty">Объявлений пока нет: метр загружает их с официального сайта NCSOFT раз в 15 минут.</p>
             }
-            <p class="nw-note">Официальные объявления AION 2 от NCSOFT — на английском, на русском NCSOFT их не публикует. Нажмите на карточку — откроется полный текст на сайте.</p>
+            else if (shown.Count == 0)
+            {
+                <p class="nw-empty">В отмеченных категориях объявлений нет.</p>
+            }
+            <p class="nw-note">Официальные объявления AION 2 от NCSOFT — на английском, на русском NCSOFT их не публикует. Метр хранит историю (@News.Items.Count шт.), начиная с самых старых, что ещё есть на сайте. Нажмите на карточку — откроется полный текст.</p>
         }
         else
         {
-            var drops = News.Items.Where(i => i.Kind == NewsKind.TwitchDrops).ToList();
+            var now = DateTimeOffset.UtcNow;
+            var current = News.Drops.Where(c => c.End > now).OrderBy(c => c.Start).ToList();
+            var past = News.Drops.Where(c => c.End <= now).ToList();
             <div class="nw-drops-head">
-                <span>Смотрите стримы AION 2 с включёнными Drops и получайте награды в игре. Привяжите аккаунт NC к Twitch на странице кампаний.</span>
+                <span>Смотрите стримы AION 2 с включёнными Drops — за время просмотра Twitch выдаёт награды для игры.</span>
                 <span class="nw-actions">
-                    <button type="button" class="nw-btn primary" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/directory/category/aion-2")'>Стримы AION 2 ↗</button>
-                    <button type="button" class="nw-btn" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/drops/campaigns")'>Кампании и награды ↗</button>
+                    <button type="button" class="nw-btn primary" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/directory/category/aion-2")'>AION 2 на Twitch ↗</button>
+                    <button type="button" class="nw-btn" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/drops/inventory")'>Инвентарь дропсов ↗</button>
+                    <button type="button" class="nw-btn" @onclick='() => NewsWindow.Browse("https://www.twitch.tv/drops/campaigns")'>Привязать аккаунты ↗</button>
                 </span>
             </div>
-            @foreach (var a in drops)
+
+            <div class="nw-sec">Текущая кампания</div>
+            @if (current.Count == 0)
             {
-                @Card(a)
+                <p class="nw-empty">Сейчас кампании Twitch Drops нет. Когда NCSOFT объявит новую, она появится здесь с наградами и сроками.</p>
             }
-            @if (drops.Count == 0)
+            @foreach (var c in current)
             {
-                <p class="nw-empty">Среди последних объявлений NCSOFT нет кампаний Twitch Drops. Когда кампания начнётся, она появится здесь.</p>
+                @Campaign(c, now, true)
+            }
+
+            <div class="nw-sec">Сейчас в эфире с дропами</div>
+            <p class="nw-hint">Список стримов прямо в метре показать нельзя: Twitch отдаёт его только по ключу разработчика. Нажмите «AION 2 на Twitch» — стримы с дропсами помечены значком «Drops включены».</p>
+
+            <div class="nw-sec">Как это работает</div>
+            <ol class="nw-steps">
+                <li><b>Привяжите аккаунты.</b> На странице «Привязать аккаунты» соедините Twitch с аккаунтом NC (один раз).</li>
+                <li><b>Смотрите стрим</b> AION 2 с включёнными Drops — время просмотра копится, прогресс виден в инвентаре дропсов.</li>
+                <li><b>Заберите награды</b> в «Инвентаре дропсов» до срока — после этого они придут в игру.</li>
+            </ol>
+
+            <div class="nw-sec">Прошлые кампании · @past.Count</div>
+            @if (past.Count == 0)
+            {
+                <p class="nw-empty">Прошлых кампаний в сохранённых объявлениях нет.</p>
+            }
+            @foreach (var c in past)
+            {
+                @Campaign(c, now, false)
             }
         }
     </div>
@@ -62,8 +101,56 @@
 
 @code {
     private string tab = "news";
-    private NewsKind? kind;
+    private readonly HashSet<NewsKind> hidden = [];
+    private int limit = 30;
     private HashSet<string> unseen = [];
+
+    private void Toggle(NewsKind k)
+    {
+        if (!hidden.Remove(k)) hidden.Add(k);
+        limit = 30;
+    }
+
+    private static string When(DateTimeOffset t) => t.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+
+    private static string Watch(int minutes) => minutes % 60 == 0 ? $"{minutes / 60} ч" : $"{minutes} мин";
+
+    private static string Left(TimeSpan t) =>
+        t.TotalDays >= 1 ? $"{(int)t.TotalDays} д {t.Hours} ч" : t.TotalHours >= 1 ? $"{(int)t.TotalHours} ч {t.Minutes} мин" : $"{Math.Max(1, t.Minutes)} мин";
+
+    private RenderFragment Campaign(DropCampaign c, DateTimeOffset now, bool big) => __builder =>
+    {
+        var running = c.Start <= now && now < c.End;
+        <div class="nw-camp @(big ? "big" : "") @(running ? "live" : "")">
+            <div class="nw-camp-top">
+                <b>@c.Name</b>
+                @if (running) { <span class="nw-badge live">ИДЁТ · осталось @Left(c.End - now)</span> }
+                else if (c.Start > now) { <span class="nw-badge soon">СКОРО · через @Left(c.Start - now)</span> }
+                else { <span class="nw-badge">завершена</span> }
+                @if (c.Url.Length > 0)
+                {
+                    <button type="button" class="nw-link" @onclick="() => NewsWindow.Browse(c.Url)">Объявление ↗</button>
+                }
+            </div>
+            <div class="nw-camp-when">
+                @When(c.Start) — @When(c.End)
+                @if (c.ClaimBy is { } claim)
+                {
+                    <span class="@(claim > now ? "nw-claim" : "")">· Получите награды до @When(claim)</span>
+                }
+            </div>
+            <div class="nw-rewards">
+                @foreach (var r in c.Rewards)
+                {
+                    <div class="nw-reward">
+                        <span class="nw-reward-time">@Watch(r.Minutes)</span>
+                        <span class="nw-reward-name">@r.Name</span>
+                        <span class="nw-reward-qty">×@r.Qty</span>
+                    </div>
+                }
+            </div>
+        </div>
+    };
 
     private RenderFragment Card(Announcement a) => __builder =>
     {

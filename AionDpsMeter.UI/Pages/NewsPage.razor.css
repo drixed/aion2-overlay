@@ -38,3 +38,44 @@
 .nw ::-webkit-scrollbar { width: 6px; }
 .nw ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
 .nw ::-webkit-scrollbar-track, .nw ::-webkit-scrollbar-button { background: transparent; display: none; }
+.nw-check { display: inline-flex; align-items: center; gap: 5px; }
+.nw-check i { display: inline-grid; place-items: center; width: 12px; height: 12px; border-radius: 3px; border: 1px solid #4a5568; font-style: normal; font-size: 9px; line-height: 1; }
+.nw-check small { color: #7d8898; font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.nw-check:not(.on) { opacity: .55; }
+.nw-chips .nw-check.on { background: #121820; color: #dfe6ee; }
+.nw-check.on i { background: currentColor; border-color: currentColor; color: #121820; }
+.nw-check.on.k-maintenance { border-color: rgba(88, 166, 255, .55); } .nw-check.k-maintenance i { color: #58a6ff; }
+.nw-check.on.k-outage { border-color: rgba(255, 143, 143, .55); } .nw-check.k-outage i { color: #ff8f8f; }
+.nw-check.on.k-newservers { border-color: rgba(95, 212, 196, .55); } .nw-check.k-newservers i { color: #5fd4c4; }
+.nw-check.on.k-servertransfer { border-color: rgba(121, 192, 255, .55); } .nw-check.k-servertransfer i { color: #79c0ff; }
+.nw-check.on.k-compensation { border-color: rgba(126, 231, 135, .55); } .nw-check.k-compensation i { color: #7ee787; }
+.nw-check.on.k-account { border-color: rgba(245, 199, 107, .55); } .nw-check.k-account i { color: #f5c76b; }
+.nw-check.on.k-twitchdrops { border-color: rgba(170, 120, 255, .6); } .nw-check.k-twitchdrops i { color: #c4a0ff; }
+.nw-check.on.k-knownissues { border-color: rgba(255, 166, 87, .55); } .nw-check.k-knownissues i { color: #ffa657; }
+.nw-check.on.k-other { border-color: rgba(139, 149, 165, .55); } .nw-check.k-other i { color: #8b95a5; }
+.nw-kind.k-servertransfer { color: #79c0ff; background: rgba(121, 192, 255, .12); border-color: rgba(121, 192, 255, .4); }
+.nw-kind.k-knownissues { color: #ffa657; background: rgba(255, 166, 87, .12); border-color: rgba(255, 166, 87, .4); }
+.nw-more { align-self: center; background: #121820; border: 1px solid #2f3846; color: #c9d1d9; border-radius: 7px; padding: 5px 16px; font: inherit; font-size: 12px; cursor: pointer; }
+.nw-more:hover, .nw-btn:hover, .nw-link:hover { border-color: rgba(95, 212, 196, .6); }
+.nw-actions { flex-wrap: wrap; }
+.nw-sec { margin-top: 6px; color: #8b95a5; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.nw-hint { margin: 0; color: #8b95a5; font-size: 12px; line-height: 1.4; }
+.nw-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: #c9d1d9; line-height: 1.4; }
+.nw-steps b { color: #e6edf3; }
+.nw-camp { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 9px; background: #19202a; border: 1px solid #252e3b; }
+.nw-camp.live { border-color: rgba(170, 120, 255, .55); background: linear-gradient(180deg, rgba(170, 120, 255, .08), #19202a 60%); }
+.nw-camp-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nw-camp-top b { font-size: 13.5px; color: #e6edf3; }
+.nw-camp.big .nw-camp-top b { font-size: 15px; }
+.nw-badge { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 1px 7px; color: #8b95a5; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .1); }
+.nw-badge.live { color: #e3d4ff; background: rgba(170, 120, 255, .22); border-color: rgba(170, 120, 255, .6); }
+.nw-badge.soon { color: #5fd4c4; background: rgba(95, 212, 196, .12); border-color: rgba(95, 212, 196, .45); }
+.nw-link { margin-left: auto; background: none; border: 1px solid #2f3846; color: #c9d1d9; border-radius: 6px; padding: 2px 9px; font: inherit; font-size: 11px; cursor: pointer; }
+.nw-camp-when { color: #8b95a5; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.nw-claim { color: #f5c76b; }
+.nw-rewards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.nw-reward { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 7px; background: #121820; border: 1px solid #252e3b; }
+.nw-camp:not(.big) .nw-reward { padding: 4px 7px; }
+.nw-reward-time { font-size: 10.5px; font-weight: 700; color: #c4a0ff; white-space: nowrap; }
+.nw-reward-name { font-size: 11.5px; color: #dfe6ee; line-height: 1.25; }
+.nw-reward-qty { font-size: 11.5px; font-weight: 700; color: #f5c76b; font-variant-numeric: tabular-nums; }

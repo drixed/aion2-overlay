@@ -48,6 +48,29 @@ public class AnnouncementsTests
     public void Every_kind_has_a_russian_label()
     {
         Assert.All(Enum.GetValues<NewsKind>(), k => Assert.False(string.IsNullOrEmpty(Announcements.Label(k))));
-        Assert.Equal("Техработы", Announcements.Label(NewsKind.Maintenance));
+        Assert.Equal("Тех. работы", Announcements.Label(NewsKind.Maintenance));
+        Assert.Equal("Прочее", Announcements.Label(NewsKind.Other));
+    }
+
+    [Fact]
+    public void The_archive_keeps_older_notices_and_takes_the_newer_text_of_the_same_one()
+    {
+        var at = new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.Zero);
+        var kept = new[] { new Announcement("a", "Maintenance", "", at, NewsKind.Maintenance, false, "u"), new Announcement("old", "Old", "", at.AddDays(-30), NewsKind.Other, false, "u") };
+        var fresh = new[] { new Announcement("a", "Maintenance", "", at, NewsKind.Maintenance, true, "u"), new Announcement("b", "New", "", at.AddDays(1), NewsKind.Other, false, "u") };
+        var merged = Announcements.Merge(kept, fresh);
+        Assert.Equal(["b", "a", "old"], merged.Select(i => i.Id));
+        Assert.True(merged[1].Done);
+    }
+
+    [Fact]
+    public void Older_pages_and_bodies_have_their_addresses()
+    {
+        Assert.EndsWith("/article/search/moreArticle?isVote=true&moreSize=18&moreDirection=BEFORE&previousArticleId=x1", Announcements.MoreUrl("x1"));
+        Assert.EndsWith("/article/x1", Announcements.ArticleUrl("x1"));
+        Assert.Equal("<p>hi</p>", Announcements.ArticleHtml("""{"article":{"content":{"content":"<p>hi</p>"}}}"""));
+        Assert.Equal("", Announcements.ArticleHtml("nope"));
+        Assert.True(Announcements.HasMore("""{"contentList":[],"hasMore":true}"""));
+        Assert.False(Announcements.HasMore("{}"));
     }
 }

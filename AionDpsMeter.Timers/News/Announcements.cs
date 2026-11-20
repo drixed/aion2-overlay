@@ -12,8 +12,8 @@ public enum NewsKind { Maintenance, Outage, NewServers, ServerTransfer, Compensa
 public sealed record Announcement(string Id, string Title, string Summary, DateTimeOffset Posted, NewsKind Kind, bool Done, string Url);
 
 /// <summary>
-/// NCSOFT's official AION 2 announcements from the public community board (no login): the newest ten, English only (NC
-/// publishes no Russian ones). NC has no category field, so the kind is read from the title.
+/// NCSOFT's official AION 2 announcements from the public community board (no login): the newest ten and the older pages,
+/// English only (NC publishes no Russian ones). NC has no category field, so the kind is read from the title.
 /// </summary>
 public static class Announcements
 {
@@ -43,15 +43,15 @@ public static class Announcements
 
     public static string Label(NewsKind kind) => kind switch
     {
-        NewsKind.Maintenance => "Техработы",
+        NewsKind.Maintenance => "Тех. работы",
         NewsKind.Outage => "Сбой",
         NewsKind.NewServers => "Новые серверы",
-        NewsKind.ServerTransfer => "Перенос",
+        NewsKind.ServerTransfer => "Перенос сервера",
         NewsKind.Compensation => "Компенсация",
-        NewsKind.Account => "Блокировки",
+        NewsKind.Account => "Аккаунт",
         NewsKind.TwitchDrops => "Twitch Drops",
-        NewsKind.KnownIssues => "Известные ошибки",
-        _ => "Новости",
+        NewsKind.KnownIssues => "Известные проблемы",
+        _ => "Прочее",
     };
 
     private static readonly Regex Tag = new(@"^\s*\[[^\]]{1,24}\]\s*", RegexOptions.Compiled);
@@ -85,6 +85,43 @@ public static class Announcements
             return [];
         }
         return items.OrderByDescending(i => i.Posted).ToList();
+    }
+
+    /// <summary>The 18 notices before <paramref name="beforeId"/> (the board's "more" button): the history behind the newest ten.</summary>
+    public static string MoreUrl(string beforeId) =>
+        $"{ListUrl}/search/moreArticle?isVote=true&moreSize=18&moreDirection=BEFORE&previousArticleId={Uri.EscapeDataString(beforeId)}";
+
+    /// <summary>One notice with its full body.</summary>
+    public static string ArticleUrl(string id) => $"{ListUrl}/{Uri.EscapeDataString(id)}";
+
+    /// <summary>The body HTML of <see cref="ArticleUrl"/>'s answer (article.content.content), empty when it is not there.</summary>
+    public static string ArticleHtml(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("article", out var a) && a.TryGetProperty("content", out var c) ? Text(c, "content") : "";
+        }
+        catch (JsonException) { return ""; }
+    }
+
+    public static bool HasMore(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("hasMore", out var v) && v.ValueKind == JsonValueKind.True;
+        }
+        catch (JsonException) { return false; }
+    }
+
+    /// <summary>The kept history with what the board gave now: one entry per id (the fresh one wins: "(Completed)" comes later), newest first.</summary>
+    public static IReadOnlyList<Announcement> Merge(IEnumerable<Announcement> kept, IEnumerable<Announcement> fresh)
+    {
+        var byId = new Dictionary<string, Announcement>();
+        foreach (var a in kept) byId[a.Id] = a;
+        foreach (var a in fresh) byId[a.Id] = a;
+        return byId.Values.OrderByDescending(a => a.Posted).ToList();
     }
 
     private static string Text(JsonElement e, string name) =>
