@@ -26,6 +26,43 @@ public class TimersOptionsTests
     }
 
     [Fact]
+    public void Map_window_settings_are_kept_and_an_old_file_gets_the_defaults()
+    {
+        using var dir = new TempDir();
+        var path = dir.File("timers-settings.json");
+        File.WriteAllText(path, "{ \"BossLeadMinutes\": 7 }");   // written before the map had settings
+        var store = new TimersOptionsStore(path);
+        store.Load();
+        var map = store.Current.Map;
+        Assert.True(map.Sidebar);
+        Assert.Equal(100, map.Opacity);
+        Assert.Equal(["Herb", "Ore"], map.Kinds.Order());
+
+        map.Sidebar = false;
+        map.Opacity = 55;
+        map.PointSize = 60;
+        map.BossNames = false;
+        map.Kinds.Add("Wood");
+        store.Save();
+
+        var again = new TimersOptionsStore(path);
+        again.Load();
+        Assert.False(again.Current.Map.Sidebar);
+        Assert.Equal(55, again.Current.Map.Opacity);
+        Assert.Equal(0.6, again.Current.Map.PointScale, 3);
+        Assert.False(again.Current.Map.BossNames);
+        Assert.Contains("Wood", again.Current.Map.Kinds);
+    }
+
+    [Fact]
+    public void Map_opacity_and_point_size_stay_in_range()
+    {
+        var map = new MapOptions { Opacity = 3, PointSize = 900 };
+        Assert.Equal(MapOptions.MinOpacity, map.ClampedOpacity);
+        Assert.Equal(MapOptions.MaxPointSize / 100.0, map.PointScale, 3);
+    }
+
+    [Fact]
     public void Startup_creates_a_missing_file_but_never_overwrites_a_hand_edited_one()
     {
         using var dir = new TempDir();

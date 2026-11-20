@@ -16,6 +16,7 @@
 @inject AionDpsMeter.Timers.Bosses.BossCatalog Catalog
 @inject AionDpsMeter.Services.Services.Entity.EntityTracker Entities
 @inject Microsoft.JSInterop.IJSRuntime JS
+@inject AionDpsMeter.Timers.Feed.TimersOptionsStore Store
 
 @{
     var layer = Layer;
@@ -28,10 +29,12 @@
     var vbH = H * k;
     var x0 = cx - vbW / 2;
     var y0 = cy - vbH / 2;
-    var nearest = me is { } m0 && layer is not null ? Nearest(layer, m0, petsHere) : new List<Near>();
+    var nearest = me is { } m0 && layer is not null && O.Nearest ? Nearest(layer, m0, petsHere) : new List<Near>();
+    var ps = O.PointScale;
 }
-<div class="mp">
+<div class="mp" style="--mp-a:@F(O.ClampedOpacity / 100.0)">
     <div class="mp-title" @onmousedown="Window.Drag">
+        <button type="button" class="mp-ico @(O.Sidebar ? "on" : "")" @onmousedown:stopPropagation="true" @onclick="() => Set(o => o.Sidebar = !o.Sidebar)" title="@(O.Sidebar ? "Скрыть боковую панель" : "Показать боковую панель")">☰</button>
         <b>Карта</b>
         <div class="mp-maps" @onmousedown:stopPropagation="true">
             @foreach (var m in WorldMap.All)
@@ -41,10 +44,31 @@
         </div>
         <span class="mp-grow"></span>
         <small class="mp-here">@HereText(layer)</small>
+        <button type="button" class="mp-ico @(settingsOpen ? "on" : "")" @onmousedown:stopPropagation="true" @onclick="() => settingsOpen = !settingsOpen" title="Вид карты: прозрачность, размер точек, подписи">⚙</button>
         <button type="button" class="mp-x" @onmousedown:stopPropagation="true" @onclick="Window.Close">✕</button>
     </div>
+    @if (settingsOpen)
+    {
+        <div class="mp-settings">
+            <b>Вид карты</b>
+            <label class="mp-check"><input type="checkbox" checked="@O.Sidebar" @onchange="e => Set(o => o.Sidebar = e.Value is true)" /> Боковая панель</label>
+            <label class="mp-range">Прозрачность фона <small>@(100 - O.ClampedOpacity)%</small>
+                <input type="range" min="0" max="@(100 - AionDpsMeter.Timers.Feed.MapOptions.MinOpacity)" step="5" value="@(100 - O.ClampedOpacity)"
+                       @oninput="e => O.Opacity = 100 - Int(e.Value)" @onchange="e => Set(o => o.Opacity = 100 - Int(e.Value))" /></label>
+            <label class="mp-range">Размер точек <small>@((int)Math.Round(O.PointScale * 100))%</small>
+                <input type="range" min="@AionDpsMeter.Timers.Feed.MapOptions.MinPointSize" max="@AionDpsMeter.Timers.Feed.MapOptions.MaxPointSize" step="10" value="@((int)Math.Round(O.PointScale * 100))"
+                       @oninput="e => O.PointSize = Int(e.Value)" @onchange="e => Set(o => o.PointSize = Int(e.Value))" /></label>
+            <label class="mp-check"><input type="checkbox" checked="@O.BossNames" @onchange="e => Set(o => o.BossNames = e.Value is true)" /> Имена боссов</label>
+            <label class="mp-check"><input type="checkbox" checked="@O.Grid" @onchange="e => Set(o => o.Grid = e.Value is true)" /> Сетка и масштаб</label>
+            <label class="mp-check"><input type="checkbox" checked="@O.Nearest" @onchange="e => Set(o => o.Nearest = e.Value is true)" /> Блок «Ближайшее»</label>
+            <label class="mp-check"><input type="checkbox" checked="@O.OnTop" @onchange="e => SetOnTop(e.Value is true)" /> Поверх всех окон</label>
+            <button type="button" class="mp-link" @onclick="ResetLook">Сбросить вид</button>
+        </div>
+    }
 
-    <div class="mp-body">
+    <div class="mp-body @(O.Sidebar ? "" : "no-side")">
+        @if (O.Sidebar)
+        {
         <aside class="mp-side">
             <section>
                 <h4>Я</h4>
@@ -60,8 +84,8 @@
             </section>
 
             <section>
-                <h4><label class="mp-check"><input type="checkbox" checked="@showPets" @onchange="e => showPets = e.Value is true" /> Питомцы</label><small>@petsHere.Count</small></h4>
-                <label class="mp-check sub"><input type="checkbox" checked="@onlyUnfinished" @onchange="e => onlyUnfinished = e.Value is true" /> только не прокачанные</label>
+                <h4><label class="mp-check"><input type="checkbox" checked="@O.Pets" @onchange="e => Set(o => o.Pets = e.Value is true)" /> Питомцы</label><small>@petsHere.Count</small></h4>
+                <label class="mp-check sub"><input type="checkbox" checked="@O.OnlyUnfinished" @onchange="e => Set(o => o.OnlyUnfinished = e.Value is true)" /> только не прокачанные</label>
                 <input class="mp-search" placeholder="Поиск питомца или монстра" value="@petQuery" @oninput="e => petQuery = e.Value?.ToString() ?? string.Empty" />
                 <div class="mp-pets">
                     @foreach (var pet in petsHere.Where(ShowsInList))
@@ -79,7 +103,7 @@
                 <h4>Сбор</h4>
                 @foreach (var kind in kinds)
                 {
-                    <label class="mp-check"><input type="checkbox" checked="@shownKinds.Contains(kind.Kind)" @onchange="e => Toggle(shownKinds, kind.Kind, e.Value is true)" />
+                    <label class="mp-check"><input type="checkbox" checked="@O.Kinds.Contains(kind.Kind)" @onchange="e => Set(o => Toggle(o.Kinds, kind.Kind, e.Value is true))" />
                         <span class="sw" style="background:@KindColor(kind.Kind)"></span>@WorldMap.KindLabel(kind.Kind)<small>@kind.Count</small></label>
                 }
                 @if (kinds.Count == 0) { <div class="mp-hint">Точек сбора на этой карте нет в таблице.</div> }
@@ -87,11 +111,12 @@
 
             <section>
                 <h4>Прочее</h4>
-                <label class="mp-check"><input type="checkbox" checked="@showBosses" @onchange="e => showBosses = e.Value is true" /><span class="sw boss"></span>Полевые боссы<small>@(layer?.Bosses.Count ?? 0)</small></label>
-                <label class="mp-check"><input type="checkbox" checked="@showCubes" @onchange="e => showCubes = e.Value is true" /><span class="sw cube"></span>Скрытые кубы<small>@(layer?.Cubes.Count ?? 0)</small></label>
+                <label class="mp-check"><input type="checkbox" checked="@O.Bosses" @onchange="e => Set(o => o.Bosses = e.Value is true)" /><span class="sw boss"></span>Полевые боссы<small>@(layer?.Bosses.Count ?? 0)</small></label>
+                <label class="mp-check"><input type="checkbox" checked="@O.Cubes" @onchange="e => Set(o => o.Cubes = e.Value is true)" /><span class="sw cube"></span>Скрытые кубы<small>@(layer?.Cubes.Count ?? 0)</small></label>
             </section>
             <p class="mp-note">Схема нарисована по координатам из открытой таблицы SkeeveAN/Aion-DPS-Meter (MIT); картинок игры здесь нет.</p>
         </aside>
+        }
 
         <div class="mp-view @(dragging ? "drag" : "")" @ref="viewRef" @onwheel="Wheel" @onwheel:preventDefault="true"
              @onmousedown="DragStart" @onmousemove="DragMove" @onmouseup="DragEnd" @onmouseleave="DragEnd">
@@ -108,18 +133,21 @@
                             if (In(c, x0, y0, vbW, vbH, LandR)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@LandR" /> }
                         }
                     </g>
-                    @{ var step = GridStep(k); }
-                    <g class="grid" stroke-width="@F(k)">
-                        @for (var gx = Math.Floor(x0 / step) * step; gx <= x0 + vbW; gx += step) { <line x1="@F(gx)" y1="@F(y0)" x2="@F(gx)" y2="@F(y0 + vbH)" /> }
-                        @for (var gy = Math.Floor(y0 / step) * step; gy <= y0 + vbH; gy += step) { <line x1="@F(x0)" y1="@F(gy)" x2="@F(x0 + vbW)" y2="@F(gy)" /> }
-                    </g>
+                    @if (O.Grid)
+                    {
+                        var step = GridStep(k);
+                        <g class="grid" stroke-width="@F(k)">
+                            @for (var gx = Math.Floor(x0 / step) * step; gx <= x0 + vbW; gx += step) { <line x1="@F(gx)" y1="@F(y0)" x2="@F(gx)" y2="@F(y0 + vbH)" /> }
+                            @for (var gy = Math.Floor(y0 / step) * step; gy <= y0 + vbH; gy += step) { <line x1="@F(x0)" y1="@F(gy)" x2="@F(x0 + vbW)" y2="@F(gy)" /> }
+                        </g>
+                    }
 
-                    @if (showCubes)
+                    @if (O.Cubes)
                     {
                         <g class="cubes">
                             @foreach (var c in layer.Cubes)
                             {
-                                if (In(c, x0, y0, vbW, vbH, 0)) { <rect x="@F(c.X - 2.4 * k)" y="@F(c.Y - 2.4 * k)" width="@F(4.8 * k)" height="@F(4.8 * k)" /> }
+                                if (In(c, x0, y0, vbW, vbH, 0)) { <rect x="@F(c.X - 2.4 * ps * k)" y="@F(c.Y - 2.4 * ps * k)" width="@F(4.8 * ps * k)" height="@F(4.8 * ps * k)" /> }
                             }
                         </g>
                     }
@@ -127,16 +155,16 @@
                     @foreach (var g in layer.Gather)
                     {
                         var obj = WorldMap.Object(g.Key);
-                        if (obj is null || !shownKinds.Contains(obj.Kind)) continue;
+                        if (obj is null || !O.Kinds.Contains(obj.Kind)) continue;
                         <g class="gather" fill="@KindColor(obj.Kind)">
                             @foreach (var c in g.Value)
                             {
-                                if (In(c, x0, y0, vbW, vbH, 0)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@F(3.6 * k)"><title>@obj.Name</title></circle> }
+                                if (In(c, x0, y0, vbW, vbH, 0)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@F(3.6 * ps * k)"><title>@obj.Name</title></circle> }
                             }
                         </g>
                     }
 
-                    @if (showPets)
+                    @if (O.Pets)
                     {
                         @foreach (var pet in petsHere.Where(ShowsOnMap))
                         {
@@ -147,21 +175,21 @@
                                     var tip = $"{MonsterName(code)} → {pet.Name} ({LevelText(pet.Level)})";
                                     foreach (var c in layer.PetSpawns[code])
                                     {
-                                        if (In(c, x0, y0, vbW, vbH, 0)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@F((on ? 5.5 : 3.4) * k)"><title>@tip</title></circle> }
+                                        if (In(c, x0, y0, vbW, vbH, 0)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@F((on ? 5.5 : 3.4) * ps * k)"><title>@tip</title></circle> }
                                     }
                                 }
                             </g>
                         }
                     }
 
-                    @if (showBosses)
+                    @if (O.Bosses)
                     {
                         <g class="bosses">
                             @foreach (var b in layer.Bosses)
                             {
                                 if (!In(b.At, x0, y0, vbW, vbH, 400 * k)) continue;
-                                <circle cx="@F(b.At.X)" cy="@F(b.At.Y)" r="@F(7 * k)" stroke-width="@F(2 * k)"><title>@b.Name</title></circle>
-                                <g><text x="@F(b.At.X)" y="@F(b.At.Y - 11 * k)" font-size="@F(11 * k)">@b.Name</text></g>
+                                <circle cx="@F(b.At.X)" cy="@F(b.At.Y)" r="@F(7 * ps * k)" stroke-width="@F(2 * k)"><title>@b.Name</title></circle>
+                                if (O.BossNames) { <g><text x="@F(b.At.X)" y="@F(b.At.Y - (4 + 7 * ps) * k)" font-size="@F(11 * k)">@b.Name</text></g> }
                             }
                         </g>
                     }
@@ -194,7 +222,7 @@
                     <button type="button" @onclick="() => ZoomBy(0.7)">+</button>
                     <button type="button" @onclick="() => ZoomBy(1.4)">−</button>
                 </div>
-                <div class="mp-scale"><span style="width:@F(GridStep(k) / k)px"></span>@Metres(GridStep(k))</div>
+                @if (O.Grid) { <div class="mp-scale"><span style="width:@F(GridStep(k) / k)px"></span>@Metres(GridStep(k))</div> }
                 @if (nearest.Count > 0)
                 {
                     <div class="mp-near" @onmousedown:stopPropagation="true">
@@ -223,10 +251,30 @@
     private int? pickedMap;
     private int fittedFor;
     private double cx, cy, Span = 100_000, W = 800, H = 600;
-    private bool follow, showPets = true, onlyUnfinished = true, showBosses = true, showCubes;
+    private bool follow, settingsOpen;
     private int? selectedPet;
     private string petQuery = string.Empty;
-    private readonly HashSet<string> shownKinds = ["Herb", "Ore"];
+    private AionDpsMeter.Timers.Feed.MapOptions O => Store.Current.Map;
+
+    private void Set(Action<AionDpsMeter.Timers.Feed.MapOptions> change)
+    {
+        change(O);
+        Store.Save();
+    }
+
+    private void SetOnTop(bool on)
+    {
+        Set(o => o.OnTop = on);
+        Window.SetTopmost(on);
+    }
+
+    private void ResetLook() => Set(o =>
+    {
+        var d = new AionDpsMeter.Timers.Feed.MapOptions();
+        (o.Sidebar, o.Opacity, o.PointSize, o.BossNames, o.Grid, o.Nearest) = (d.Sidebar, d.Opacity, d.PointSize, d.BossNames, d.Grid, d.Nearest);
+    });
+
+    private static int Int(object? value) => int.TryParse(value?.ToString(), out var n) ? n : 0;
     private bool dragging, skipRender;
     private double dragX, dragY, dragCx, dragCy;
     private DateTime lastMe;
@@ -287,7 +335,7 @@
     private bool Unfinished(PetHere p) => p.Level is null || p.Level < PetBook.MaxLevel;
 
     private bool ShowsInList(PetHere p) =>
-        (!onlyUnfinished || Unfinished(p) || selectedPet == p.Pet)
+        (!O.OnlyUnfinished || Unfinished(p) || selectedPet == p.Pet)
         && (petQuery.Length == 0 || p.Name.Contains(petQuery, StringComparison.CurrentCultureIgnoreCase) || p.Monsters.Contains(petQuery, StringComparison.CurrentCultureIgnoreCase));
 
     private bool ShowsOnMap(PetHere p) => selectedPet == p.Pet || (selectedPet is null && ShowsInList(p));
@@ -323,7 +371,7 @@
     private List<Near> Nearest(MapLayer layer, MapPoint me, List<PetHere> petsHere)
     {
         var list = new List<Near>();
-        if (showPets)
+        if (O.Pets)
         {
             var pets = petsHere.Where(ShowsOnMap).ToList();
             var points = pets.SelectMany(p => p.Codes.SelectMany(c => layer.PetSpawns[c].Select(pt => (Pet: p, Code: c, At: pt))));
@@ -331,13 +379,13 @@
             if (best.Pet is not null)
                 list.Add(new Near($"{best.Pet.Name} · {MonsterName(best.Code)}", "#f0a35e", best.At, (int)Math.Round(best.D / 100), true));
         }
-        foreach (var kind in shownKinds.OrderBy(WorldMap.KindLabel))
+        foreach (var kind in O.Kinds.OrderBy(WorldMap.KindLabel))
         {
             var points = layer.Gather.Where(g => WorldMap.Object(g.Key)?.Kind == kind).SelectMany(g => g.Value);
             if (WorldMap.Nearest(points, me) is { } n) list.Add(new Near(WorldMap.KindLabel(kind), KindColor(kind), n.Point, n.Metres, list.Count == 0));
         }
-        if (showCubes && WorldMap.Nearest(layer.Cubes, me) is { } cube) list.Add(new Near("Скрытый куб", "#5fd4c4", cube.Point, cube.Metres, list.Count == 0));
-        if (showBosses)
+        if (O.Cubes && WorldMap.Nearest(layer.Cubes, me) is { } cube) list.Add(new Near("Скрытый куб", "#5fd4c4", cube.Point, cube.Metres, list.Count == 0));
+        if (O.Bosses)
         {
             var boss = layer.Bosses.MinBy(b => Dist(b.At, me));
             if (boss is not null) list.Add(new Near(boss.Name, "#ff6b6b", boss.At, (int)Math.Round(Dist(boss.At, me) / 100), list.Count == 0));

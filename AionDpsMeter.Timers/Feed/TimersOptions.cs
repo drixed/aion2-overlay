@@ -28,6 +28,8 @@ public sealed class TimersOptions
     public bool ShowHps { get; set; }
     /// <summary>"Доход с фарма": kina and Abyss points that came in, in all and per hour, under the main window.</summary>
     public bool ShowFarmIncome { get; set; } = true;
+    /// <summary>The 🗺 window's own look and layers, kept between runs.</summary>
+    public MapOptions Map { get; set; } = new();
     /// <summary>Marks in the skill table: skills that rarely crit or are often parried.</summary>
     public bool ShowSkillWarnings { get; set; } = true;
     /// <summary>Rows, shares, party DPS and the summary count only me and my party.</summary>
@@ -244,6 +246,37 @@ public sealed class TimersOptions
         if (sound.IsDefault) Sounds.Remove(key);
         else Sounds[key] = sound.ToString();
     }
+}
+
+/// <summary>The 🗺 window: side panel, background transparency, point size, labels and which layers are on.</summary>
+public sealed class MapOptions
+{
+    public const int MinOpacity = 20;
+    public const int MinPointSize = 40;
+    public const int MaxPointSize = 250;
+
+    /// <summary>The panel with layers and pets on the left; off — only the map.</summary>
+    public bool Sidebar { get; set; } = true;
+    /// <summary>Background opacity in percent; the points stay solid.</summary>
+    public int Opacity { get; set; } = 100;
+    /// <summary>Point size in percent of the usual.</summary>
+    public int PointSize { get; set; } = 100;
+    public bool BossNames { get; set; } = true;
+    public bool Grid { get; set; } = true;
+    public bool Nearest { get; set; } = true;
+    public bool OnTop { get; set; } = true;
+    public bool Pets { get; set; } = true;
+    public bool OnlyUnfinished { get; set; } = true;
+    public bool Bosses { get; set; } = true;
+    public bool Cubes { get; set; }
+    /// <summary>Gathering kinds on the map (Herb, Ore, Wood…).</summary>
+    public HashSet<string> Kinds { get; set; } = ["Herb", "Ore"];
+
+    [JsonIgnore]
+    public int ClampedOpacity => Math.Clamp(Opacity, MinOpacity, 100);
+
+    [JsonIgnore]
+    public double PointScale => Math.Clamp(PointSize, MinPointSize, MaxPointSize) / 100.0;
 }
 
 /// <summary>timers-settings.json next to the exe; edit it by hand to change lead times or sound.</summary>
