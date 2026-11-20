@@ -74,6 +74,13 @@ public static class TimersServiceCollectionExtensions
         });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Replay.PositionLog>());
         services.AddSingleton<AionDpsMeter.Timers.Pets.TargetSelection>();
+        services.AddSingleton(_ =>
+        {
+            // 0x9702 belongs to upstream's party processor, so the lobby listens to every frame instead of RawForwarder
+            var lobby = new AionDpsMeter.Timers.Lobby.LobbyTracker();
+            AionDpsMeter.Services.PacketProcessing.Fork.PacketTap.Frame += (opcode, packet) => lobby.OnRawPacket(opcode, packet);
+            return lobby;
+        });
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Pets.TargetSelection>());
         services.AddSingleton<AionDpsMeter.Timers.Farm.FarmIncome>();
         services.AddSingleton<AionDpsMeter.Services.PacketProcessing.Fork.IRawPacketListener>(sp => sp.GetRequiredService<AionDpsMeter.Timers.Farm.FarmIncome>());

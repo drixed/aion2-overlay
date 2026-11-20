@@ -116,6 +116,22 @@
                 <button type="button" class="bp-link" @onclick="ViewModel.DismissUpdate">✕</button>
             </div>
         }
+        @if (!noticeOpen && LobbyNow is { } lobbyParty)
+        {
+            var accepted = lobbyParty.Members.Count(m => m.Ready || m.Leader);
+            <div class="bp-lobby">
+                <div class="bp-lobby-head"><b>👥 @lobbyParty.Title</b><span class="@(accepted == lobbyParty.Members.Count ? "all" : "")">приняли @accepted / @lobbyParty.Members.Count</span></div>
+                @foreach (var m in lobbyParty.Members)
+                {
+                    <div class="bp-lobby-row @(m.Ready || m.Leader ? "ok" : "wait")" title="@($"{m.Name} · {AionDpsMeter.Core.Data.ServerMap.GetName(m.Server)} · ур. {m.Level}")">
+                        <i>@(m.Leader ? "★" : m.Ready ? "✓" : "…")</i>
+                        <span class="bp-lobby-name">@m.Name</span>
+                        <small>@AionDpsMeter.Core.Data.ServerMap.GetName(m.Server)</small>
+                        <small>@(m.Leader ? "лидер" : m.Ready ? "принял" : "ждём")</small>
+                    </div>
+                }
+            </div>
+        }
         @if (!noticeOpen && PetLine is { } petLine)
         {
             <div class="bp-pet" title="@PetTitle(petLine)">

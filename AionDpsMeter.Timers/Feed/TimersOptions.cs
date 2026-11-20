@@ -158,6 +158,8 @@ public sealed class TimersOptions
     public int FightIdleSeconds { get; set; } = 45;
     /// <summary>Hitting a monster whose pet is not maxed shows its souls; a pet level up gets a banner and a sound.</summary>
     public bool ShowPets { get; set; } = true;
+    /// <summary>"Лобби": the party finder's party in the main window — who is in it and who accepted.</summary>
+    public bool ShowLobby { get; set; } = true;
 
     /// <summary>Next to a player's name in the main window: БМ, ГС, both or nothing.</summary>
     public AionDpsMeter.Timers.Overlay.PowerColumn PowerColumn { get; set; } = AionDpsMeter.Timers.Overlay.PowerColumn.CombatPower;
@@ -221,6 +223,9 @@ public sealed class TimersOptions
 
     /// <summary>The key the pet level-up sound is muted and chosen by, like an event's.</summary>
     public const string PetLevelUpKey = "pet-levelup";
+
+    /// <summary>The key of the sound played when everyone in the party finder's party accepted.</summary>
+    public const string LobbyReadyKey = "lobby-ready";
 
     /// <summary>Events that are quiet by default (schedule "alert": false) and the user switched on.</summary>
     public HashSet<string> EnabledIds { get; set; } = [];

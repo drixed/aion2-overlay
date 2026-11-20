@@ -95,6 +95,23 @@ namespace AionDpsMeter.UI.Pages
             : $"{(p.Level == 0 ? "сбор" : $"ур. {p.Level}")} · {(p.Souls is { } s ? $"{s} / {p.Need}" : $"? / {p.Need}")}";
 
         private AionDpsMeter.Timers.Pets.TargetSelection? targetSelection;
+        private AionDpsMeter.Timers.Lobby.LobbyTracker? lobby;
+        private AionDpsMeter.Timers.Lobby.LobbyParty? LobbyNow;
+        private long lobbyRangFor;
+
+        /// <summary>The party finder's party while it gathers (the last change within ten minutes); once everyone accepted,
+        /// the "Лобби: все приняли" sound, one time per party.</summary>
+        private void RecomputeLobby()
+        {
+            lobby ??= services.GetService(typeof(AionDpsMeter.Timers.Lobby.LobbyTracker)) as AionDpsMeter.Timers.Lobby.LobbyTracker;
+            var party = Options.ShowLobby && lobby is { Party: { } p, At: { } at } && DateTime.Now - at < TimeSpan.FromMinutes(10) ? p : null;
+            LobbyNow = party;
+            if (party is null || party.Members.Count < 2 || !party.Members.All(m => m.Ready || m.Leader) || lobbyRangFor == party.Id) return;
+            lobbyRangFor = party.Id;
+            if (options.Current.MutedIds.Contains(AionDpsMeter.Timers.Feed.TimersOptions.LobbyReadyKey)) return;
+            if (services.GetService(typeof(AionDpsMeter.UI.Services.TimerWindow.AlertSoundPlayer)) is AionDpsMeter.UI.Services.TimerWindow.AlertSoundPlayer player)
+                player.Play(options.Current.SoundFor(AionDpsMeter.Timers.Feed.TimersOptions.LobbyReadyKey));
+        }
 
         /// <summary>The pet of the monster clicked on (selected in the game) within the last two minutes, maxed ones too:
         /// the pet is known before the first hit.</summary>
@@ -449,6 +466,7 @@ namespace AionDpsMeter.UI.Pages
                 fightIsBoss = target is { IsBoss: true, IsDummy: false };
                 targetIsDummy = target?.IsDummy == true;
                 PetLine = Options.ShowPets ? SelectedPet() ?? pets.Current() : null;
+                RecomputeLobby();
                 if (target is not null || ViewModel?.HasActiveTarget == true) lastFightAt = DateTime.Now;
                 Fight = target is { HpTotal: > 0, HpCurrent: > 0 } && (fightIsBoss || options.Current.CardForAllTargets)
                     ? BossFight.Build(target.MobCode == 0 ? "Цель" : target.Name, target.HpCurrent, target.HpTotal, sessions.GetPartyDps(),

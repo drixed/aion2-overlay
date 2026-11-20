@@ -49,6 +49,19 @@ public sealed class PacketRecorderTests : IDisposable
         Assert.Equal(0, recorder.Count);
     }
 
+    [Fact]
+    public void What_was_recorded_is_on_disk_while_the_recording_still_runs()
+    {
+        // Nov 2026: a 20 minute recording looked two minutes long until it was stopped — the writer kept the rest in memory
+        var recorder = new PacketRecorder(dir);
+        recorder.Start(T0, TimeSpan.FromMinutes(20));
+        recorder.Record(T0.AddSeconds(1), 0x3834, [0x34, 0x38]);
+        using var stream = new FileStream(recorder.File!, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var text = new StreamReader(stream).ReadToEnd();
+        Assert.Contains("07:00:01.000 3834 2 3438", text);
+        recorder.Stop();
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(dir, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }

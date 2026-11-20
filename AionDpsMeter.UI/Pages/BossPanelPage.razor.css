@@ -182,3 +182,16 @@
 .bp-farm b { color: #fff; font-weight: 700; }
 .bp-farm small { opacity: .6; font-size: 10.5px; margin-left: 2px; }
 .bp-theme-light .bp-farm b { color: #111; }
+/* "Лобби": the party finder's party while it gathers */
+.bp-lobby { margin: 0 8px 6px; padding: 5px 8px 6px; border-radius: 6px; background: rgba(88, 166, 255, .08); border: 1px solid rgba(88, 166, 255, .35); font-size: 12px; }
+.bp-lobby-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.bp-lobby-head b { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cfe3ff; }
+.bp-lobby-head span { color: #f2cc60; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bp-lobby-head span.all { color: #7ee787; }
+.bp-lobby-row { display: flex; align-items: center; gap: 6px; padding: 1px 0; }
+.bp-lobby-row i { font-style: normal; width: 14px; text-align: center; font-weight: 700; }
+.bp-lobby-row.ok i { color: #7ee787; }
+.bp-lobby-row.wait i { color: #f2cc60; }
+.bp-lobby-row.wait .bp-lobby-name { color: #f2cc60; }
+.bp-lobby-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e6edf3; }
+.bp-lobby-row small { color: #8b95a5; font-size: 10.5px; white-space: nowrap; }

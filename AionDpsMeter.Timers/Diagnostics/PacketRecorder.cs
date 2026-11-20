@@ -32,7 +32,8 @@ public sealed class PacketRecorder(string dir)
             Close();
             Directory.CreateDirectory(dir);
             File = Path.Combine(dir, $"packets-{now:yyyyMMdd-HHmmss}.txt");
-            writer = new StreamWriter(File, append: false) { AutoFlush = false };
+            // written through at once: the file can be read (and is complete) while the recording still runs
+            writer = new StreamWriter(new FileStream(File, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)) { AutoFlush = true };
             writer.WriteLine($"# AION2 overlay: packets from {now:yyyy-MM-dd HH:mm:ss}, {duration.TotalMinutes:0} min. Time, opcode (LE), length, bytes.");
             Count = 0;
             Until = now + duration;
