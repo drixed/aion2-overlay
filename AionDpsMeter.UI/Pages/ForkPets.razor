@@ -4,6 +4,8 @@
 @using System.Globalization
 @inject PetTracker Pets
 @inject AionDpsMeter.Timers.Schedule.ScheduleSource Schedule
+@inject AionDpsMeter.UI.Services.TimerWindow.MapWindow MapWindow
+@inject AionDpsMeter.Timers.Bosses.BossCatalog Catalog
 
 <div class="fs-label">ПИТОМЦЫ</div>
 @if (rows.Count == 0)
@@ -74,7 +76,17 @@ else
                         </span>
                     </div>
                 }
-                <div class="fp-monster @(monster is null ? "unknown" : "")" title="@monster">🎯 @(monster ?? "монстр ещё не известен")</div>
+                @{
+                    var places = AionDpsMeter.Timers.Map.WorldMap.PlacesOf(view.Pet);
+                    var shownMonster = monster ?? MapMonsters(places);
+                }
+                <div class="fp-foot">
+                    <div class="fp-monster @(shownMonster is null ? "unknown" : "")" title="@shownMonster">🎯 @(shownMonster ?? "монстр ещё не известен")</div>
+                    @if (places.Count > 0)
+                    {
+                        <button type="button" class="fp-map" title="@($"Показать на карте: {string.Join(", ", places.Select(p => $"{p.Layer.Name} — {p.Points.Count} мест"))}")" @onclick="() => MapWindow.ShowPet(view.Pet)">🗺 На карте</button>
+                    }
+                </div>
             </div>
         }
     </div>
@@ -109,6 +121,13 @@ else
             "level" => list.OrderByDescending(r => r.View.Level).ThenByDescending(r => r.View.Souls ?? 0),
             _ => list, // the tracker's own order: closest to the next level first
         };
+    }
+
+    /// <summary>The pet's monsters by name from the map table, while the meter has not yet seen a soul drop.</summary>
+    private string? MapMonsters(IReadOnlyList<(AionDpsMeter.Timers.Map.MapLayer Layer, IReadOnlyList<AionDpsMeter.Timers.Map.MapPoint> Points, IReadOnlyList<int> Monsters)> places)
+    {
+        var names = places.SelectMany(p => p.Monsters).Select(Catalog.NameOrNull).OfType<string>().Distinct().Take(3).ToList();
+        return names.Count == 0 ? null : string.Join(", ", names);
     }
 
     private static string LevelName(int level) => level switch

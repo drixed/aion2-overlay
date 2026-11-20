@@ -29,6 +29,21 @@ public class WorldMapTests
     }
 
     [Fact]
+    public void A_pet_leads_to_the_maps_and_points_where_its_monsters_live()
+    {
+        var monster = WorldMap.For(1010)!.PetSpawns.Keys.First(code => WorldMap.PetOf(code) is not null);
+        var pet = WorldMap.PetOf(monster)!.Value;
+        var places = WorldMap.PlacesOf(pet);
+        Assert.NotEmpty(places);
+        Assert.Contains(places, p => p.Layer.Id == 1010 && p.Monsters.Contains(monster));
+        var (layer, points, monsters) = places[0];
+        Assert.NotEmpty(points);
+        Assert.All(monsters, m => Assert.Equal(pet, WorldMap.PetOf(m)));
+        Assert.Equal(points.Count, monsters.Sum(m => layer.PetSpawns[m].Count));
+        Assert.Empty(WorldMap.PlacesOf(-1));
+    }
+
+    [Fact]
     public void Gathering_kinds_have_russian_labels()
     {
         Assert.Equal("Травы", WorldMap.KindLabel("Herb"));

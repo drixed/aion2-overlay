@@ -15,6 +15,13 @@
     var arcana = items.Where(x => x.Worn.Slot >= EquipmentParser.ArcanaSlotStart || x.Info?.Slot == "Arcana").ToList();
     var avg = gear.Where(x => x.Info is not null).Select(x => (double)x.Info!.ItemLevel).DefaultIfEmpty(0).Average();
     var me = Entities.PlayerEntities.FirstOrDefault(p => p.IsUser);
+    var who = Character.Profile;
+    var classId = me?.CharacterClass?.Id ?? who?.ClassId ?? 0;
+    var name = me?.Name is { Length: > 0 } n0 ? n0 : who?.Name;
+    var level = me?.CharacterLevel > 0 ? me.CharacterLevel : who?.Level ?? 0;
+    var server = me?.ServerName is { Length: > 0 } s0 ? s0 : who?.Server;
+    var power = me?.CombatPower > 0 ? me.CombatPower : who?.CombatPower ?? 0;
+    var gs = me?.GearScore > 0 ? me.GearScore : who?.GearScore ?? 0;
 }
 <div class="ch">
     <div class="ch-title" @onmousedown="Window.Drag">
@@ -24,16 +31,16 @@
     </div>
     <div class="ch-body">
         <div class="ch-hero">
-            <span class="ch-class" style="background-image:url('/images/classes/@(me?.CharacterClass?.Id ?? 0).png')"></span>
+            <span class="ch-class @(classId == 0 ? "none" : "")" style="@(classId == 0 ? "" : $"background-image:url('/images/classes/{classId}.png')")">@(classId == 0 ? "?" : "")</span>
             <div class="ch-who">
-                <b>@(me?.Name is { Length: > 0 } n ? n : "Ваш персонаж")</b>
-                <small>@ClassName(me?.CharacterClass?.Id)@(me?.CharacterLevel > 0 ? $" · уровень {me.CharacterLevel}" : "")@(me?.ServerName is { Length: > 0 } s ? $" · {s}" : "")</small>
+                <b>@(name ?? "Ваш персонаж")</b>
+                <small>@(classId == 0 ? "класс и имя появятся после первого боя или входа" : ClassName(classId))@(level > 0 ? $" · уровень {level}" : "")@(server is { Length: > 0 } ? $" · {server}" : "")</small>
             </div>
             <span class="ch-grow"></span>
             <div class="ch-stat"><b class="gold">@(avg > 0 ? avg.ToString("0.0", CultureInfo.InvariantCulture) : "—")</b><small>ср. уровень предметов</small></div>
             <div class="ch-stat"><b>@gear.Count</b><small>предметов</small></div>
-            @if (me?.CombatPower > 0) { <div class="ch-stat"><b>@me.CombatPower.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b><small>боевая мощь</small></div> }
-            @if (me?.GearScore > 0) { <div class="ch-stat"><b>@me.GearScore.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b><small>ГС</small></div> }
+            @if (power > 0) { <div class="ch-stat"><b>@power.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b><small>боевая мощь</small></div> }
+            @if (gs > 0) { <div class="ch-stat"><b>@gs.ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))</b><small>ГС</small></div> }
         </div>
 
         <div class="ch-tabs">
@@ -58,7 +65,8 @@
                 </div>
                 <div class="ch-center">
                     <div class="ch-ring">
-                        <span class="ch-class big" style="background-image:url('/images/classes/@(me?.CharacterClass?.Id ?? 0).png')"></span>
+                        <span class="ch-class big @(classId == 0 ? "none" : "")" style="@(classId == 0 ? "" : $"background-image:url('/images/classes/{classId}.png')")">@(classId == 0 ? "?" : "")</span>
+                        @if (classId != 0) { <em class="ch-ring-class">@ClassName(classId)</em> }
                         <b>@(avg > 0 ? avg.ToString("0.0", CultureInfo.InvariantCulture) : "—")</b>
                         <small>средний уровень предметов</small>
                     </div>
@@ -125,9 +133,32 @@
         </div>
     };
 
-    protected override void OnInitialized() => Character.Changed += OnChanged;
+    private Timer? timer;
+
+    protected override void OnInitialized()
+    {
+        Character.Changed += OnChanged;
+        Remember();
+        // the entity marked as me comes with the first fight or login after the window opened
+        timer = new Timer(_ => { if (Remember()) OnChanged(); }, null, 2000, 2000);
+    }
+
+    /// <summary>Keeps who the character is, so a restart still shows the name and class.</summary>
+    private bool Remember()
+    {
+        if (Entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is not { Name.Length: > 0 } me) return false;
+        var profile = new AionDpsMeter.Timers.Character.CharacterProfile(me.Name, me.CharacterClass?.Id ?? 0, me.CharacterLevel,
+            me.ServerName is { Length: > 0 } s ? s : null, me.CombatPower, me.GearScore);
+        if (Character.Profile == profile) return false;
+        Character.RememberProfile(profile);
+        return true;
+    }
 
     private void OnChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Character.Changed -= OnChanged;
+    public void Dispose()
+    {
+        Character.Changed -= OnChanged;
+        timer?.Dispose();
+    }
 }

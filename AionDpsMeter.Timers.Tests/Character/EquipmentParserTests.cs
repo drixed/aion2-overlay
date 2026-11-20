@@ -46,4 +46,19 @@ public class EquipmentParserTests
         Assert.Contains("Рудры", item.Name);
         Assert.StartsWith("https://assets.playnccdn.com/", item.IconUrl);
     }
+
+    [Fact]
+    public void The_character_name_and_class_are_kept_with_the_equipment()
+    {
+        using var dir = new TempDir();
+        var path = dir.File("character.json");
+        var tracker = new CharacterTracker(path);
+        Assert.Null(tracker.Profile);
+        tracker.RememberProfile(new CharacterProfile("andrew", 17, 45, "Месламтаеда", 123456, 2100));
+        tracker.RememberProfile(new CharacterProfile("", 0, 0, null, 0, 0));        // nothing known: the old one stays
+
+        var again = new CharacterTracker(path);
+        Assert.Equal(new CharacterProfile("andrew", 17, 45, "Месламтаеда", 123456, 2100), again.Profile);
+        Assert.Null(again.Equipment);
+    }
 }

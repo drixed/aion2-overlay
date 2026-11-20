@@ -217,7 +217,7 @@
                 </svg>
 
                 <div class="mp-tools" @onmousedown:stopPropagation="true">
-                    <button type="button" @onclick="() => Fit(layer)">Вписать</button>
+                    <button type="button" @onclick="() => Fit(layer)" title="Показать всю карту целиком">Вся карта</button>
                     @if (me is { } c1) { <button type="button" @onclick="() => CenterOn(c1)">На меня</button> }
                     <button type="button" @onclick="() => ZoomBy(0.7)">+</button>
                     <button type="button" @onclick="() => ZoomBy(1.4)">−</button>
@@ -533,13 +533,41 @@
         if (!firstRender) return;
         await Box();
         if (Layer is { } layer) Fit(layer);
-        if (MeOn(Layer) is { } me && Here(Layer)) CenterOn(me);
+        if (Window.TakePendingPet() is { } pet) FocusPet(pet);
+        else if (MeOn(Layer) is { } me && Here(Layer)) CenterOn(me);
         StateHasChanged();
     }
+
+    /// <summary>From the "Питомцы" tab: the map with most of this pet's monsters, the pet picked, zoomed to its points.</summary>
+    private void FocusPet(int pet)
+    {
+        var places = WorldMap.PlacesOf(pet);
+        if (places.Count == 0) return;
+        var (layer, points, _) = places[0];
+        pickedMap = layer.Id;
+        fittedFor = layer.Id;
+        selectedPet = pet;
+        follow = false;
+        if (!O.Pets) Set(o => o.Pets = true);
+        var minX = points.Min(p => p.X);
+        var maxX = points.Max(p => p.X);
+        var minY = points.Min(p => p.Y);
+        var maxY = points.Max(p => p.Y);
+        cx = (minX + maxX) / 2.0;
+        cy = (minY + maxY) / 2.0;
+        Span = Math.Clamp(Math.Max(maxX - minX, maxY - minY) * 1.4, 15_000, 900_000);
+    }
+
+    private void OnFocusRequested() => InvokeAsync(() =>
+    {
+        if (Window.TakePendingPet() is { } pet) FocusPet(pet);
+        StateHasChanged();
+    });
 
     protected override void OnInitialized()
     {
         Zones.Changed += OnZone;
+        Window.FocusRequested += OnFocusRequested;
         timer = new Timer(_ => Tick(), null, 1000, 1000);
     }
 
@@ -567,6 +595,7 @@
     public void Dispose()
     {
         Zones.Changed -= OnZone;
+        Window.FocusRequested -= OnFocusRequested;
         timer?.Dispose();
     }
 }

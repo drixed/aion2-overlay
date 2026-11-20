@@ -15,6 +15,32 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         /// <summary>Not in upstream's WindowKey enum, after the replay window (1014).</summary>
         public static readonly WindowKey Key = (WindowKey)1015;
 
+        /// <summary>A pet to show once the map is up (from the "Питомцы" tab); taken by the map page.</summary>
+        public int? PendingPet { get; private set; }
+
+        /// <summary>Raised when a pet should be shown on an already open map.</summary>
+        public event Action? FocusRequested;
+
+        public int? TakePendingPet()
+        {
+            var pet = PendingPet;
+            PendingPet = null;
+            return pet;
+        }
+
+        /// <summary>Opens the map on the places of this pet's monsters.</summary>
+        public void ShowPet(int pet)
+        {
+            PendingPet = pet;
+            if (windowManager.IsOpen(Key))
+            {
+                windowManager.Focus(Key);
+                FocusRequested?.Invoke();
+                return;
+            }
+            Open();
+        }
+
         public void Open()
         {
             if (windowManager.IsOpen(Key)) { windowManager.Focus(Key); return; }

@@ -50,3 +50,6 @@
 .ch ::-webkit-scrollbar { width: 6px; }
 .ch ::-webkit-scrollbar-thumb { background: #2f3846; border-radius: 3px; }
 .ch ::-webkit-scrollbar-track, .ch ::-webkit-scrollbar-button { background: transparent; display: none; }
+.ch-class.none { display: inline-flex; align-items: center; justify-content: center; color: #5f6b7c; font-weight: 700; font-size: 18px; }
+.ch-class.big.none { font-size: 34px; }
+.ch-ring-class { font-style: normal; color: #aeb8c5; font-size: 12px; }

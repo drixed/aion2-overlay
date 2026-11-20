@@ -46,6 +46,18 @@ public static class WorldMap
 
     public static string? PetName(int pet) => Loaded.Value.Pets.TryGetValue(pet, out var p) ? p.Name : null;
 
+    /// <summary>Where a pet's monsters live: per map, their spawn points and monster codes; the map with the most points first.</summary>
+    public static IReadOnlyList<(MapLayer Layer, IReadOnlyList<MapPoint> Points, IReadOnlyList<int> Monsters)> PlacesOf(int pet) =>
+        All.Select(layer =>
+            {
+                var monsters = layer.PetSpawns.Keys.Where(code => PetOf(code) == pet).ToList();
+                IReadOnlyList<MapPoint> points = monsters.SelectMany(code => layer.PetSpawns[code]).ToList();
+                return (Layer: layer, Points: points, Monsters: (IReadOnlyList<int>)monsters);
+            })
+            .Where(x => x.Points.Count > 0)
+            .OrderByDescending(x => x.Points.Count)
+            .ToList();
+
     public static string? PetCategory(int pet) => Loaded.Value.Pets.TryGetValue(pet, out var p) ? p.Category : null;
 
     public static string KindLabel(string kind) => kind switch
