@@ -316,6 +316,8 @@ namespace AionDpsMeter.UI.Pages
             return hpsCache.TryGetValue(player.PlayerId, out var v) && v > 0 ? DamageFormatter.Format(v) : "—";
         }
 
+        private static string Grouped(long v) => v.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"));
+
         private string DpsOf(PlayerRenderState player) =>
             Options.DpsMode == DpsMode.Active && Dps().TryGetValue(player.PlayerId, out var dps)
                 ? DamageFormatter.Format(dps.Active)

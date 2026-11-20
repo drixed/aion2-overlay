@@ -5,7 +5,8 @@ using AionDpsMeter.Services.PacketProcessing.Routing;
 namespace AionDpsMeter.Services.PacketProcessing.Processors
 {
     /// <summary>Hands frames upstream does not read to the fork (the opcode is read back from the frame). No listener, nothing done.</summary>
-    [PacketOpcode(0x5611)] // 11 56: the character's equipment list at login
+    [PacketOpcode(0x5611)] // 11 56: the login list (equipment, inventory)
+    [PacketOpcode(0x561B)] // 1B 56: an inventory change (kina, Abyss points)
     internal sealed class RawForwarder(IEnumerable<IRawPacketListener> listeners) : IOpcodeProcessor
     {
         public void Process(Packet packet)

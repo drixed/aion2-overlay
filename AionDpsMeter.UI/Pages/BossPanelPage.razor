@@ -6,6 +6,7 @@
 @inject AionDpsMeter.UI.Services.TimerWindow.NewsWindow NewsWindow
 @inject AionDpsMeter.UI.Services.TimerWindow.NewsService News
 @inject AionDpsMeter.UI.Services.TimerWindow.CharacterWindow CharacterWindow
+@inject AionDpsMeter.Timers.Farm.FarmIncome Farm
 
 @if (ViewModel != null)
 {
@@ -294,6 +295,14 @@
             }
             }
         </div>
+        @if (!Compact && Options.ShowFarmIncome && (Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.Kina) > 0 || Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints) > 0))
+        {
+            var nowFarm = DateTime.Now;
+            <div class="bp-farm" title="Доход с фарма с @(Farm.Since?.ToString("HH:mm") ?? "—"); нажмите, чтобы начать отсчёт заново" @onclick="() => Farm.Reset(DateTime.Now)">
+                <span class="bp-farm-kina">● Кинары <b>+@Grouped(Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.Kina))</b> <small>@Grouped((long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.Kina, nowFarm))/ч</small></span>
+                <span class="bp-farm-ap">● Очки Бездны <b>+@Grouped(Farm.Gained(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints))</b> <small>@Grouped((long)Farm.PerHour(AionDpsMeter.Timers.Farm.FarmIncome.AbyssPoints, nowFarm))/ч</small></span>
+            </div>
+        }
         @if (!Compact && (Chips.Count > 0 || Energy is not null))
         {
             <div class="bp-footer">

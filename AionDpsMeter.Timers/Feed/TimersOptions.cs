@@ -26,6 +26,8 @@ public sealed class TimersOptions
     public bool HideTotalDamage { get; set; }
     /// <summary>An HPS column before DPS: each player's healing on others this fight, per second.</summary>
     public bool ShowHps { get; set; }
+    /// <summary>"Доход с фарма": kina and Abyss points that came in, in all and per hour, under the main window.</summary>
+    public bool ShowFarmIncome { get; set; } = true;
     /// <summary>Marks in the skill table: skills that rarely crit or are often parried.</summary>
     public bool ShowSkillWarnings { get; set; } = true;
     /// <summary>Rows, shares, party DPS and the summary count only me and my party.</summary>
