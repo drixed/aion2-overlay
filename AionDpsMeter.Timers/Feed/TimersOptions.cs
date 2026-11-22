@@ -302,6 +302,10 @@ public sealed class MapOptions
     public bool Cubes { get; set; }
     /// <summary>"Куб рядом": a sound and the way to a hidden cube (spoken) within this many metres; 0 — off.</summary>
     public int CubeAlertMetres { get; set; }
+    /// <summary>"Окно-компас": a small window over the game with an arrow to the nearest hidden cube; where it was put.</summary>
+    public bool CubeCompass { get; set; }
+    public double? CompassLeft { get; set; }
+    public double? CompassTop { get; set; }
     /// <summary>The user's own screenshot of the game map under the points, per map id (the file stays theirs, the meter
     /// ships no game pictures); where it lies in game units.</summary>
     public Dictionary<int, MapUnderlay> Underlays { get; set; } = [];

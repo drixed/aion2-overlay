@@ -140,6 +140,7 @@
                         <option value="0">выкл</option>
                         @foreach (var m in new[] { 30, 50, 80, 120 }) { <option value="@m">@m м</option> }
                     </select></label>
+                <label class="mp-check sub" title="Маленькое окно поверх игры со стрелкой к ближайшему кубу; вверх — север, как на карте"><input type="checkbox" checked="@O.CubeCompass" @onchange="e => Set(o => o.CubeCompass = e.Value is true)" /> Окно-компас к ближайшему кубу</label>
             </section>
             <p class="mp-note">Схема нарисована по координатам из открытой таблицы SkeeveAN/Aion-DPS-Meter (MIT); картинок игры здесь нет.</p>
         </aside>

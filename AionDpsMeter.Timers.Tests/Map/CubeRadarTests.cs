@@ -19,6 +19,14 @@ public class CubeRadarTests
     public void The_direction_reads_as_a_compass_point(float x, float y, string expected) =>
         Assert.Equal(expected, CubeRadar.Direction(Me, new MapPoint(x, y)));
 
+    [Theory]
+    [InlineData(0, -4000, 0)]
+    [InlineData(4000, 0, 90)]
+    [InlineData(0, 4000, 180)]
+    [InlineData(-4000, 0, 270)]
+    public void The_compass_arrow_turns_clockwise_from_north(float x, float y, double degrees) =>
+        Assert.Equal(degrees, CubeRadar.Bearing(Me, new MapPoint(x, y)), 3);
+
     [Fact]
     public void A_cube_in_range_is_announced_once_with_how_far_and_where()
     {

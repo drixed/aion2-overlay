@@ -14,12 +14,11 @@ public sealed class CubeRadar
     private static readonly string[] Points = ["север", "северо-восток", "восток", "юго-восток", "юг", "юго-запад", "запад", "северо-запад"];
     private readonly HashSet<MapPoint> told = [];
 
-    public static string Direction(MapPoint from, MapPoint to)
-    {
-        var degrees = Math.Atan2(to.X - from.X, -(to.Y - from.Y)) * 180 / Math.PI; // 0 = north, clockwise
-        var sector = (int)Math.Round((degrees + 360) % 360 / 45) % 8;
-        return Points[sector];
-    }
+    /// <summary>The way from one place to another in degrees, 0 = north (up on the map), clockwise: the compass arrow.</summary>
+    public static double Bearing(MapPoint from, MapPoint to) =>
+        (Math.Atan2(to.X - from.X, -(to.Y - from.Y)) * 180 / Math.PI + 360) % 360;
+
+    public static string Direction(MapPoint from, MapPoint to) => Points[(int)Math.Round(Bearing(from, to) / 45) % 8];
 
     public static int Metres(MapPoint a, MapPoint b) => (int)Math.Round(Math.Sqrt(Sq(a, b)) / 100);
 

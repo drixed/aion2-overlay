@@ -1,0 +1,38 @@
+@* aion2-overlay fork: new file (see FORK_CHANGES.md). "Компас к кубу": a small window over the game with an arrow to the
+   nearest hidden cube, the compass point and the metres. North is up (the meter does not know where the camera looks),
+   like the game's map with north up. Dragged anywhere; ✕ turns it off. *@
+@using System.Globalization
+@using AionDpsMeter.UI.Services.TimerWindow
+@implements IDisposable
+@inject CubeAlertService Cubes
+
+<div class="cc" @onmousedown="Cubes.DragCompass" title="Направление к ближайшему скрытому кубу; вверх — север, как на карте">
+    <button type="button" class="cc-x" title="Выключить компас" @onmousedown:stopPropagation="true" @onclick="Cubes.TurnCompassOff">✕</button>
+    @if (Cubes.Compass is { } c)
+    {
+        <svg class="cc-rose" viewBox="-50 -50 100 100">
+            <circle class="cc-ring" r="44" />
+            <text class="cc-n" x="0" y="-31">С</text>
+            <g transform="rotate(@c.Bearing.ToString("0.#", CultureInfo.InvariantCulture))">
+                <path class="cc-arrow" d="M 0 -30 L 13 10 L 0 3 L -13 10 Z" />
+            </g>
+        </svg>
+        <div class="cc-text">
+            <b>@c.Metres м</b>
+            <span>@c.Direction</span>
+            <small>скрытый куб@(c.Stale ? " · позиция старая" : "")</small>
+        </div>
+    }
+    else
+    {
+        <div class="cc-wait">Скрытый куб: жду вашу позицию — сдвиньтесь с места</div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Cubes.Changed += OnChanged;
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Cubes.Changed -= OnChanged;
+}
