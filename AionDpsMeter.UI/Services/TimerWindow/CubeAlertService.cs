@@ -54,6 +54,22 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             options.Save();
         }
 
+        public bool SoundOn => options.Current.Map.CubeAlertMetres > 0;
+
+        /// <summary>🔊/🔇 on the compass: the cube sound off, or back on at the distance it had.</summary>
+        public void ToggleSound()
+        {
+            var map = options.Current.Map;
+            if (map.CubeAlertMetres > 0)
+            {
+                map.CubeAlertLastMetres = map.CubeAlertMetres;
+                map.CubeAlertMetres = 0;
+            }
+            else map.CubeAlertMetres = map.CubeAlertLastMetres > 0 ? map.CubeAlertLastMetres : 50;
+            options.Save();
+            Changed?.Invoke();
+        }
+
         public void TurnCompassOff()
         {
             options.Current.Map.CubeCompass = false;

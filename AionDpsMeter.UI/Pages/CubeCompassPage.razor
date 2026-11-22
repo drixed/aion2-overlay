@@ -8,6 +8,8 @@
 
 <div class="cc" @onmousedown="Cubes.DragCompass" title="Направление к ближайшему скрытому кубу; вверх — север, как на карте">
     <button type="button" class="cc-x" title="Выключить компас" @onmousedown:stopPropagation="true" @onclick="Cubes.TurnCompassOff">✕</button>
+    <button type="button" class="cc-snd @(Cubes.SoundOn ? "on" : "")" title="@(Cubes.SoundOn ? "Звук у кубов включён — нажмите, чтобы выключить" : "Звук у кубов выключен — нажмите, чтобы включить")"
+            @onmousedown:stopPropagation="true" @onclick="Cubes.ToggleSound">@(Cubes.SoundOn ? "🔊" : "🔇")</button>
     @if (Cubes.Compass is { } c)
     {
         <svg class="cc-rose" viewBox="-50 -50 100 100">

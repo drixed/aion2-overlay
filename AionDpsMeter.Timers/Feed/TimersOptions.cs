@@ -302,6 +302,8 @@ public sealed class MapOptions
     public bool Cubes { get; set; }
     /// <summary>"Куб рядом": a sound and the way to a hidden cube (spoken) within this many metres; 0 — off.</summary>
     public int CubeAlertMetres { get; set; }
+    /// <summary>The distance the sound comes back with when switched on again from the compass (🔊).</summary>
+    public int CubeAlertLastMetres { get; set; } = 50;
     /// <summary>"Окно-компас": a small window over the game with an arrow to the nearest hidden cube; where it was put.</summary>
     public bool CubeCompass { get; set; }
     public double? CompassLeft { get; set; }

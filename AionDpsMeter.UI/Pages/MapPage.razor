@@ -135,8 +135,8 @@
                 <h4>Прочее</h4>
                 <label class="mp-check"><input type="checkbox" checked="@O.Bosses" @onchange="e => Set(o => o.Bosses = e.Value is true)" /><span class="sw boss"></span>Полевые боссы<small>@(layer?.Bosses.Count ?? 0)</small></label>
                 <label class="mp-check"><input type="checkbox" checked="@O.Cubes" @onchange="e => Set(o => o.Cubes = e.Value is true)" /><span class="sw cube"></span>Скрытые кубы<small>@(layer?.Cubes.Count ?? 0)</small></label>
-                <label class="mp-check sub" title="Звук и голосом — в какую сторону идти; работает и при закрытой карте">Сигнал, когда куб ближе
-                    <select class="mp-select" value="@O.CubeAlertMetres" @onchange="e => Set(o => o.CubeAlertMetres = Int(e.Value))">
+                <label class="mp-check sub" title="Звук и голосом — в какую сторону идти; работает и при закрытой карте; выключить можно и кнопкой 🔊 на компасе">Звук у кубов, когда ближе
+                    <select class="mp-select" value="@O.CubeAlertMetres" @onchange="e => Set(o => { o.CubeAlertMetres = Int(e.Value); if (o.CubeAlertMetres > 0) o.CubeAlertLastMetres = o.CubeAlertMetres; })">
                         <option value="0">выкл</option>
                         @foreach (var m in new[] { 30, 50, 80, 120 }) { <option value="@m">@m м</option> }
                     </select></label>

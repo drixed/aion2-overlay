@@ -13,3 +13,6 @@
 .cc-text span { font-size: 13px; color: #5fd4c4; font-weight: 600; }
 .cc-text small { font-size: 10.5px; color: #8b95a5; line-height: 1.2; }
 .cc-wait { font-size: 12px; color: #c9d1d9; line-height: 1.35; }
+.cc-snd { position: absolute; bottom: 4px; right: 4px; background: none; border: 0; cursor: pointer; font-size: 13px; padding: 2px 4px; opacity: .55; }
+.cc-snd.on { opacity: 1; }
+.cc-snd:hover { opacity: 1; }
