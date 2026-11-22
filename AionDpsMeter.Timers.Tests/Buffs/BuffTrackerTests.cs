@@ -24,6 +24,33 @@ public class BuffTrackerTests
     }
 
     [Fact]
+    public void The_panel_shows_only_the_buffs_that_are_on_in_the_preset_order()
+    {
+        var t = new BuffTracker();
+        t.OnBuff(303, "Ярость", null, 30_000, T0);
+        t.OnBuff(101, "Щит", null, 5_000, T0);
+        t.OnBuff(999, "Чужой", null, 60_000, T0); // not in the preset
+        Assert.Equal([101, 303], t.ActiveTiles(Preset, T0.AddSeconds(2)).Select(x => x.BuffId));
+        Assert.Equal([303], t.ActiveTiles(Preset, T0.AddSeconds(6)).Select(x => x.BuffId)); // the shield ran out: gone
+        Assert.Empty(t.ActiveTiles(Preset, T0.AddSeconds(31)));
+    }
+
+    [Fact]
+    public void Switching_to_another_character_drops_the_old_ones_buffs_but_keeps_the_seen_list()
+    {
+        var t = new BuffTracker();
+        Assert.False(t.ForCharacter("DRIXED·15"));        // the first character: nothing to drop
+        t.OnBuff(101, "Ярость", null, 600_000, T0);
+        Assert.False(t.ForCharacter("DRIXED·15"));        // the same one again
+        Assert.Single(t.ActiveTiles(Preset, T0.AddSeconds(1)));
+
+        Assert.True(t.ForCharacter("Alt·11"));            // another character: the old buffs go
+        Assert.Empty(t.ActiveTiles(Preset, T0.AddSeconds(1)));
+        Assert.Empty(t.Expired(Preset, T0.AddMinutes(20))); // and no "спал" for them
+        Assert.Contains(t.Seen(), s => s.Id == 101);
+    }
+
+    [Fact]
     public void A_refreshed_buff_runs_from_the_new_cast()
     {
         var t = new BuffTracker();

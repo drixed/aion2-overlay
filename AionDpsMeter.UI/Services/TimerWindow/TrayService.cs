@@ -74,13 +74,24 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             menu.Items.Add("Калькулятор статов", null, (_, _) => OnUi(() => { ShowAll(byUser: true); calc.Open(); }));
             menu.Items.Add("Объявления и Twitch Drops", null, (_, _) => OnUi(() => { ShowAll(byUser: true); news.Open(); }));
             menu.Items.Add(new Forms.ToolStripSeparator());
-            menu.Items.Add("Выход", null, (_, _) => OnUi(() => { ShowAll(byUser: true); main?.Close(); }));
+            // the whole app, like the main window's ✕: closing only the main window left the overlays (and the app) running
+            menu.Items.Add("Выход", null, (_, _) => OnUi(() => { icon?.Dispose(); icon = null; main?.Close(); Application.Current.Shutdown(); }));
             tray.ContextMenuStrip = menu;
             tray.DoubleClick += (_, _) => OnUi(() => ShowAll(byUser: true));
             return tray;
         }
 
         private void OnUi(Action action) => main?.Dispatcher.BeginInvoke(action);
+
+        /// <summary>A second copy of the meter was started: this one comes back to the front (from the tray too).</summary>
+        public void ShowMeter() => OnUi(() =>
+        {
+            ShowAll(byUser: true);
+            if (main is null) return;
+            if (!main.IsVisible) main.Show();
+            if (main.WindowState == WindowState.Minimized) main.WindowState = WindowState.Normal;
+            main.Activate();
+        });
 
         /// <summary>"Сворачивать в трей": the main window's minimize hides the overlay instead.</summary>
         private void OnStateChanged(object? sender, EventArgs e)

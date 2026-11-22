@@ -1,5 +1,6 @@
 @* aion2-overlay fork: new file (see FORK_CHANGES.md). The buff tracker panel: the active preset's buffs with the time
-   left; a buff that is not on glows red. Draggable while "Расставить" is on. *@
+   left: a buff shows when it is used and goes when it runs out. While "Расставить" is on, the whole preset shows (greyed
+   when off) so there is something to drag. *@
 @using System.Globalization
 @using AionDpsMeter.Timers.Buffs
 @using AionDpsMeter.UI.Services.TimerWindow
@@ -12,7 +13,7 @@
     {
         <div class="bt-edit">Перетащите панель · @(Buffs.ActivePreset?.Name)</div>
     }
-    @if (tiles.Count == 0)
+    @if (Buffs.ActivePreset is not { BuffIds.Count: > 0 })
     {
         <div class="bt-empty">Трекер баффов: добавьте баффы в пресет своего класса — Настройки → Баффы</div>
     }
@@ -24,7 +25,7 @@
                     @if (!string.IsNullOrEmpty(t.Icon)) { <img src="@t.Icon" alt="" /> } else { <i>@(t.Name.Length > 0 ? t.Name[..1] : "?")</i> }
                     @if (t.Left is not null) { <i class="bt-fill" style="height:@((100 - t.Share * 100).ToString("0.#", CultureInfo.InvariantCulture))%"></i> }
                 </span>
-                <b>@(t.Left is { } left ? Time(left) : "нет")</b>
+                @if (t.Left is { } left) { <b>@Time(left)</b> }
             </div>
         }
     </div>
@@ -41,7 +42,9 @@
         Buffs.Changed += OnChanged;
     }
 
-    private void Refresh() => tiles = Buffs.ActivePreset is { } p ? Buffs.Tracker.Tiles(p, DateTimeOffset.Now) : [];
+    private void Refresh() => tiles = Buffs.ActivePreset is not { } p ? []
+        : Buffs.Editing ? Buffs.Tracker.Tiles(p, DateTimeOffset.Now)
+        : Buffs.Tracker.ActiveTiles(p, DateTimeOffset.Now);
 
     private void OnChanged() => InvokeAsync(StateHasChanged);
 

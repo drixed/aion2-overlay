@@ -29,6 +29,23 @@ public sealed class BuffTracker
     private readonly List<SeenBuff> seen = [];
     private readonly HashSet<int> reported = [];
 
+    private string? character;
+
+    /// <summary>Who plays now (name and class): another character than before drops the old one's buffs (they are not on
+    /// this one) without a "спал" for them; the seen list stays. True when buffs were dropped for a switch.</summary>
+    public bool ForCharacter(string who)
+    {
+        lock (gate)
+        {
+            var switched = character is not null && character != who;
+            character = who;
+            if (!switched) return false;
+            on.Clear();
+            reported.Clear();
+            return true;
+        }
+    }
+
     public void OnBuff(int buffId, string name, string? icon, uint durationMs, DateTimeOffset at)
     {
         lock (gate)
@@ -57,6 +74,11 @@ public sealed class BuffTracker
             }).ToList();
         }
     }
+
+    /// <summary>The panel: only the preset's buffs that are on now, in the preset's order (a buff shows when it is used and
+    /// goes when it runs out; missing ones are not shown).</summary>
+    public IReadOnlyList<BuffTile> ActiveTiles(BuffPreset preset, DateTimeOffset now) =>
+        Tiles(preset, now).Where(t => t.Left is not null).ToList();
 
     /// <summary>Tracked buffs that were on and have run out since the last call; each run-out is reported once.</summary>
     public IReadOnlyList<SeenBuff> Expired(BuffPreset preset, DateTimeOffset now)

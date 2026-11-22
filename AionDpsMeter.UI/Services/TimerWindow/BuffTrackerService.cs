@@ -68,9 +68,17 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             }
         }
 
+        /// <summary>Another character logged in: the old one's buffs go (they stayed on the panel until they ran out).</summary>
+        private void CheckCharacter(Player? me)
+        {
+            if (me is { Name.Length: > 0 } && me.CharacterClass is { } c && Tracker.ForCharacter($"{me.Name}·{(int)c.Id}"))
+                Changed?.Invoke();
+        }
+
         private void OnBuff(BuffEvent e)
         {
             if (Me is not { } me || e.EntityId != me.Id) return;
+            CheckCharacter(me);
             Tracker.OnBuff(e.BuffId, e.BuffName, e.BuffIcon, e.DurationMs, DateTimeOffset.Now);
         }
 
@@ -106,6 +114,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
         private void Tick()
         {
             var o = options.Current;
+            CheckCharacter(Me);
             var preset = ActivePreset;
             var inFight = sessions.GetActiveTargetSession() is not null;
             var bossOrDummy = sessions.GetActiveTargetInfo() is { MobCode: > 0 } mob && (catalog.IsBoss(mob.MobCode) || catalog.IsDummy(mob.MobCode));

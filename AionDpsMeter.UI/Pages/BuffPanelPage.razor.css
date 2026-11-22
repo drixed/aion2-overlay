@@ -12,6 +12,5 @@
 .bt-fill { position: absolute; left: 0; right: 0; top: 0; background: rgba(0, 0, 0, .55); }
 .bt-tile b { font-size: 12px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
 .bt-tile.ending b { color: #f5c76b; }
-.bt-tile.off .bt-icon { filter: grayscale(1) brightness(.6); box-shadow: 0 0 0 2px #ff5f5f, 0 0 10px rgba(255, 95, 95, .7); }
-.bt-tile.off b { color: #ff8f8f; }
+.bt-tile.off .bt-icon { filter: grayscale(1) brightness(.6); } /* only while placing the panel */
 .bt-empty { font-size: 11px; color: #c9d1d9; text-align: center; padding: 6px 8px; border-radius: 8px; background: rgba(20, 26, 35, .85); border: 1px dashed rgba(95, 212, 196, .6); }

@@ -83,8 +83,19 @@ namespace AionDpsMeter.UI
             Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", combinedArguments, EnvironmentVariableTarget.Process);
         }
 
+        // aion2-overlay fork: one meter at a time (two copies read the same traffic and write the same files)
+        private static AionDpsMeter.Timers.Runtime.SingleInstance? singleInstance;
+
         protected override async void OnStartup(StartupEventArgs e)
         {
+            // a second copy: the running one comes to the front, this one quits (it waits a little when the old one is closing after an update)
+            singleInstance = AionDpsMeter.Timers.Runtime.SingleInstance.TryStart(@"Local\aion2-overlay-meter", TimeSpan.FromSeconds(10),
+                () => AppHost.Services.GetService<AionDpsMeter.UI.Services.TimerWindow.TrayService>()?.ShowMeter());
+            if (singleInstance is null)
+            {
+                Shutdown();
+                return;
+            }
             await AppHost.StartAsync();
 
             _ = AppHost.Services.GetRequiredService<ICombatHistoryStore>();
@@ -100,6 +111,11 @@ namespace AionDpsMeter.UI
 
         protected override async void OnExit(ExitEventArgs e)
         {
+            if (singleInstance is null) // the second copy that did not start: the running one owns the history and the files
+            {
+                base.OnExit(e);
+                return;
+            }
             try
             {
                 var sessionManager = AppHost.Services.GetRequiredService<CombatSessionManager>();
@@ -108,6 +124,7 @@ namespace AionDpsMeter.UI
                 historyStore.FlushPendingSaves();
                 await AppHost.StopAsync();
                 await Log.CloseAndFlushAsync();
+                singleInstance?.Dispose();
                 base.OnExit(e);
             }
             catch (Exception ex)
