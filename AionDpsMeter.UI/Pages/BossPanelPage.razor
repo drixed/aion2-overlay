@@ -107,7 +107,7 @@
                 </div>
             </div>
         }
-        @if (ViewModel.UpdateAvailable && !noticeOpen && !Compact)
+        @if (ViewModel.UpdateAvailable && !noticeOpen) @* also compact: auto-compact hid it out of combat, so an update never showed after a restart *@
         {
             <div class="bp-notice">
                 <span class="bp-notice-icon">⬆</span>
