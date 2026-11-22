@@ -73,6 +73,8 @@ public class PositionLogTests
         Assert.Equal(new Fix(T0.AddSeconds(1), 30, 40), log.Last(5));
 
         log.OnFrame(T0.AddSeconds(2), Local(777, 100_000f, 2_000f));
+        Assert.Equal(0, log.LocalEntity);           // 3C 37 comes about other players too: it says nothing about who I am
+        log.OnFrame(T0.AddSeconds(2), MapEntry(777, 100_000f, 2_000f));
         Assert.Equal(777, log.LocalEntity);
         log.OnFrame(T0.AddSeconds(3), Move(777, 100_500f, 2_500f));
         Assert.Equal(new Fix(T0.AddSeconds(3), 100_500f, 2_500f), log.Me);
@@ -101,15 +103,21 @@ public class PositionLogTests
         Assert.Null(log.Last(2232));
     }
 
+    private static byte[] MapEntry(long entity, float x, float y)
+    {
+        var frame = new byte[200];
+        frame[0] = 0x33; frame[1] = 0x36;
+        Varint(entity).CopyTo(frame, 2);
+        BitConverter.GetBytes(x).CopyTo(frame, 180);
+        BitConverter.GetBytes(y).CopyTo(frame, 184);
+        return frame;
+    }
+
     [Fact]
     public void Entering_a_map_tells_where_I_am_and_who_I_am()
     {
-        var frame = new byte[200];
-        frame[0] = 0x33; frame[1] = 0x36; frame[2] = 0xB8; frame[3] = 0x11; // 33 36, entity 2232
-        BitConverter.GetBytes(3047f).CopyTo(frame, 180);
-        BitConverter.GetBytes(87308f).CopyTo(frame, 184);
         var log = new PositionLog();
-        log.OnFrame(T0, frame);
+        log.OnFrame(T0, MapEntry(2232, 3047f, 87308f));
         Assert.Equal(2232, log.LocalEntity);
         Assert.Equal(new Fix(T0, 3047f, 87308f), log.MeFor(2232));
     }
@@ -122,6 +130,6 @@ public class PositionLogTests
         log.OnFrame(T0.AddSeconds(1), Local(999, 50_000f, 9_000f));     // a 3C 37 about someone else
         log.OnFrame(T0.AddSeconds(2), Move(777, 100_400f, 2_000f));     // me again
         Assert.Equal(new Fix(T0.AddSeconds(2), 100_400f, 2_000f), log.MeFor(777));
-        Assert.Equal(new Fix(T0.AddSeconds(1), 50_000f, 9_000f), log.MeFor(null)); // unknown who I am: the old guess
+        Assert.Null(log.MeFor(null)); // unknown who I am: no guess from someone else's frame
     }
 }

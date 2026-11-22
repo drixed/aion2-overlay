@@ -102,26 +102,36 @@ public sealed class CharacterTracker(string path) : IRawPacketListener
 /// </summary>
 public sealed class SelfNamer(
     Func<CharacterProfile?> profile,
-    Func<int, (bool Named, int? ClassId)?> player,
-    Action<int, string, string?, long> name,
-    Func<int>? localEntity = null) : IRawPacketListener
+    Func<IReadOnlyList<SelfNamer.Row>> players,
+    Action<int, string, string?, long> name) : IRawPacketListener
 {
-    private const ushort MyMoveOpcode = 0x373C;
-    private int done;
+    /// <summary>A player of the meter: is the game's name on it, its class when known, is it marked as me.</summary>
+    public readonly record struct Row(int Entity, bool Named, int? ClassId, bool IsUser);
 
+    private long nextCheck;
+
+    /// <summary>Any frame the fork gets is the clock: a look every 2 seconds.</summary>
     public void OnRawPacket(ushort opcode, Packet packet)
     {
-        if (opcode == MyMoveOpcode && localEntity is not null) OnLocalEntity(localEntity());
+        var now = Environment.TickCount64;
+        if (now < Interlocked.Read(ref nextCheck)) return;
+        Interlocked.Exchange(ref nextCheck, now + 2000);
+        try { Check(); } catch (Exception) { /* naming never breaks parsing */ }
     }
 
-    public void OnLocalEntity(int entity)
+    /// <summary>
+    /// After a restart the game names everyone but me (it names you only on entering a map). My row is the one player
+    /// without a name whose class is my class from the last login — only when there is exactly one such and nobody is me
+    /// yet: a neighbour is never named after me (the 3C 37 frame this used comes about other players too).
+    /// </summary>
+    public void Check()
     {
-        if (entity <= 0 || entity == done || profile() is not { Name.Length: > 0 } me) return;
-        var (named, classId) = player(entity) ?? (false, null);
-        if (named) { done = entity; return; }
-        if (classId is { } c && me.ClassId > 0 && c != me.ClassId) return;
-        name(entity, me.Name, me.Server, me.CombatPower);
-        done = entity;
+        if (profile() is not { Name.Length: > 0 } me || me.ClassId <= 0) return;
+        var rows = players();
+        if (rows.Any(r => r.IsUser)) return;
+        var mine = rows.Where(r => !r.Named && r.ClassId == me.ClassId).Take(2).ToList();
+        if (mine.Count != 1) return;
+        name(mine[0].Entity, me.Name, me.Server, me.CombatPower);
     }
 }
 

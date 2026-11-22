@@ -26,7 +26,7 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
     private readonly Dictionary<int, Fix> last = [];
     private volatile int localEntity;
 
-    /// <summary>The played character's entity id, from its own position frame (3C 37); 0 until one came.</summary>
+    /// <summary>The played character's entity id, from entering a map (33 36; it changes with every map); 0 until one came.</summary>
     public int LocalEntity => localEntity;
 
     /// <summary>Where the played character was last seen, for the map window.</summary>
@@ -141,7 +141,7 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
     public void OnFrame(DateTime at, ReadOnlySpan<byte> frame)
     {
         if (!TryRead(frame, out var entity, out var x, out var y)) return;
-        if (frame[0] == 0x3c || (frame[0] == 0x33 && frame[1] == 0x36)) localEntity = entity;
+        if (frame[0] == 0x33 && frame[1] == 0x36) localEntity = entity; // entering a map is me; 3C 37 comes about others too
         Add(at, entity, x, y);
     }
 

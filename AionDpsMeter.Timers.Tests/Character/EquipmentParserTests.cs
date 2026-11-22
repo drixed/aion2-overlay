@@ -185,31 +185,31 @@ public class EquipmentParserTests
         Assert.Null(again.Equipment);
     }
 
+    private static readonly CharacterProfile Drixed = new("DRIXED", 15, 45, "MES", 202780, 3110);
+
     [Fact]
     public void After_a_restart_my_own_row_gets_my_name_from_the_last_login()
     {
         // Nov 2026: after a restart in the dungeon everyone got a name but me ("Player_13189"): the game names you only on entering
         var named = new List<(int Entity, string Name, string? Server, long Power)>();
-        var me = new CharacterProfile("DRIXED", 15, 45, "MES", 202780, 3110);
-        int? classOf13189 = null;
-        var namer = new SelfNamer(() => me, e => e == 13189 ? (false, classOf13189) : null, (e, n, s, p) => named.Add((e, n, s, p)));
+        var party = new List<SelfNamer.Row> { new(13189, false, 15, false), new(401, true, 11, false), new(402, true, 15, false) };
+        var namer = new SelfNamer(() => Drixed, () => party, (e, n, s, p) => named.Add((e, n, s, p)));
 
-        namer.OnLocalEntity(13189);                 // not hit yet: no class known, the name from the last login
+        namer.Check();                               // the one unnamed Sorcerer is me
         Assert.Equal([(13189, "DRIXED", "MES", 202780L)], named);
-        namer.OnLocalEntity(13189);                 // once is enough
-        Assert.Single(named);
     }
 
     [Fact]
-    public void Another_class_than_the_last_login_is_not_named()
+    public void A_neighbour_is_never_named_after_me()
     {
-        // logged in with an alt while the meter was off: a Gladiator is not "DRIXED"
+        // 22.11: "DRIXED" went to another class's row while my own stayed "Player_10157"
         var named = new List<int>();
-        var namer = new SelfNamer(() => new CharacterProfile("DRIXED", 15, 45, "MES", 1, 1), _ => (false, 11), (e, _, _, _) => named.Add(e));
-        namer.OnLocalEntity(500);
-        Assert.Empty(named);
-        var known = new SelfNamer(() => new CharacterProfile("DRIXED", 15, 45, "MES", 1, 1), _ => (true, 15), (e, _, _, _) => named.Add(e));
-        known.OnLocalEntity(501);                   // already named by the game: left alone
+        void Check(params SelfNamer.Row[] rows) => new SelfNamer(() => Drixed, () => rows, (e, _, _, _) => named.Add(e)).Check();
+
+        Check(new SelfNamer.Row(500, false, 11, false));                                    // another class
+        Check(new SelfNamer.Row(501, false, null, false));                                  // class not known yet
+        Check(new SelfNamer.Row(502, false, 15, false), new SelfNamer.Row(503, false, 15, false)); // two unnamed Sorcerers: no guess
+        Check(new SelfNamer.Row(504, false, 15, false), new SelfNamer.Row(505, true, 15, true));   // I am already known
         Assert.Empty(named);
     }
 }
