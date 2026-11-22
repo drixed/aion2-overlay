@@ -55,6 +55,7 @@ public sealed class FarmIncome : IRawPacketListener
     private readonly Lock gate = new();
     private readonly Dictionary<int, (int Item, long Quantity)> slots = [];
     private readonly Dictionary<int, long> gained = [];
+    private readonly Dictionary<int, long> rewards = [];
     private DateTime? since;
 
     public event Action? Changed;
@@ -70,13 +71,23 @@ public sealed class FarmIncome : IRawPacketListener
     /// start made millions "per hour".</summary>
     public static readonly TimeSpan RateAfter = TimeSpan.FromMinutes(15);
 
-    /// <summary>What came in per hour since the start, null until the count has run <see cref="RateAfter"/>.</summary>
+    /// <summary>One increase this big is a reward (a dungeon's, a boss chest), not farming: it counts in the total, not per hour.</summary>
+    public static long RewardFrom(int item) => item == AbyssPoints ? 3_000 : 300_000;
+
+    /// <summary>The part of <see cref="Gained"/> that came as rewards.</summary>
+    public long Rewards(int item)
+    {
+        lock (gate) return item == Kina ? rewards.GetValueOrDefault(Kina) + rewards.GetValueOrDefault(KinaBound) : rewards.GetValueOrDefault(item);
+    }
+
+    /// <summary>What farming brought per hour since the start (rewards left out: one dungeon made millions "per hour"),
+    /// null until the count has run <see cref="RateAfter"/>.</summary>
     public double? PerHour(int item, DateTime now)
     {
         DateTime? start;
         lock (gate) start = since;
         if (start is not { } s || now - s < RateAfter) return null;
-        return Gained(item) / (now - s).TotalHours;
+        return (Gained(item) - Rewards(item)) / (now - s).TotalHours;
     }
 
     public DateTime? Since { get { lock (gate) return since; } }
@@ -86,6 +97,7 @@ public sealed class FarmIncome : IRawPacketListener
         lock (gate)
         {
             gained.Clear();
+            rewards.Clear();
             since = now;
         }
         Changed?.Invoke();
@@ -117,7 +129,9 @@ public sealed class FarmIncome : IRawPacketListener
                 slots[r.Slot] = (r.Item, r.Quantity);
                 if (resend) continue;
                 var delta = had && old.Item == r.Item ? r.Quantity - old.Quantity : had || r.Kind != 0 ? 0 : r.Quantity;
-                if (delta > 0) gained[r.Item] = gained.GetValueOrDefault(r.Item) + delta;
+                if (delta <= 0) continue;
+                gained[r.Item] = gained.GetValueOrDefault(r.Item) + delta;
+                if (delta >= RewardFrom(r.Item)) rewards[r.Item] = rewards.GetValueOrDefault(r.Item) + delta;
             }
         }
         Changed?.Invoke();

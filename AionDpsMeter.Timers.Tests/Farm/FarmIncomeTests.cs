@@ -51,7 +51,21 @@ public class FarmIncomeTests
         f.OnChange(InventoryRecords.Read(Frame(Record(1, FarmIncome.Kina, 1_960_000, 1, 3))), T0.AddMinutes(7));
         Assert.Equal(960_000, f.Gained(FarmIncome.Kina));
         Assert.Null(f.PerHour(FarmIncome.Kina, T0.AddMinutes(10)));
-        Assert.Equal(960_000 / 0.5, f.PerHour(FarmIncome.Kina, T0.AddMinutes(30))!.Value, 1);
+        Assert.Equal(0, f.PerHour(FarmIncome.Kina, T0.AddMinutes(30))!.Value, 1); // a chest is a reward, not farming
+    }
+
+    [Fact]
+    public void A_dungeon_reward_counts_in_the_total_but_not_in_the_rate_per_hour()
+    {
+        // 22.11: +5 775 000 kina from a dungeon showed "5 144 079/ч"
+        var f = new FarmIncome();
+        f.OnChange(InventoryRecords.Read(Frame(Record(1, FarmIncome.Kina, 1_000_000, 1, 3))), T0);
+        f.OnChange(InventoryRecords.Read(Frame(Record(1, FarmIncome.Kina, 1_012_000, 1, 3))), T0.AddMinutes(10));  // farming
+        f.OnChange(InventoryRecords.Read(Frame(Record(1, FarmIncome.Kina, 6_787_000, 1, 3))), T0.AddMinutes(20));  // the dungeon reward
+        f.OnChange(InventoryRecords.Read(Frame(Record(1, FarmIncome.Kina, 6_795_000, 1, 3))), T0.AddMinutes(50));  // farming
+        Assert.Equal(5_795_000, f.Gained(FarmIncome.Kina));
+        Assert.Equal(5_775_000, f.Rewards(FarmIncome.Kina));
+        Assert.Equal(20_000, f.PerHour(FarmIncome.Kina, T0.AddMinutes(60))!.Value, 1);
     }
 
     [Fact]
