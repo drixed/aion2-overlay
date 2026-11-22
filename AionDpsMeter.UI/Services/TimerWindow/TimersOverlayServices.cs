@@ -25,6 +25,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             services.AddSingleton<NewsService>();
             services.AddSingleton<NewsWindow>();
             services.AddSingleton<BuffTrackerService>();
+            services.AddSingleton<CubeAlertService>();
             services.AddSingleton<CharacterWindow>();
             services.AddSingleton<MapWindow>();
             services.AddSingleton<CraftWindow>();

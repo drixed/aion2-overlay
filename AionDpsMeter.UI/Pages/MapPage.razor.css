@@ -86,3 +86,8 @@
 .mp-range small { position: absolute; right: 0; top: 0; color: #8b95a5; font-size: 11px; }
 .mp-range { position: relative; }
 .mp-range input { width: 100%; accent-color: #5fd4c4; margin: 0; }
+/* the user's screenshot of the game map: the dark land blobs give way to it */
+.land.under circle { display: none; }
+.mp-settings .mp-sub { margin-top: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b95a5; }
+.mp-settings > span { display: flex; gap: 10px; }
+.mp-select { margin-left: 6px; background: #1b2330; color: #c9d1d9; border: 1px solid rgba(255,255,255,.15); border-radius: 4px; font-size: 11px; padding: 1px 4px; }

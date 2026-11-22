@@ -267,6 +267,19 @@ public sealed class TimersOptions
 }
 
 /// <summary>The 🗺 window: side panel, background transparency, point size, labels and which layers are on.</summary>
+/// <summary>A screenshot of the game map laid under the map's points: the file, its top-left corner and width in game
+/// units (moved and scaled by the user to match), and how see-through it is.</summary>
+public sealed class MapUnderlay
+{
+    public string Path { get; set; } = "";
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Width { get; set; } = 100_000;
+    /// <summary>The picture's width over its height.</summary>
+    public double Aspect { get; set; } = 1;
+    public int Opacity { get; set; } = 70;
+}
+
 public sealed class MapOptions
 {
     public const int MinOpacity = 20;
@@ -287,6 +300,11 @@ public sealed class MapOptions
     public bool OnlyUnfinished { get; set; } = true;
     public bool Bosses { get; set; } = true;
     public bool Cubes { get; set; }
+    /// <summary>"Куб рядом": a sound and the way to a hidden cube (spoken) within this many metres; 0 — off.</summary>
+    public int CubeAlertMetres { get; set; }
+    /// <summary>The user's own screenshot of the game map under the points, per map id (the file stays theirs, the meter
+    /// ships no game pictures); where it lies in game units.</summary>
+    public Dictionary<int, MapUnderlay> Underlays { get; set; } = [];
     /// <summary>Gathering kinds on the map (Herb, Ore, Wood…).</summary>
     public HashSet<string> Kinds { get; set; } = ["Herb", "Ore"];
 

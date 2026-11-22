@@ -63,6 +63,28 @@
             <label class="mp-check"><input type="checkbox" checked="@O.Nearest" @onchange="e => Set(o => o.Nearest = e.Value is true)" /> Блок «Ближайшее»</label>
             <label class="mp-check"><input type="checkbox" checked="@O.OnTop" @onchange="e => SetOnTop(e.Value is true)" /> Поверх всех окон</label>
             <button type="button" class="mp-link" @onclick="ResetLook">Сбросить вид</button>
+            @if (layer is not null)
+            {
+                var under = Under(layer);
+                <b class="mp-sub">Подложка: скриншот карты · @layer.Name</b>
+                @if (under is null)
+                {
+                    <div class="mp-hint">Откройте карту в игре, сделайте скриншот и выберите его — он ляжет под точки. Картинка остаётся только у вас.</div>
+                    <button type="button" class="mp-link" @onclick="() => PickUnderlay(layer)">Выбрать скриншот…</button>
+                }
+                else
+                {
+                    <label class="mp-range">Видимость скриншота <small>@under.Opacity%</small>
+                        <input type="range" min="10" max="100" step="5" value="@under.Opacity"
+                               @oninput="e => under.Opacity = Int(e.Value)" @onchange="e => Set(_ => under.Opacity = Int(e.Value))" /></label>
+                    <label class="mp-check"><input type="checkbox" checked="@fitting" @onchange="e => fitting = e.Value is true" /> Подгонять мышью: тащить — сдвиг, колесо — размер</label>
+                    @if (underlayError is { } err) { <div class="mp-hint">@err</div> }
+                    <span>
+                        <button type="button" class="mp-link" @onclick="() => PickUnderlay(layer)">Другой скриншот…</button>
+                        <button type="button" class="mp-link" @onclick="() => Set(o => o.Underlays.Remove(layer.Id))">Убрать</button>
+                    </span>
+                }
+            }
         </div>
     }
 
@@ -113,6 +135,11 @@
                 <h4>Прочее</h4>
                 <label class="mp-check"><input type="checkbox" checked="@O.Bosses" @onchange="e => Set(o => o.Bosses = e.Value is true)" /><span class="sw boss"></span>Полевые боссы<small>@(layer?.Bosses.Count ?? 0)</small></label>
                 <label class="mp-check"><input type="checkbox" checked="@O.Cubes" @onchange="e => Set(o => o.Cubes = e.Value is true)" /><span class="sw cube"></span>Скрытые кубы<small>@(layer?.Cubes.Count ?? 0)</small></label>
+                <label class="mp-check sub" title="Звук и голосом — в какую сторону идти; работает и при закрытой карте">Сигнал, когда куб ближе
+                    <select class="mp-select" value="@O.CubeAlertMetres" @onchange="e => Set(o => o.CubeAlertMetres = Int(e.Value))">
+                        <option value="0">выкл</option>
+                        @foreach (var m in new[] { 30, 50, 80, 120 }) { <option value="@m">@m м</option> }
+                    </select></label>
             </section>
             <p class="mp-note">Схема нарисована по координатам из открытой таблицы SkeeveAN/Aion-DPS-Meter (MIT); картинок игры здесь нет.</p>
         </aside>
@@ -127,7 +154,12 @@
             else
             {
                 <svg viewBox="@F(x0) @F(y0) @F(vbW) @F(vbH)" preserveAspectRatio="xMidYMid meet">
-                    <g class="land">
+                    @if (Under(layer) is { } u && UnderlayUri(u) is { } uri)
+                    {
+                        <image class="underlay" href="@uri" x="@F(u.X)" y="@F(u.Y)" width="@F(u.Width)" height="@F(u.Width / Math.Max(0.01, u.Aspect))"
+                               preserveAspectRatio="none" opacity="@F(u.Opacity / 100.0)" />
+                    }
+                    <g class="land @(Under(layer) is not null ? "under" : "")">
                         @foreach (var c in Land(layer))
                         {
                             if (In(c, x0, y0, vbW, vbH, LandR)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@LandR" /> }
@@ -384,7 +416,7 @@
             var points = layer.Gather.Where(g => WorldMap.Object(g.Key)?.Kind == kind).SelectMany(g => g.Value);
             if (WorldMap.Nearest(points, me) is { } n) list.Add(new Near(WorldMap.KindLabel(kind), KindColor(kind), n.Point, n.Metres, list.Count == 0));
         }
-        if (O.Cubes && WorldMap.Nearest(layer.Cubes, me) is { } cube) list.Add(new Near("Скрытый куб", "#5fd4c4", cube.Point, cube.Metres, list.Count == 0));
+        if (O.Cubes && WorldMap.Nearest(layer.Cubes, me) is { } cube) list.Add(new Near($"Скрытый куб · {CubeRadar.Direction(me, cube.Point)}", "#5fd4c4", cube.Point, cube.Metres, list.Count == 0));
         if (O.Bosses)
         {
             var boss = layer.Bosses.MinBy(b => Dist(b.At, me));
@@ -488,6 +520,15 @@
         var py = r is { Length: 4 } ? e.ClientY - r[1] : H / 2;
         var wx = cx + (px - W / 2) * k;
         var wy = cy + (py - H / 2) * k;
+        if (fitting && Layer is { } fl && Under(fl) is { } u) // the screenshot grows or shrinks around the cursor
+        {
+            var f = e.DeltaY > 0 ? 1 / 1.02 : 1.02;
+            u.X = wx - (wx - u.X) * f;
+            u.Y = wy - (wy - u.Y) * f;
+            u.Width *= f;
+            Store.Save();
+            return;
+        }
         ZoomBy(e.DeltaY > 0 ? 1.2 : 1 / 1.2);
         var k2 = Span / Math.Min(W, H);
         cx = wx - (px - W / 2) * k2;
@@ -500,12 +541,19 @@
         dragging = true;
         follow = false;
         (dragX, dragY, dragCx, dragCy) = (e.ClientX, e.ClientY, cx, cy);
+        if (fitting && Layer is { } fl && Under(fl) is { } u) (dragUx, dragUy) = (u.X, u.Y);
     }
 
     private void DragMove(MouseEventArgs e)
     {
         if (!dragging) { skipRender = true; return; }
         var k = Span / Math.Min(W, H);
+        if (fitting && Layer is { } fl && Under(fl) is { } u) // the screenshot moves, the map stays
+        {
+            u.X = dragUx + (e.ClientX - dragX) * k;
+            u.Y = dragUy + (e.ClientY - dragY) * k;
+            return;
+        }
         cx = dragCx - (e.ClientX - dragX) * k;
         cy = dragCy - (e.ClientY - dragY) * k;
     }
@@ -514,6 +562,68 @@
     {
         if (!dragging) { skipRender = true; return; }
         dragging = false;
+        if (fitting) Store.Save();
+    }
+
+    private bool fitting;
+    private double dragUx, dragUy;
+    private string? underlayError;
+    private static readonly Dictionary<string, string> UnderlayCache = [];
+
+    private AionDpsMeter.Timers.Feed.MapUnderlay? Under(MapLayer layer) => O.Underlays.GetValueOrDefault(layer.Id);
+
+    /// <summary>The user's screenshot as a data URI (read once): the page cannot open files from the disk itself.</summary>
+    private string? UnderlayUri(AionDpsMeter.Timers.Feed.MapUnderlay u)
+    {
+        if (UnderlayCache.TryGetValue(u.Path, out var uri)) return uri;
+        try
+        {
+            var mime = System.IO.Path.GetExtension(u.Path).ToLowerInvariant() is ".jpg" or ".jpeg" ? "image/jpeg" : "image/png";
+            uri = $"data:{mime};base64,{Convert.ToBase64String(System.IO.File.ReadAllBytes(u.Path))}";
+            underlayError = null;
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            underlayError = "Скриншот не найден — выберите его заново.";
+            return null;
+        }
+        UnderlayCache[u.Path] = uri;
+        return uri;
+    }
+
+    /// <summary>"Выбрать скриншот…": the file, its shape, and a first place over the land; then it is fitted with the mouse.</summary>
+    private void PickUnderlay(MapLayer layer)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = $"Скриншот карты «{layer.Name}»",
+            Filter = "Картинки (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+        };
+        if (dialog.ShowDialog() != true) return;
+        int w, h;
+        try
+        {
+            using var img = System.Drawing.Image.FromFile(dialog.FileName);
+            (w, h) = (img.Width, img.Height);
+        }
+        catch (Exception ex) when (ex is OutOfMemoryException or System.IO.IOException or ArgumentException)
+        {
+            underlayError = "Этот файл не открывается как картинка.";
+            return;
+        }
+        var land = Land(layer);
+        var (x, y, width) = land.Count == 0 ? (cx - Span / 2, cy - Span / 2, Span)
+            : CubeRadar.FitUnderlay(land.Min(p => p.X) - LandR, land.Min(p => p.Y) - LandR, land.Max(p => p.X) + LandR, land.Max(p => p.Y) + LandR, w, h);
+        UnderlayCache.Remove(dialog.FileName);
+        underlayError = null;
+        var opacity = O.Underlays.GetValueOrDefault(layer.Id)?.Opacity ?? 70;
+        Set(o => o.Underlays[layer.Id] = new AionDpsMeter.Timers.Feed.MapUnderlay
+        {
+            Path = dialog.FileName, X = x, Y = y, Width = width, Aspect = w / (double)Math.Max(1, h), Opacity = opacity,
+        });
+        fitting = true;
+        Fit(layer);
     }
 
     protected override bool ShouldRender()
