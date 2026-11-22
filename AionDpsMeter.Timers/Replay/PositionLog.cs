@@ -32,6 +32,10 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
     /// <summary>Where the played character was last seen, for the map window.</summary>
     public Fix? Me => localEntity == 0 ? null : Last(localEntity);
 
+    /// <summary>Where I am: my own entity's last place (who I am comes from the meter knowing my name); the 3C 37 guess only
+    /// while that is not known yet — 3C 37 comes about other players too, so it alone made my place jump to theirs.</summary>
+    public Fix? MeFor(int? userEntity) => userEntity is { } id && Last(id) is { } mine ? mine : Me;
+
     public Fix? Last(int entity)
     {
         lock (gate) return last.TryGetValue(entity, out var f) ? f : null;

@@ -77,4 +77,15 @@ public class PositionLogTests
         log.OnFrame(T0.AddSeconds(3), Move(777, 100_500f, 2_500f));
         Assert.Equal(new Fix(T0.AddSeconds(3), 100_500f, 2_500f), log.Me);
     }
+
+    [Fact]
+    public void My_place_follows_my_own_entity_even_when_another_players_correction_frame_comes()
+    {
+        var log = new PositionLog();
+        log.OnFrame(T0, Move(777, 100_000f, 2_000f));                   // me moving
+        log.OnFrame(T0.AddSeconds(1), Local(999, 50_000f, 9_000f));     // a 3C 37 about someone else
+        log.OnFrame(T0.AddSeconds(2), Move(777, 100_400f, 2_000f));     // me again
+        Assert.Equal(new Fix(T0.AddSeconds(2), 100_400f, 2_000f), log.MeFor(777));
+        Assert.Equal(new Fix(T0.AddSeconds(1), 50_000f, 9_000f), log.MeFor(null)); // unknown who I am: the old guess
+    }
 }

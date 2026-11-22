@@ -11,5 +11,5 @@
 .cc-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
 .cc-text b { font-size: 22px; font-variant-numeric: tabular-nums; }
 .cc-text span { font-size: 13px; color: #5fd4c4; font-weight: 600; }
-.cc-text small { font-size: 10.5px; color: #8b95a5; white-space: nowrap; }
+.cc-text small { font-size: 10.5px; color: #8b95a5; line-height: 1.2; }
 .cc-wait { font-size: 12px; color: #c9d1d9; line-height: 1.35; }

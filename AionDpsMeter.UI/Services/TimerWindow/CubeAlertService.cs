@@ -67,8 +67,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
             {
                 var map = options.Current.Map;
                 var layer = WorldMap.For(zones.CurrentMapId);
-                var fix = positions.Me;
-                if (fix is null && entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is { } user) fix = positions.Last(user.Id);
+                var fix = positions.MeFor(entities.PlayerEntities.FirstOrDefault(p => p.IsUser)?.Id);
                 MapPoint? me = fix is { } f ? new MapPoint(f.X, f.Y) : null;
 
                 // the compass: only on a map with cubes
@@ -112,7 +111,7 @@ namespace AionDpsMeter.UI.Services.TimerWindow
                     WindowStartupLocation = WindowStartupLocation.Manual,
                     Left = map.CompassLeft ?? 80,
                     Top = map.CompassTop ?? 240,
-                    Width = 210,
+                    Width = 240,
                     Height = 100,
                     Topmost = true,
                 };

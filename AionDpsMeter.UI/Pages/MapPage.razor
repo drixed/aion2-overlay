@@ -331,7 +331,7 @@
     {
         if (layer is null) return null;
         if (Zones.CurrentMapId is not null && !Here(layer)) return null;
-        var fix = Positions.Me;
+        var fix = Positions.MeFor(Entities.PlayerEntities.FirstOrDefault(p => p.IsUser)?.Id);
         if (fix is null && Entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is { } user) fix = Positions.Last(user.Id);
         return fix is { } f ? new MapPoint(f.X, f.Y) : null;
     }
@@ -695,7 +695,7 @@
     /// <summary>Redraws once a second while the character moves; in follow mode keeps it in the middle.</summary>
     private void Tick()
     {
-        var fix = Positions.Me;
+        var fix = Positions.MeFor(Entities.PlayerEntities.FirstOrDefault(p => p.IsUser)?.Id);
         if (fix is null && Entities.PlayerEntities.FirstOrDefault(p => p.IsUser) is { } user) fix = Positions.Last(user.Id);
         if (fix is null || fix.Value.At == lastMe) return;
         lastMe = fix.Value.At;
