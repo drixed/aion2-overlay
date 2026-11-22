@@ -91,3 +91,5 @@
 .mp-settings .mp-sub { margin-top: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b95a5; }
 .mp-settings > span { display: flex; gap: 10px; }
 .mp-select { margin-left: 6px; background: #1b2330; color: #c9d1d9; border: 1px solid rgba(255,255,255,.15); border-radius: 4px; font-size: 11px; padding: 1px 4px; }
+/* while fitting the screenshot, the land the meter knows shows over it as a see-through shape to match */
+.land.under.fit circle { display: block; fill: #5fd4c4; fill-opacity: .22; }

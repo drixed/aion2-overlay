@@ -77,7 +77,7 @@
                     <label class="mp-range">Видимость скриншота <small>@under.Opacity%</small>
                         <input type="range" min="10" max="100" step="5" value="@under.Opacity"
                                @oninput="e => under.Opacity = Int(e.Value)" @onchange="e => Set(_ => under.Opacity = Int(e.Value))" /></label>
-                    <label class="mp-check"><input type="checkbox" checked="@fitting" @onchange="e => fitting = e.Value is true" /> Подгонять мышью: тащить — сдвиг, колесо — размер</label>
+                    <label class="mp-check"><input type="checkbox" checked="@fitting" @onchange="e => fitting = e.Value is true" /> Подгонять мышью: тащить — сдвиг, колесо — размер (с Shift — точнее)</label>
                     @if (underlayError is { } err) { <div class="mp-hint">@err</div> }
                     <span>
                         <button type="button" class="mp-link" @onclick="() => PickUnderlay(layer)">Другой скриншот…</button>
@@ -160,7 +160,7 @@
                         <image class="underlay" href="@uri" x="@F(u.X)" y="@F(u.Y)" width="@F(u.Width)" height="@F(u.Width / Math.Max(0.01, u.Aspect))"
                                preserveAspectRatio="none" opacity="@F(u.Opacity / 100.0)" />
                     }
-                    <g class="land @(Under(layer) is not null ? "under" : "")">
+                    <g class="land @(Under(layer) is null ? "" : fitting ? "under fit" : "under")">
                         @foreach (var c in Land(layer))
                         {
                             if (In(c, x0, y0, vbW, vbH, LandR)) { <circle cx="@F(c.X)" cy="@F(c.Y)" r="@LandR" /> }
@@ -523,7 +523,8 @@
         var wy = cy + (py - H / 2) * k;
         if (fitting && Layer is { } fl && Under(fl) is { } u) // the screenshot grows or shrinks around the cursor
         {
-            var f = e.DeltaY > 0 ? 1 / 1.02 : 1.02;
+            var step = e.ShiftKey ? 1.01 : 1.06; // Shift: fine
+            var f = e.DeltaY > 0 ? 1 / step : step;
             u.X = wx - (wx - u.X) * f;
             u.Y = wy - (wy - u.Y) * f;
             u.Width *= f;
@@ -579,7 +580,7 @@
         if (UnderlayCache.TryGetValue(u.Path, out var uri)) return uri;
         try
         {
-            var mime = System.IO.Path.GetExtension(u.Path).ToLowerInvariant() is ".jpg" or ".jpeg" ? "image/jpeg" : "image/png";
+            var mime = System.IO.Path.GetExtension(u.Path).ToLowerInvariant() switch { ".jpg" or ".jpeg" => "image/jpeg", ".webp" => "image/webp", _ => "image/png" };
             uri = $"data:{mime};base64,{Convert.ToBase64String(System.IO.File.ReadAllBytes(u.Path))}";
             underlayError = null;
         }
@@ -598,19 +599,21 @@
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Title = $"Скриншот карты «{layer.Name}»",
-            Filter = "Картинки (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
+            Filter = "Картинки (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
         };
         if (dialog.ShowDialog() != true) return;
         int w, h;
         try
         {
-            using var img = System.Drawing.Image.FromFile(dialog.FileName);
-            (w, h) = (img.Width, img.Height);
+            // WPF's decoder reads WebP too (Windows' codec); System.Drawing only PNG/JPEG
+            using var file = System.IO.File.OpenRead(dialog.FileName);
+            var frame = System.Windows.Media.Imaging.BitmapFrame.Create(file, System.Windows.Media.Imaging.BitmapCreateOptions.DelayCreation, System.Windows.Media.Imaging.BitmapCacheOption.None);
+            (w, h) = (frame.PixelWidth, frame.PixelHeight);
         }
-        catch (Exception ex) when (ex is OutOfMemoryException or System.IO.IOException or ArgumentException)
+        catch (Exception ex) when (ex is OutOfMemoryException or System.IO.IOException or ArgumentException or NotSupportedException or System.IO.FileFormatException)
         {
-            underlayError = "Этот файл не открывается как картинка.";
+            underlayError = "Этот файл не открывается как картинка — сохраните его как PNG (например, в Paint).";
             return;
         }
         var land = Land(layer);
