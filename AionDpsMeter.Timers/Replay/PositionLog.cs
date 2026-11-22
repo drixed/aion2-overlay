@@ -54,7 +54,10 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
     public static bool TryRead(ReadOnlySpan<byte> frame, out int entity, out float x, out float y)
     {
         entity = 0; x = y = 0;
-        if (frame.Length < 4 || frame[1] != 0x37) return false;
+        if (frame.Length < 4) return false;
+        if (frame[0] == 0x33 && frame[1] == 0x36) return TryReadMapEntry(frame, out entity, out x, out y);
+        if (frame[0] == 0x2a && frame[1] == 0x38) return TryReadSelfBuff(frame, out entity, out x, out y);
+        if (frame[1] != 0x37) return false;
         var p = 2;
         if (!Varint(frame, ref p, out var id) || id is < 1 or > 10_000_000) return false;
         int offset;
@@ -70,6 +73,40 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
         y = BinaryPrimitives.ReadSingleLittleEndian(frame[(p + offset + 4)..]);
         if (!float.IsFinite(x) || !float.IsFinite(y) || Math.Abs(x) is <= 1 or >= 500_000 || Math.Abs(y) is <= 1 or >= 500_000) return false;
         entity = (int)id;
+        return true;
+    }
+
+    // In the open world the game does not send the player their own movement; their place comes only on entering a map
+    // (33 36, the place at offset 180) and with a buff that lands on them (2A 38: the caster's place closes the frame —
+    // only a buff they cast on themselves says where they are). Found in a capture of 22.11.
+    private static bool TryReadMapEntry(ReadOnlySpan<byte> frame, out int entity, out float x, out float y)
+    {
+        entity = 0; x = y = 0;
+        var p = 2;
+        if (frame.Length < 188 || !Varint(frame, ref p, out var id) || id is < 1 or > 10_000_000) return false;
+        return Place(frame, 180, (int)id, out entity, out x, out y);
+    }
+
+    private static bool TryReadSelfBuff(ReadOnlySpan<byte> frame, out int entity, out float x, out float y)
+    {
+        entity = 0; x = y = 0;
+        var p = 2;
+        if (!Varint(frame, ref p, out var id) || id is < 1 or > 10_000_000) return false;
+        var idBytes = frame[2..p];
+        var place = frame.Length - 12;                  // x, y, z
+        var caster = place - 2 - idBytes.Length;        // the caster's id, then 01 00
+        if (caster <= p || frame[place - 2] != 0x01 || frame[place - 1] != 0x00 || !frame.Slice(caster, idBytes.Length).SequenceEqual(idBytes))
+            return false;
+        return Place(frame, place, (int)id, out entity, out x, out y);
+    }
+
+    private static bool Place(ReadOnlySpan<byte> frame, int at, int id, out int entity, out float x, out float y)
+    {
+        entity = 0;
+        x = BinaryPrimitives.ReadSingleLittleEndian(frame[at..]);
+        y = BinaryPrimitives.ReadSingleLittleEndian(frame[(at + 4)..]);
+        if (!float.IsFinite(x) || !float.IsFinite(y) || Math.Abs(x) is <= 1 or >= 500_000 || Math.Abs(y) is <= 1 or >= 500_000) return false;
+        entity = id;
         return true;
     }
 
@@ -91,7 +128,7 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
 
     public void OnRawPacket(ushort opcode, Packet packet)
     {
-        if ((opcode >> 8) != 0x37) return;
+        if ((opcode >> 8) != 0x37 && opcode is not (0x382A or 0x3633)) return; // movements, a buff landing, a map entry
         try
         {
             if (!Wire.TryVarint(packet.Data, 0, out _, out var header) || packet.Data.Length < header + 4) return;
@@ -104,7 +141,7 @@ public sealed class PositionLog(string? replayDir = null) : IRawPacketListener
     public void OnFrame(DateTime at, ReadOnlySpan<byte> frame)
     {
         if (!TryRead(frame, out var entity, out var x, out var y)) return;
-        if (frame[0] == 0x3c) localEntity = entity;
+        if (frame[0] == 0x3c || (frame[0] == 0x33 && frame[1] == 0x36)) localEntity = entity;
         Add(at, entity, x, y);
     }
 

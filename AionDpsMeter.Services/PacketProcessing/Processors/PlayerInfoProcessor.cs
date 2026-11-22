@@ -6,10 +6,11 @@ using AionDpsMeter.Services.Services.Entity;
 namespace AionDpsMeter.Services.PacketProcessing.Processors
 {
     [PacketOpcode(PacketOpcodes.PlayerInfo)]
-    internal class PlayerInfoProcessor(EntityTracker entityTracker) : BasePlayerInfoProcessor , IOpcodeProcessor
+    internal class PlayerInfoProcessor(EntityTracker entityTracker, IEnumerable<Fork.IRawPacketListener> listeners) : BasePlayerInfoProcessor , IOpcodeProcessor
     {
         public void Process(Packet packet)
         {
+            Fork.RawTap.Forward(listeners, packet); // aion2-overlay fork: entering a map carries my own place (the map)
             if (!TryParseInfo(packet.Data, out PlayerInfoResult result)) return;
             entityTracker.SetSessionPlayerName(result.EntityId, result.Name, result.CombatPower, ServerMap.GetName(result.ServerId), true);
         }

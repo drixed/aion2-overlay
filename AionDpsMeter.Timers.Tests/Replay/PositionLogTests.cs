@@ -78,6 +78,42 @@ public class PositionLogTests
         Assert.Equal(new Fix(T0.AddSeconds(3), 100_500f, 2_500f), log.Me);
     }
 
+    // a buff I put on myself in Verteron (2A 38, captured 22.11): the caster's place closes the frame
+    private static readonly byte[] SelfBuff = Convert.FromHexString("2A38B81101116412270000881300000000000098031D01A2010000B8110100AE6A3E453686AA4700FF1E47");
+
+    [Fact]
+    public void A_buff_I_put_on_myself_tells_where_I_am()
+    {
+        var log = new PositionLog();
+        log.OnFrame(T0, SelfBuff);
+        var at = log.Last(2232);
+        Assert.NotNull(at);
+        Assert.Equal((3047f, 87308f), ((float)Math.Round(at!.Value.X), (float)Math.Round(at.Value.Y)));
+    }
+
+    [Fact]
+    public void A_buff_someone_else_put_on_me_does_not_move_me_to_them()
+    {
+        var other = (byte[])SelfBuff.Clone();
+        other[^16] = 0xB9; // the caster is entity 2233
+        var log = new PositionLog();
+        log.OnFrame(T0, other);
+        Assert.Null(log.Last(2232));
+    }
+
+    [Fact]
+    public void Entering_a_map_tells_where_I_am_and_who_I_am()
+    {
+        var frame = new byte[200];
+        frame[0] = 0x33; frame[1] = 0x36; frame[2] = 0xB8; frame[3] = 0x11; // 33 36, entity 2232
+        BitConverter.GetBytes(3047f).CopyTo(frame, 180);
+        BitConverter.GetBytes(87308f).CopyTo(frame, 184);
+        var log = new PositionLog();
+        log.OnFrame(T0, frame);
+        Assert.Equal(2232, log.LocalEntity);
+        Assert.Equal(new Fix(T0, 3047f, 87308f), log.MeFor(2232));
+    }
+
     [Fact]
     public void My_place_follows_my_own_entity_even_when_another_players_correction_frame_comes()
     {

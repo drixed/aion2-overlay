@@ -15,7 +15,16 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
     [PacketOpcode(0x3809)] // 09 38: a skill being wound up (the boss cast overlay)
     internal sealed class RawForwarder(IEnumerable<IRawPacketListener> listeners) : IOpcodeProcessor
     {
-        public void Process(Packet packet)
+        public void Process(Packet packet) => Fork.RawTap.Forward(listeners, packet);
+    }
+}
+
+namespace AionDpsMeter.Services.PacketProcessing.Fork
+{
+    /// <summary>A copy of a frame for the fork's listeners (the opcode read back from the frame); also from processors that own an opcode upstream.</summary>
+    public static class RawTap
+    {
+        public static void Forward(IEnumerable<IRawPacketListener> listeners, Packet packet)
         {
             var data = packet.Data;
             var i = 0;
@@ -23,7 +32,10 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
             i++; // past the length varint
             if (i + 2 > data.Length) return;
             var opcode = (ushort)(data[i] | (data[i + 1] << 8));
-            foreach (var listener in listeners) listener.OnRawPacket(opcode, packet);
+            foreach (var listener in listeners)
+            {
+                try { listener.OnRawPacket(opcode, packet); } catch { /* a listener never breaks parsing */ }
+            }
         }
     }
 }

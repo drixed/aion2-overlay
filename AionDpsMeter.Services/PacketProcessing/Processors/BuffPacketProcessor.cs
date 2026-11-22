@@ -19,8 +19,12 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
         private readonly ILogger<BuffPacketProcessor> logger;
         private readonly CombatSessionManager sessionManager;
 
-        public BuffPacketProcessor(ILogger<BuffPacketProcessor> logger, CombatSessionManager sessionManager)
+        // aion2-overlay fork: a buff landing carries the caster's place (my own place when I cast it on myself): the map
+        private readonly IEnumerable<Fork.IRawPacketListener> listeners;
+
+        public BuffPacketProcessor(ILogger<BuffPacketProcessor> logger, CombatSessionManager sessionManager, IEnumerable<Fork.IRawPacketListener> listeners)
         {
+            this.listeners = listeners;
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.gameData = GameDataProvider.Instance;
             this.sessionManager = sessionManager;
@@ -29,6 +33,7 @@ namespace AionDpsMeter.Services.PacketProcessing.Processors
 
         public void Process(Packet packet)
         {
+            Fork.RawTap.Forward(listeners, packet); // aion2-overlay fork
             var r = new PacketReader(packet.Data);
 
             r.ReadVarInt(); //len
