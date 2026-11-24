@@ -64,7 +64,7 @@ public class EntityTrackerAdaptersTests
         var entities = new EntityTracker();
         var sorcerer = new AionDpsMeter.Core.Models.CharacterClass { Id = 15, Name = "Sorcerer" };
         var gladiator = new AionDpsMeter.Core.Models.CharacterClass { Id = 11, Name = "Gladiator" };
-        entities.GetOrCreateSessionPlayer(4431, sorcerer);
+        entities.GetOrCreateSessionPlayer(4431).CharacterClass = sorcerer;   // taken over from a party link, no hit of its own
         Assert.Equal(11, entities.GetOrCreateSessionPlayer(4431, gladiator).CharacterClass!.Id);
         Assert.Equal(11, entities.GetOrCreateSessionPlayer(4431).CharacterClass!.Id);   // no class given: the known one stays
     }

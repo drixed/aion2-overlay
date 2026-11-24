@@ -93,7 +93,9 @@ namespace AionDpsMeter.Services.Services.Entity
             {
                 // aion2-overlay fork: the class follows the skills the player uses (a skill code names its class); the first class
                 // used to win for good, and one taken over from a wrong party link made a Gladiator a Sorcerer (see FORK_CHANGES.md)
-                if (characterClass != null) player.CharacterClass = characterClass;
+                // — but by the most used one: another class's buff ticking under a player's id (a Chanter's Protection Circle, a
+                // Templar's seal) brings that class's skill code, and taking the last code recoloured rows "like a rainbow"
+                if (characterClass != null) player.CharacterClass = VoteClass(player, characterClass);
                 return player;
             }
 
@@ -105,8 +107,22 @@ namespace AionDpsMeter.Services.Services.Entity
             };
 
             sessionPlayers[sessionId] = player;
+            if (characterClass != null) VoteClass(player, characterClass);
             CleanupUnidSessionPlayers();
             return player;
+        }
+
+        // aion2-overlay fork: how many hits each class's skill codes brought per player (a new player object starts afresh)
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<Player, Dictionary<long, (CharacterClass Class, int Hits)>> classVotes = new();
+
+        private CharacterClass VoteClass(Player player, CharacterClass used)
+        {
+            var votes = classVotes.GetOrCreateValue(player);
+            votes[used.Id] = (used, votes.TryGetValue(used.Id, out var v) ? v.Hits + 1 : 1);
+            var current = player.CharacterClass;
+            var best = votes.Values.MaxBy(x => x.Hits);
+            // a tie keeps the class shown
+            return current != null && votes.TryGetValue(current.Id, out var mine) && mine.Hits >= best.Hits ? current : best.Class;
         }
 
         public void CleanupUnidSessionPlayers()
